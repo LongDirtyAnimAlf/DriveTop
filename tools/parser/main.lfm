@@ -1,0 +1,54 @@
+object Form1: TForm1
+  Left = 239
+  Height = 784
+  Top = 126
+  Width = 1191
+  Caption = 'Form1'
+  ClientHeight = 784
+  ClientWidth = 1191
+  LCLVersion = '2.3.0.0'
+  object Button1: TButton
+    Left = 16
+    Height = 72
+    Top = 8
+    Width = 114
+    Caption = 'Button1'
+    OnClick = Button1Click
+    TabOrder = 0
+  end
+  object Memo1: TMemo
+    Left = 152
+    Height = 761
+    Top = 8
+    Width = 479
+    Lines.Strings = (
+      'Memo1'
+    )
+    ScrollBars = ssBoth
+    TabOrder = 1
+    WordWrap = False
+  end
+  object Memo2: TMemo
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 688
+    Height = 768
+    Top = 8
+    Width = 495
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    BorderSpacing.Around = 8
+    Lines.Strings = (
+      'Memo2'
+    )
+    ScrollBars = ssBoth
+    TabOrder = 2
+    WordWrap = False
+  end
+  object OpenDialog1: TOpenDialog
+    Left = 48
+    Top = 128
+  end
+end
