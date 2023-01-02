@@ -363,6 +363,8 @@ const
   function  GetDriveInfo(const Drive:word):TDRIVE;
   procedure SetDriveInfo(const Drive:word; value:TDRIVE);
 
+  function GetDriveErrorDescription(derr:word):string;
+
 var
   DriveOperationModes         : TOMD;
   DriveOperationModesLagLess  : TOMD;
@@ -600,6 +602,21 @@ end;
 function DriveRegisterDataCount(const DriveNumber:word):integer;
 begin
   result:=RegisterDataCount(IDNDriveList[DriveNumber]);
+end;
+
+function GetDriveErrorDescription(derr:word):string;
+var
+ error:TERROR;
+begin
+  result:=sUN;
+  for error in DRIVE_ERRORS do
+  begin
+    if (error.NUMBER=derr) then
+    begin
+      result:=error.EXPLANATION;
+      break;
+    end;
+  end;
 end;
 
 procedure ModeInit;

@@ -435,3 +435,60 @@
    (Valid : FALSE; Lagless : FALSE; BitMask :  %1100000000000011; Name : 'Step-motor mode'),
    (Valid : FALSE; Lagless : FALSE; BitMask :  %1100000000010011; Name : 'Jog mode')
    );
+
+DRIVE_ERRORS : array[0..40] of TERROR =
+  (
+  (NUMBER: $1001; EXPLANATION:'IDN not available'),
+  (NUMBER: $1009; EXPLANATION:'element 1 incorrectly accessed'),
+  (NUMBER: $2001; EXPLANATION:'name not available'),
+  (NUMBER: $2002; EXPLANATION:'name transmission too short'),
+  (NUMBER: $2003; EXPLANATION:'name transmission too long'),
+  (NUMBER: $2004; EXPLANATION:'name cannot be changed'),
+  (NUMBER: $2005; EXPLANATION:'name presently write protected'),
+  (NUMBER: $3002; EXPLANATION:'attribute transmission too short'),
+  (NUMBER: $3003; EXPLANATION:'attribute transmission too long'),
+  (NUMBER: $3004; EXPLANATION:'attribute cannot be changed'),
+  (NUMBER: $3005; EXPLANATION:'attribute presently write protected'),
+  (NUMBER: $4001; EXPLANATION:'unit not available'),
+  (NUMBER: $4002; EXPLANATION:'unit transmission too short'),
+  (NUMBER: $4003; EXPLANATION:'unit transmission too long'),
+  (NUMBER: $4004; EXPLANATION:'unit cannot be changed'),
+  (NUMBER: $4005; EXPLANATION:'unit presently write protected'),
+  (NUMBER: $5001; EXPLANATION:'minimum input value not available'),
+  (NUMBER: $5002; EXPLANATION:'minimum input value transmission too short'),
+  (NUMBER: $5003; EXPLANATION:'minimum input value transmission too long'),
+  (NUMBER: $5004; EXPLANATION:'minimum input value cannot be changed'),
+  (NUMBER: $5005; EXPLANATION:'minimum input value presently write protected'),
+  (NUMBER: $6001; EXPLANATION:'maximum input value not available'),
+  (NUMBER: $6002; EXPLANATION:'maximum input value transmission too short'),
+  (NUMBER: $6003; EXPLANATION:'maximum input value transmission too long'),
+  (NUMBER: $6004; EXPLANATION:'maximum input value cannot be changed'),
+  (NUMBER: $6005; EXPLANATION:'maximum input value presently write protected'),
+  (NUMBER: $7002; EXPLANATION:'data transmission too short'),
+  (NUMBER: $7003; EXPLANATION:'data transmission too long'),
+  (NUMBER: $7004; EXPLANATION:'data cannot be changed'),
+  (NUMBER: $7005; EXPLANATION:'data presently write protected'),
+  (NUMBER: $7006; EXPLANATION:'data semaller than minimum input value'),
+  (NUMBER: $7007; EXPLANATION:'data greater than maximum input value'),
+  (NUMBER: $7008; EXPLANATION:'data not correct'),
+  (NUMBER: $7009; EXPLANATION:'data password protected'),
+  (NUMBER: $9001; EXPLANATION:'fatal error (symbol cannot be identified)'),
+  (NUMBER: $9002; EXPLANATION:'parameter type error'),
+  (NUMBER: $9003; EXPLANATION:'invalid data block number'),
+  (NUMBER: $9004; EXPLANATION:'Input cannot be identified'),
+  (NUMBER: $9005; EXPLANATION:'data element number not defined'),
+  (NUMBER: $9006; EXPLANATION:'error in write/read (r/w)'),
+  (NUMBER: $9007; EXPLANATION:'nonsense symbol in data')
+  );
+
+ASCII_ERRORS : array[0..6] of TERROR =
+  (
+  (NUMBER: $9001; EXPLANATION:'fatal error (symbol cannot be identified)'),
+  (NUMBER: $9002; EXPLANATION:'parameter type error'),
+  (NUMBER: $9003; EXPLANATION:'invalid data block number'),
+  (NUMBER: $9004; EXPLANATION:'Input cannot be identified'),
+  (NUMBER: $9005; EXPLANATION:'data element number not defined'),
+  (NUMBER: $9006; EXPLANATION:'error in write/read (r/w)'),
+  (NUMBER: $9007; EXPLANATION:'nonsense symbol in data')
+  );
+

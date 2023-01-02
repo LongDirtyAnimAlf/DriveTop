@@ -55,6 +55,11 @@ type
     NUMID          : word;
   end;
 
+  TERROR = record
+    NUMBER         : word;
+    EXPLANATION    : string;
+  end;
+
   TDRIVE = record
     DRIVEADDRESS   : byte;
     PHASE          : byte;
@@ -327,6 +332,7 @@ begin
   s:=hexstring;
   if (Length(s)>0) then
   begin
+    if s[1]='#' then Delete(s,1,1); // error number
     if s[Length(s)]='h' then Delete(s,Length(s),1);
     if (Length(s)>1) then if s[2]='x' then Delete(s,1,2);
     {$ifdef ALLOWCONVERRORS}

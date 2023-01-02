@@ -1909,13 +1909,24 @@ var
   DataString,s:string;
   CD:TCOMMANDDATA;
 begin
-  FDirectDrive:=True;
-  s:='S-0-0292,7,r';
+  //FDirectDrive:=True;
+  //s:='S-0-0292,7,r';
+  //s:='S-0-0128,7,w,0000000000000011b';
+
+
+  DataString:='>1 DP 1.104 !05 Greater than maximum value'#13#10;
+
+
   if s='S-0-0032,7,r' then DataString:=s+#13+'0000000000001011b'+#13+'A01:>';
   if s='S-0-0292,7,r' then DataString:=s+#13+'0001h'+#13+'0002h'+#13+'0003h'+#13+'000Bh'+#13+'0013h'+#13+'001Bh'+#13+'0004h'+#13+'000Ch'+#13+'!19 List is finished'+#13+'A01:>';
   if s='S-0-0040,7,r' then DataString:=s+#13+'34.872'+#13+'A01:>';
   if s='S-0-0134,7,r' then DataString:=s+#13+'1110000000000000b'+#13+'A01:>';
   if s='S-0-0135,7,r' then DataString:=s+#13+'1100000000000000b'+#13+'A01:>';
+
+  if s='S-0-0127,7,w,0000000000000011b' then DataString:='S-0-0127,7,w,0000000000000011b'#$0D#$0D#$0A'#7005'#$0D#$0A#$0D'E02:>';
+  if s='S-0-0128,7,w,0000000000000011b' then DataString:='S-0-0127,7,w,0000000000000011b'#$0D#$0A#$0D'E02:>';
+
+
   CD:=ProcessCommDataString(DataString);
   ProcessCommResult(CD);
 end;
@@ -3794,10 +3805,13 @@ var
   cc:TVMCOMMANDCLASS;
   csc:TVMCOMMANDPARAMETERSUBCLASS;
   s1:string;
+  data:string;
 begin
   Result:=Default(TCOMMANDDATA);
 
   // Parse datastring from serial port
+
+  data:=s;
 
   if DirectDrive then
   begin
@@ -3876,9 +3890,10 @@ begin
 
       if (Length(s)>0) then
       begin
-        if (ro AND (Length(Result.ERROR)=0)) then
+        //if (ro AND (Length(Result.ERROR)=0)) then
+        //if ro then
         begin
-          // Get all read data
+          // Get all read data, if any
           repeat
             // Look for terminator
             index:=Pos(#13,s);
@@ -3897,9 +3912,12 @@ begin
               Delete(s,1,1);
               s1:=ExtractWhileConforming(s,['0'..'9']);
               Result.SETID:=StringToIntSafe(s1);
-              // Delete final comma from data, if any
               index:=Length(Result.DATA);
-              if (index>0) then Delete(Result.DATA,index,1);
+              if (index>0) then
+              begin
+                // Delete final comma from data, if any
+                if Result.DATA[index]=',' then Delete(Result.DATA,index,1);
+              end;
               // Do we have a list of data ?
               if (Pos(',',Result.DATA)>0) then
               begin
@@ -3918,7 +3936,7 @@ begin
             s1:=ExtractWhileConforming(s,[#10,#13]);
             Delete(s,1,length(s1));
             // Only parameter data can ever be a list of data
-            if (Result.CSUBCLASS<>mscParameterData) then s:='';
+            //if (Result.CSUBCLASS<>mscParameterData) then s:=''; // wrong: address must yet be parsed from 'E02:>'
           until false;
         end;
       end;
@@ -4004,10 +4022,22 @@ begin
             if (Result.STEPID=0) then Result.STEPID:=STEPLISTSTART;
           end;
         end;
-        if (Length(s)>0) then Delete(s,1,1); // delete space in front of datastring, if any
-        Result.DATA:=s;
+        if ((Length(s)>0) AND (s[1]=' ')) then Delete(s,1,1); // delete space in front of datastring, if any
+        if (Length(s)>0) then
+        begin
+          if s[1]='!' then
+          begin
+            // We have an error !!
+            // Get number and description
+            Delete(s,1,1);
+            s1:=ExtractWhileConforming(s,['0'..'9']);
+            Result.ERROR:=s1;
+            Delete(s,1,length(s1));
+            if ((Length(s)>0) AND (s[1]=' ')) then Delete(s,1,1); // delete space in front of errorstring, if any
+          end;
+          Result.DATA:=Trim(s);
+        end;
       end;
-
     end;
   end;
 
@@ -4044,6 +4074,19 @@ begin
     begin
       raise EArgumentException.Create ('Could not determine drive address from command data.');
     end;
+  end;
+
+  if Length(LocalCD.ERROR)>0 then
+  begin
+    s:=LocalCD.DATA;
+    if (Length(s)=0) then
+    begin
+      i:=HexStringToDecimal(LocalCD.ERROR);
+      s:=GetDriveErrorDescription(i);
+    end;
+    ShowDataUpdateInfo('Error !!!');
+    ShowDataUpdateInfo('Error message: '+s);
+    exit;
   end;
 
   list:=false;
