@@ -535,14 +535,14 @@ begin
       begin
         LocalCD.MEMORY:=false;
         PRRStore:=LoadDriveRegisterDataRaw(LocalCD);
-        if Assigned(PRRStore) then PRRStore^.IDN.Data.Blk:=7;
+        if Assigned(PRRStore) then PRRStore^.IDN.Data.ParamBlock:=7;
         LocalCD.MEMORY:=true;
       end;
     end;
     if Assigned(PRRStore) then
     begin
       PRR:=LoadDriveRegisterDataRaw(CD);
-      if LocalCD.MEMORY then PRR^.IDN.Data.Blk:=PRRStore^.IDN.Data.Blk;
+      if LocalCD.MEMORY then PRR^.IDN.Data.ParamBlock:=PRRStore^.IDN.Data.ParamBlock;
       if (PRRStore^.Attribute=0) then PRRStore^.Attribute:=GetAttributeDefault;
       if (PRR^.Attribute=0) then PRR^.Attribute:=PRRStore^.Attribute;
       if Length(PRR^.Min)=0 then PRR^.Min:=PRRStore^.Min;
@@ -648,14 +648,15 @@ begin
     //CreateRegisterData(IDNDriveList[i]);
     IDNDriveList[i]:=TMySortedMap.Create;
 
-    {$ifndef USEHASHLIST}
-    IDNDriveList[i].Count:=Length(SERCOSSTANDARD)+Length(SERCOSSPECIFIC)+Length(SERCOSPARAMETERSMEMORY);
-    {$endif}
     {$ifdef USEHASHLIST}
     IDNDriveList[i].OwnsObjects:=False;
     {$endif}
 
     if (i>Low(IDNDriveList)) then continue;
+
+    {$ifndef USEHASHLIST}
+    IDNDriveList[i].Count:=Length(SERCOSSTANDARD)+Length(SERCOSSPECIFIC)+Length(SERCOSPARAMETERSMEMORY);
+    {$endif}
 
     j:=0;
 

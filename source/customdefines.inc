@@ -1,2 +1,2 @@
-{$define USEHASHLIST}
+{.$define USEHASHLIST}
 {$define ALLOWCONVERRORS}

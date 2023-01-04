@@ -8,7 +8,7 @@
         <CompatibilityMode Value="True"/>
       </Flags>
       <SessionStorage Value="InProjectDir"/>
-      <Title Value="DriveTop"/>
+      <Title Value="drivetop"/>
       <ResourceType Value="res"/>
       <UseXPManifest Value="True"/>
       <XPManifest>
@@ -33,7 +33,7 @@
           <Version Value="11"/>
           <PathDelim Value="\"/>
           <Target>
-            <Filename Value="..\buildbins\$NameOnly($(ProjFile))-$(TargetCPU)-$(TargetOS)"/>
+            <Filename Value="..\buildbins\drivetop"/>
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir);..\common\jvcl\jvcl\common"/>
@@ -67,7 +67,7 @@
           <Version Value="11"/>
           <PathDelim Value="\"/>
           <Target>
-            <Filename Value="..\buildbins\$NameOnly($(ProjFile))-$(TargetCPU)-$(TargetOS)"/>
+            <Filename Value="..\buildbins\drivetop"/>
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir);..\common\jvcl\jvcl\common"/>
@@ -98,7 +98,7 @@
           <Version Value="11"/>
           <PathDelim Value="\"/>
           <Target>
-            <Filename Value="..\buildbins\$NameOnly($(ProjFile))-$(TargetCPU)-$(TargetOS)-cocoa"/>
+            <Filename Value="..\buildbins\drivetop"/>
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir);..\common\jvcl\jvcl\common"/>
@@ -153,7 +153,7 @@
       <Unit0>
         <Filename Value="drivetop.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="Hubert"/>
+        <UnitName Value="DriveTop"/>
       </Unit0>
       <Unit1>
         <Filename Value="main.pas"/>
@@ -189,7 +189,7 @@
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value="..\buildbins\$NameOnly($(ProjFile))-$(TargetCPU)-$(TargetOS)"/>
+      <Filename Value="..\buildbins\drivetop"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir);..\common\jvcl\jvcl\common"/>

@@ -223,9 +223,9 @@ var
   PW:IDNWORD;
 begin
   PW.Raw:=0;
-  PW.Data.Num:=CD.NUMID;
-  if CD.CCLASS=TVMCOMMANDCLASS.ccDriveSpecific then PW.Data.Typ:=1;
-  if CD.MEMORY then PW.Data.Blk:=7;
+  PW.Data.ParamNum:=CD.NUMID;
+  if CD.CCLASS=TVMCOMMANDCLASS.ccDriveSpecific then PW.Data.ParamType:=1;
+  if CD.MEMORY then PW.Data.ParamBlock:=7;
 
   if (CD.CCLASS=ccNone) then
     result:=CD.CCLASSCHAR+CD.CSUBCLASSCHAR
@@ -318,14 +318,15 @@ begin
     //CreateRegisterData(IDNCLCList[i]);
     IDNCLCList[i]:=TMySortedMap.Create;
 
-    {$ifndef USEHASHLIST}
-    IDNCLCList[i].Count:=Length(SERCOSSTANDARD)+Length(SERCOSSPECIFIC)+Length(SERCOSPARAMETERSMEMORY);
-    {$endif}
     {$ifdef USEHASHLIST}
     IDNCLCList[i].OwnsObjects:=False;
     {$endif}
 
     if (i>Low(IDNCLCList)) then continue;
+
+    {$ifndef USEHASHLIST}
+    IDNCLCList[i].Count:=Length(VMSYSTEMCOMMANDS)+Length(VMREGISTERS)+Length(VMTASKCOMMANDS)+Length(VMAXISCOMMANDS);
+    {$endif}
 
     j:=0;
 

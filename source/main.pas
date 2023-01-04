@@ -147,7 +147,7 @@ type
     tabVMRegister: TTabSheet;
     tabVMTask: TTabSheet;
     Timer1: TTimer;
-    UpDown1: TUpDown;
+    UpDownDriveAddress: TUpDown;
     ValueListEditor1: TValueListEditor;
     PointTableEditor: TValueListEditor;
     vleParamDetails: TValueListEditor;
@@ -192,7 +192,7 @@ type
       {%H-}Shift: TShiftState; {%H-}X, {%H-}Y: Integer);
     procedure TabControl1Change(Sender: TObject);
     procedure Timer1Timer({%H-}Sender: TObject);
-    procedure UpDown1Click(Sender: TObject; Button: TUDBtnType);
+    procedure UpDownDriveAddressClick(Sender: TObject; Button: TUDBtnType);
     procedure ValueListEditor1DblClick(Sender: TObject);
     procedure vleParamDetailsDrawCell(Sender: TObject; aCol, aRow: Integer;
       aRect: TRect; aState: TGridDrawState);
@@ -458,23 +458,23 @@ begin
     DD:=LoadCLCRegisterDataRaw(0,i)^;
     if DD.CClass=ccControl then
     begin
-      s:=Format('S-0-%.4d', [DD.IDN.Data.Num]);
-      lbVMSYSTEMCOMMANDS.Items.AddObject(s+' : '+DD.Name,TObject(PtrInt(DD.IDN.Data.Num)));
+      s:=Format('S-0-%.4d', [DD.IDN.Data.ParamNum]);
+      lbVMSYSTEMCOMMANDS.Items.AddObject(s+' : '+DD.Name,TObject(PtrInt(DD.IDN.Data.ParamNum)));
     end;
     if DD.CClass=ccAxis then
     begin
-      s:=Format('A-0-%.4d', [DD.IDN.Data.Num]);
-      lbVMAXISCOMMANDS.Items.AddObject(s+' : '+DD.Name,TObject(PtrInt(DD.IDN.Data.Num)));
+      s:=Format('A-0-%.4d', [DD.IDN.Data.ParamNum]);
+      lbVMAXISCOMMANDS.Items.AddObject(s+' : '+DD.Name,TObject(PtrInt(DD.IDN.Data.ParamNum)));
     end;
     if DD.CClass=ccTask then
     begin
-      s:=Format('T-0-%.4d', [DD.IDN.Data.Num]);
-      lbVMTASKCOMMANDS.Items.AddObject(s+' : '+DD.Name,TObject(PtrInt(DD.IDN.Data.Num)));
+      s:=Format('T-0-%.4d', [DD.IDN.Data.ParamNum]);
+      lbVMTASKCOMMANDS.Items.AddObject(s+' : '+DD.Name,TObject(PtrInt(DD.IDN.Data.ParamNum)));
     end;
     if DD.CClass=ccRegister then
     begin
-      s:=Format('Register %.4d', [DD.IDN.Data.Num]);
-      lbVMREGISTERS.Items.AddObject(s+' : '+DD.Name,TObject(PtrInt(DD.IDN.Data.Num)));
+      s:=Format('Register %.4d', [DD.IDN.Data.ParamNum]);
+      lbVMREGISTERS.Items.AddObject(s+' : '+DD.Name,TObject(PtrInt(DD.IDN.Data.ParamNum)));
     end;
   end;
 
@@ -483,13 +483,13 @@ begin
     DD:=LoadDriveRegisterDataRaw(0,i)^;
     if DD.CClass=ccDrive then
     begin
-      s:=Format('S-0-%.4d', [DD.IDN.Data.Num]);
-      lbSERCOSCOMMANDS.Items.AddObject(s+' : '+DD.Name,TObject(PtrInt(DD.IDN.Data.Num)));
+      s:=Format('S-0-%.4d', [DD.IDN.Data.ParamNum]);
+      lbSERCOSCOMMANDS.Items.AddObject(s+' : '+DD.Name,TObject(PtrInt(DD.IDN.Data.ParamNum)));
     end;
     if DD.CClass=ccDriveSpecific then
     begin
-      s:=Format('P-0-%.4d', [DD.IDN.Data.Num]);
-      lbSERCOSPARAMS.Items.AddObject(s+' : '+DD.Name,TObject(PtrInt(DD.IDN.Data.Num)));
+      s:=Format('P-0-%.4d', [DD.IDN.Data.ParamNum]);
+      lbSERCOSPARAMS.Items.AddObject(s+' : '+DD.Name,TObject(PtrInt(DD.IDN.Data.ParamNum)));
     end;
   end;
 
@@ -2407,7 +2407,10 @@ begin
   FComDevice:=nil;
 
   // Store drive data on disk
-  for i:=1 to MAXDRIVES do ProcessDiskDriveData(i,True);
+  for i:=1 to MAXDRIVES do
+  begin
+    ProcessDiskDriveData(i,True);
+  end;
 
   IniFile := TIniFile.Create( ChangeFileExt( Application.ExeName, '.ini' ) );
   try
@@ -2495,7 +2498,7 @@ begin
         P^:=Default(TRegisterRecord);
         LocalCD:=IDN2CD(aKey,Drive);
         P^.CClass:=LocalCD.CCLASS;
-        P^.IDN.Data.Num:=LocalCD.NUMID;
+        P^.IDN.Data.ParamNum:=LocalCD.NUMID;
         for m:=0 to Pred(Section.Count) do
         begin
           n:=Section.Names[m];
@@ -2523,7 +2526,9 @@ begin
   begin
     for j:=0 to Pred(len) do
     begin
-      DD:=LoadDriveRegisterDataRaw(Drive,j)^;
+      P:=LoadDriveRegisterDataRaw(Drive,j);
+      if (NOT Assigned(P)) then continue;
+      DD:=P^;
       aKey:=GetIDN(DD);
       P:=LoadRegisterDataRaw(aKey,IDNIniList);
       if (NOT Assigned(P)) then
@@ -2533,9 +2538,9 @@ begin
       else
       begin
         // if we have data from drive, use it to fill the ini-data
-        if (DD.IDN.Data.Blk>0) then P^.IDN.Data.Blk:=DD.IDN.Data.Blk;
+        if (DD.IDN.Data.ParamBlock>0) then P^.IDN.Data.ParamBlock:=DD.IDN.Data.ParamBlock;
         if (DD.CClass<>ccNone) then P^.CClass:=DD.CClass;
-        if (DD.IDN.Data.Num>0) then P^.IDN.Data.Num:=DD.IDN.Data.Num;
+        if (DD.IDN.Data.ParamNum>0) then P^.IDN.Data.ParamNum:=DD.IDN.Data.ParamNum;
         if (DD.Attribute>0) then P^.Attribute:=DD.Attribute;
         if (Length(DD.Min)>0) then P^.Min:=DD.Min;
         if (Length(DD.Max)>0) then P^.Max:=DD.Max;
@@ -3094,7 +3099,7 @@ begin
   end;
 end;
 
-procedure TForm1.UpDown1Click(Sender: TObject; Button: TUDBtnType);
+procedure TForm1.UpDownDriveAddressClick(Sender: TObject; Button: TUDBtnType);
 var
   DI:TDRIVE;
 begin
@@ -4007,10 +4012,10 @@ begin
         if (Result.CCLASS=ccDrive) then
         begin
           // Check special ID's
-          Result.MEMORY:=(PW.Data.Blk=7);
-          if PW.Data.Typ=1 then Result.CCLASS:=ccDriveSpecific;
+          Result.MEMORY:=(PW.Data.ParamBlock=7);
+          if PW.Data.ParamType=1 then Result.CCLASS:=ccDriveSpecific;
         end;
-        Result.NUMID:=PW.Data.Num;
+        Result.NUMID:=PW.Data.ParamNum;
         if (Length(s)>0) then
         begin
           if (s[1]='.') then

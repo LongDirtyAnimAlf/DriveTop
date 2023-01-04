@@ -75,13 +75,13 @@ type
       case integer of
           1 : (  Data : record
                /// Bit 0-11: The parameter number [0..4095], e.g. P-0-*1177*, includes 1177 as ParamNumber.
-               Num                           : T12BITS;
+               ParamNum                           : T12BITS;
                /// Bit 12-15: The parameter block [0..7], e.g. P-*0*-1177, includes 0 as ParamSet.
-               Blk                           : T3BITS;
+               ParamBlock                           : T3BITS;
                // Bit 16: Parameter variant:
                /// * 0: S-Parameter (drive)
                /// * 1: P-Parameter (drive).
-               Typ                           : T1BITS;
+               ParamType                           : T1BITS;
              end
              );
           2 : (
@@ -420,7 +420,7 @@ function GetIDN(const RR:TRegisterRecord):string;
 var
   bt       : char;
 begin
-  if ((RR.CCLASS=ccNone) OR (RR.IDN.Data.Num=0)) then result:='-' else
+  if ((RR.CCLASS=ccNone) OR (RR.IDN.Data.ParamNum=0)) then result:='-' else
   begin
     bt:=VMCOMMANDCLASS[RR.CClass];
     case RR.CCLASS of
@@ -428,8 +428,8 @@ begin
       ccDriveSpecific  : bt:='P';
     else
     end;
-    if RR.IDN.Data.Typ=1 then bt:='P';
-    result:=Format('%s-%d-%.4d',[bt,RR.IDN.Data.Blk,RR.IDN.Data.Num])
+    if RR.IDN.Data.ParamType=1 then bt:='P';
+    result:=Format('%s-%d-%.4d',[bt,RR.IDN.Data.ParamBlock,RR.IDN.Data.ParamNum])
   end;
 end;
 
@@ -489,9 +489,9 @@ begin
     new(P);
     P^:=Default(TRegisterRecord);
     P^.CClass:=CD.CCLASS;
-    P^.IDN.Data.Num:=CD.NUMID;
-    if (CD.CCLASS=ccDriveSpecific) then P^.IDN.Data.Typ:=1;
-    if CD.MEMORY then P^.IDN.Data.Blk:=7;
+    P^.IDN.Data.ParamNum:=CD.NUMID;
+    if (CD.CCLASS=ccDriveSpecific) then P^.IDN.Data.ParamType:=1;
+    if CD.MEMORY then P^.IDN.Data.ParamBlock:=7;
   end;
 
   if (CD.CSUBCLASS=mscList) then
@@ -643,8 +643,8 @@ begin
   if Assigned(P) then
   begin
     Result.CCLASS         := P^.CClass;
-    Result.MEMORY         := (P^.IDN.Data.Blk=7);
-    Result.NUMID          := P^.IDN.Data.Num;
+    Result.MEMORY         := (P^.IDN.Data.ParamBlock=7);
+    Result.NUMID          := P^.IDN.Data.ParamNum;
     case CD.CSUBCLASS of
       mscAttributes     : Result.DATA := DecimalToBinaryString(P^.Attribute);
       mscUpperLimit     : Result.DATA := P^.Max;

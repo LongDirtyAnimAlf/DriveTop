@@ -1,7 +1,7 @@
 object Form1: TForm1
-  Left = 429
+  Left = 661
   Height = 591
-  Top = 159
+  Top = 172
   Width = 1142
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'DriveTop'
@@ -2074,21 +2074,21 @@ object Form1: TForm1
         TabOrder = 5
       end
     end
-    object UpDown1: TUpDown
+    object UpDownDriveAddress: TUpDown
       AnchorSideLeft.Control = stDriveAddress
       AnchorSideTop.Control = stDriveAddress
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = stDriveAddress
       AnchorSideRight.Side = asrBottom
       Left = 542
-      Height = 20
+      Height = 19
       Hint = 'Change drive address'
-      Top = 95
+      Top = 94
       Width = 40
       Anchors = [akLeft, akTop, akRight]
-      BorderSpacing.Top = 4
+      ArrowKeys = False
       Min = 1
-      OnClick = UpDown1Click
+      OnClick = UpDownDriveAddressClick
       Orientation = udHorizontal
       ParentShowHint = False
       Position = 1
@@ -2097,22 +2097,30 @@ object Form1: TForm1
       Thousands = False
     end
     object stDriveAddress: TStaticText
-      AnchorSideTop.Control = grpDriveDashBoard
+      AnchorSideTop.Control = TabControl1
       AnchorSideRight.Control = TabControl1
       AnchorSideRight.Side = asrBottom
       Left = 542
-      Height = 55
-      Hint = 'Drive address'
-      Top = 32
+      Height = 59
+      Hint = 'Drive Address'
+      Top = 27
       Width = 40
       Alignment = taCenter
       Anchors = [akTop, akRight]
       AutoSize = True
+      BorderSpacing.Top = 4
       BorderSpacing.Right = 8
+      BorderStyle = sbsSingle
       Caption = '1'
+      Color = clDefault
       Constraints.MinWidth = 40
+      Font.CharSet = ANSI_CHARSET
+      Font.Color = clRed
       Font.Height = -40
+      Font.Pitch = fpVariable
+      Font.Quality = fqDraft
       ParentFont = False
+      ParentColor = False
       ParentShowHint = False
       ShowHint = True
       TabOrder = 9
