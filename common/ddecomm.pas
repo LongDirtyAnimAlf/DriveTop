@@ -551,8 +551,8 @@ begin
   if (Success) then
   begin
     // Create VM string handle
-    DDEConnection^.TopicVMConnection:=GetTopicDataConnection('DEMO_'+chr(48+ConnectionAddress));
-    //DDEConnection^.TopicVMConnection:=GetTopicDataConnection('SERIAL_'+chr(48+ConnectionAddress));
+    //DDEConnection^.TopicVMConnection:=GetTopicDataConnection('DEMO_'+chr(48+ConnectionAddress));
+    DDEConnection^.TopicVMConnection:=GetTopicDataConnection('SERIAL_'+chr(48+ConnectionAddress));
     Success:=(DDEConnection^.TopicVMConnection.Handle<>0);
     if (NOT Success) then
     begin
@@ -921,9 +921,12 @@ begin
     finally
       LeaveCriticalSection(Owner.FCriticalSection);
     end;
+
     if da then Synchronize(@CallEvent);
+
+    TThread.Yield();
     // Sleep a bit to give other processes some time
-    Sleep(10);
+    TThread.Sleep(1);
   end;
 
   Owner.DDEConnection:=@Owner.FDDEThreadConnection;

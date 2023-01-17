@@ -429,7 +429,10 @@ begin
     mscUnits         : be:=CSMD_SERC_ELEM4;
   end;
 
-  result:=Format('%s,%d,r',[IDN,be])
+  if (Length(CD.DATA)=0) then
+    result:=Format('%s,%d,r',[IDN,be])
+  else
+    result:=Format('%s,%d,w,',[IDN,be]);
 end;
 
 function GetDriveAttribute(const CD:TCOMMANDDATA):dword;

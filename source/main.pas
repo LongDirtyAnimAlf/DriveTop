@@ -679,31 +679,39 @@ begin
   success:=ProcessCommand(CD,s,false,true);
 
   // Sleep at least 64 ms
-  Sleep(64);
+  Sleep(100);
 
-  CD.DATA:='';
   while true do
   begin
-    sleep(50);
-
+    CD:=aCD;
+    CD.DATA:='';
+    s:='';
     if DirectDrive then
     begin
       // Direct Drive checks the status of a command in a very special way
       // write ID,1,w,0
       // read normal result
       c:=Format('%s,%d,w,0',[GetIDN(CD),1]);
-      s:='';
+      //c:=GetDirectDriveCommand(CD);
       success:=ProcessDirectDriveCommand(c,s,false,true);
     end
     else
     begin
       success:=ProcessCommand(CD,s,false,true);
     end;
+    CD:=ProcessCommDataString(s);
+
+    sleep(150);
 
     if (NOT success) then break;
+    if (Length(CD.ERROR)>0) then break;
     //success:=(s<>sERR);
     //if (NOT success) then break;
-    i:=StringToIntSafe(s);
+    if DirectDrive then
+      i:=HexStringToDecimal(CD.DATA)
+    else
+      i:=BinaryStringToDecimal(CD.DATA);
+      //i:=StringToIntSafe(CD.DATA);
     SCS.Raw:=i;
     //Detect command error.
     success:=((SCS.Data.CommandSetInDrive=1) AND (SCS.Data.ExecutionOfCommandInDriveEnabled=1) AND (SCS.Data.ExecutionOfCommandIsNotPossible=0));
@@ -712,8 +720,8 @@ begin
   end;
 
   // Clear command
-  SCS.Raw:=0;
-  CD.DATA:=DecimalToBinaryString(SCS.Raw,DirectDrive);
+  CD:=aCD;
+  CD.DATA:='0';
   success:=ProcessCommand(CD,s,false,true);
   //success:=(s<>sERR);
 
@@ -1131,11 +1139,12 @@ begin
 
   CD:=Default(TCOMMANDDATA);
 
+  CD.SETID:=ActiveDrive;
+
   if (Sender=btnPhase2) then
   begin
     CD.CCLASS:=ccDriveSpecific;
     CD.CSUBCLASS:=mscParameterData;
-    CD.SETID:=axis;
     CD.NUMID:=4023;
     m:='Axis back in Phase 2';
   end;
@@ -1143,7 +1152,6 @@ begin
   begin
     CD.CCLASS:=ccDrive;
     CD.CSUBCLASS:=mscParameterData;
-    CD.SETID:=axis;
     CD.NUMID:=127;
     m:='Axis from Phase 2 to Phase 3';
   end;
@@ -1151,7 +1159,6 @@ begin
   begin
     CD.CCLASS:=ccDrive;
     CD.CSUBCLASS:=mscParameterData;
-    CD.SETID:=axis;
     CD.NUMID:=128;
     m:='Axis from Phase 3 to Phase 4'
   end;
@@ -1160,7 +1167,6 @@ begin
   begin
     CD.CCLASS:=ccDrive;
     CD.CSUBCLASS:=mscParameterData;
-    CD.SETID:=axis;
     CD.NUMID:=99;
     m:='Cleared all drive errors';
   end;
@@ -1169,7 +1175,6 @@ begin
   if success then
   begin
     Memo1.Lines.Append(m);
-
     CD:=COMMAND2CD(DRIVE_INTERFACE,ActiveDrive);
     DP14.Raw:=0;
     if (Sender=btnPhase2) then DP14.Data.CommPhase:=2;
@@ -1177,7 +1182,6 @@ begin
     if (Sender=btnPhase4) then DP14.Data.CommPhase:=4;
     CD.DATA:=DecimalToBinaryString(DP14.Raw,DirectDrive);
     success:=ProcessCommand(CD,m,false,false,true);
-
   end;
 end;
 
@@ -1367,28 +1371,36 @@ begin
   s:=editValue.Text;
   ro:=(Length(s)=0);
 
-  {$ifdef MSWindows}
-  if (ActiveConnection=TCONNECTION.conCLCDDE) then
+  if (ActiveConnection<>TCONNECTION.conNone) then
   begin
-    if (NOT ProcessDDECommand(c,s,false,true)) then c:='DDE error !';
-  end;
-  {$endif}
-
-  if ((ActiveConnection<>TCONNECTION.conNone) AND (ActiveConnection<>TCONNECTION.conCLCDDE)) then
-  begin
-    if DirectDrive then
+    if (ActiveConnection=TCONNECTION.conCLCDDE) then
     begin
-      if (NOT ProcessDirectDriveCommand(c,s,false,true)) then c:='Serial error !';
+      {$ifdef MSWindows}
+      if (NOT ProcessDDECommand(c,s,false,true)) then c:='DDE error !';
+      {$endif}
     end
     else
     begin
-      if (NOT ProcessSerialCommand(c,s,false,true)) then c:='Serial error !';
+      if DirectDrive then
+      begin
+        if (NOT ro) then
+        begin
+          if c[Length(c)]='r' then c[Length(c)]:='w';
+          if c[Length(c)]='w' then c:=c+',';
+        end;
+        if (NOT ProcessDirectDriveCommand(c,s,false,true)) then c:='Serial error !';
+      end
+      else
+      begin
+        if (NOT ProcessSerialCommand(c,s,false,true)) then c:='Serial error !';
+      end;
     end;
   end;
+
   if ro then
-    Memo1.Lines.Append(c+' : '+s)
+    Memo1.Lines.Append('Read. '+c+' : ['+s+']')
   else
-    Memo1.Lines.Append(c);
+    Memo1.Lines.Append('Write. '+c+' {'+s+'}');
   editValue.Text:='';
 end;
 
@@ -2164,31 +2176,22 @@ end;
 
 function TForm1.ProcessDirectDriveCommand(const Command:string; var Value:string; const prio,blocking:boolean):boolean;
 var
-  c,s:string;
-  success:boolean;
-  //i:integer;
+  c,s      : string;
   ro       : boolean;
 begin
-  result:=false;
+  result:=true;
 
   c:=Command;
   s:=Value;
   ro:=(Length(s)=0);
-  if (NOT ro) then
-  begin
-    if c[Length(c)]='r' then c[Length(c)]:='w';
-    if c[Length(c)]=',' then c:=c+'w';
-    c:=c+','+s;
-  end
-  else
-  begin
-    if c[Length(c)]='w' then c[Length(c)]:='r';
-    if c[Length(c)]=',' then c:=c+'r';
-  end;
+
+  if (NOT ro) then c:=c+s;
+
   Memo1.Lines.Append('Drive command: '+c);
+
   c:=c+#13;
   s:='';
-  success:=true;
+
   if prio then
   begin
     FComDevice.WriteStringPrio(c,s);
@@ -2197,14 +2200,13 @@ begin
   if blocking then
   begin
     FComDevice.WriteStringBlocking(c,s);
-    success:=((FComDevice AS TLazSerial).SynSer.LastError=0);
+    result:=((FComDevice AS TLazSerial).SynSer.LastError=0);
   end
   else
   begin
     FComDevice.WriteString(c,s);
   end;
   if blocking then Value:=s;
-  result:=success;
 end;
 
 {$ifdef MSWindows}
@@ -3001,23 +3003,6 @@ var
   wp,wb    : boolean;
 begin
   result:=false;
-  wp:=false;
-  wb:=false;
-
-  // always blocking to get the list length
-  //if CD.STEPID=STEPLISTSTART then wb:=true;
-
-  if (NOT wb) then
-  begin
-    wp:=prio;
-    wb:=blocking;
-
-    if (NOT wb) then wb:=GetBlocking(CD);
-    if wb then
-      wp:=false
-    else
-      if (NOT wp) then wp:=GetPrio(CD);
-  end;
 
   ro:=(Length(CD.DATA)=0);
 
@@ -3050,25 +3035,39 @@ begin
       Memo1.Lines.Append('Read command: '+s+'.');
   end;
 
+  if (ActiveConnection=TCONNECTION.conNone) then exit;
+
+  wp:=false;
+  wb:=false;
+  if (NOT wb) then
+  begin
+    wp:=prio;
+    wb:=blocking;
+    if (NOT wb) then wb:=GetBlocking(CD);
+    if wb then
+      wp:=false
+    else
+      if (NOT wp) then wp:=GetPrio(CD);
+  end;
+
   LocalCD:=CD;
   if ((LocalCD.CCLASS=ccNone) AND (LocalCD.CCLASSCHAR=VMCOMMANDCLASS[ccRegister])) then LocalCD.SETID:=0;  // Register: always SetID=0
+
   c:=GetCLCCommandString(LocalCD);
+  s:=LocalCD.DATA;
 
-  s:=CD.DATA;
-
-  {$ifdef MSWindows}
   if (ActiveConnection=TCONNECTION.conCLCDDE) then
   begin
+    {$ifdef MSWindows}
     ProcessDDECommand(c,s,wp,wb);
     success:=true;
-  end;
-  {$endif}
-
-  if ((ActiveConnection<>TCONNECTION.conNone) AND (ActiveConnection<>TCONNECTION.conCLCDDE)) then
+    {$endif}
+  end
+  else
   begin
     if DirectDrive then
     begin
-      c:=GetDirectDriveCommand(CD);
+      c:=GetDirectDriveCommand(LocalCD);
       success:=ProcessDirectDriveCommand(c,s,wp,wb);
     end
     else
@@ -3076,6 +3075,7 @@ begin
       success:=ProcessSerialCommand(c,s,wp,wb);
     end;
   end;
+
   response:=s;
   result:=success;
 end;
@@ -3805,6 +3805,7 @@ function TForm1.ProcessCommDataString(s:string):TCOMMANDDATA;
 var
   index,j:integer;
   ro:boolean;
+  SC_IDN:boolean;
   cs,rcs:byte;
   PW:IDNWORD;
   cc:TVMCOMMANDCLASS;
@@ -3824,11 +3825,13 @@ begin
     if ((Result.CCLASS=ccDrive) OR (Result.CCLASS=ccDriveSpecific)) then
     try
       Delete(s,1,9); // delete IDN and comma
+      SC_IDN:=false;
       if (Length(s)>0) then
       begin
         // Extract subclass
         j:=Ord(s[1])-48;
         case j of
+          1: SC_IDN:=true; // This is IDN data. Must be treated special (for DirectDrive commands)
           //1: Result.CSUBCLASS:=mscParameterData; // This is IDN data. Not sure what to do with it.
           2: Result.CSUBCLASS:=mscName;
           3: Result.CSUBCLASS:=mscAttributes;
@@ -3872,6 +3875,7 @@ begin
           // Delete all remaining terminators, if any
           s1:=ExtractWhileConforming(s,[#10,#13]);
           Delete(s,1,length(s1));
+          if SC_IDN then Result.DATA:='';
         end;
       end;
 
@@ -4084,7 +4088,7 @@ begin
   if Length(LocalCD.ERROR)>0 then
   begin
     s:=LocalCD.DATA;
-    if (Length(s)=0) then
+    //if (Length(s)=0) then
     begin
       i:=HexStringToDecimal(LocalCD.ERROR);
       s:=GetDriveErrorDescription(i);

@@ -5,7 +5,7 @@ object Form1: TForm1
   Width = 1142
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'DriveTop'
-  ClientHeight = 591
+  ClientHeight = 571
   ClientWidth = 1142
   Menu = MainMenu1
   OnCreate = FormCreate
@@ -21,7 +21,7 @@ object Form1: TForm1
     Height = 25
     Top = 33
     Width = 152
-    Anchors = [akLeft, akTop, akRight]
+    Anchors = [akTop, akLeft, akRight]
     AutoSize = True
     BorderSpacing.Top = 4
     Caption = 'Connect with VM DDE'
@@ -34,10 +34,10 @@ object Form1: TForm1
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = editStatus
     Left = 8
-    Height = 64
+    Height = 44
     Top = 496
     Width = 592
-    Anchors = [akLeft, akTop, akRight, akBottom]
+    Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Left = 8
     BorderSpacing.Bottom = 4
     ScrollBars = ssAutoVertical
@@ -53,7 +53,7 @@ object Form1: TForm1
     Height = 25
     Top = 33
     Width = 172
-    Anchors = [akLeft, akTop, akRight]
+    Anchors = [akTop, akLeft, akRight]
     AutoSize = True
     BorderSpacing.Top = 4
     Caption = 'Connect as  DriveTop RS485'
@@ -70,7 +70,7 @@ object Form1: TForm1
     Height = 23
     Top = 66
     Width = 172
-    Anchors = [akLeft, akTop, akRight]
+    Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Top = 8
     ItemHeight = 15
     OnChange = cmboSerialPortsChange
@@ -87,7 +87,7 @@ object Form1: TForm1
     Hint = 'Location of the DLL executable'
     Top = 66
     Width = 152
-    Anchors = [akLeft, akTop, akRight]
+    Anchors = [akTop, akLeft, akRight]
     AutoSelect = False
     BorderSpacing.Top = 8
     HideSelection = False
@@ -105,19 +105,19 @@ object Form1: TForm1
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 608
-    Height = 575
+    Height = 555
     Top = 8
     Width = 526
-    ActivePage = TabSheet1
-    Anchors = [akLeft, akTop, akRight, akBottom]
+    ActivePage = tabRawCommands
+    Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Top = 8
     BorderSpacing.Right = 8
     BorderSpacing.Bottom = 8
-    TabIndex = 0
+    TabIndex = 2
     TabOrder = 6
     object TabSheet1: TTabSheet
       Caption = 'Drive data'
-      ClientHeight = 547
+      ClientHeight = 527
       ClientWidth = 518
       object lvParameters: TListView
         AnchorSideLeft.Control = TabSheet1
@@ -126,10 +126,10 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = vleParamDetails
         Left = 8
-        Height = 363
+        Height = 343
         Top = 8
         Width = 502
-        Anchors = [akLeft, akTop, akRight, akBottom]
+        Anchors = [akTop, akLeft, akRight, akBottom]
         AutoWidthLastColumn = True
         BorderSpacing.Around = 8
         Columns = <        
@@ -162,7 +162,7 @@ object Form1: TForm1
         AnchorSideBottom.Control = synDataUpdate
         Left = 8
         Height = 19
-        Top = 386
+        Top = 366
         Width = 101
         Anchors = [akLeft, akBottom]
         BorderSpacing.Left = 8
@@ -180,7 +180,7 @@ object Form1: TForm1
         AnchorSideBottom.Control = synDataUpdate
         Left = 246
         Height = 25
-        Top = 382
+        Top = 362
         Width = 122
         Anchors = [akRight, akBottom]
         AutoSize = True
@@ -199,7 +199,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 8
         Height = 124
-        Top = 415
+        Top = 395
         Width = 360
         BorderSpacing.Around = 8
         Anchors = [akLeft, akBottom]
@@ -696,7 +696,7 @@ object Form1: TForm1
         Left = 376
         Height = 160
         Hint = 'Edit value field to update data.'
-        Top = 379
+        Top = 359
         Width = 134
         Anchors = [akLeft, akRight, akBottom]
         AutoEdit = False
@@ -728,13 +728,13 @@ object Form1: TForm1
         )
         ColWidths = (
           64
-          69
+          52
         )
       end
     end
     object tabMove: TTabSheet
       Caption = 'Movement'
-      ClientHeight = 547
+      ClientHeight = 527
       ClientWidth = 518
       object shapeBase: TShape
         AnchorSideLeft.Control = tabMove
@@ -742,10 +742,10 @@ object Form1: TForm1
         AnchorSideBottom.Control = tabMove
         AnchorSideBottom.Side = asrBottom
         Left = 12
-        Height = 523
+        Height = 503
         Top = 12
         Width = 299
-        Anchors = [akLeft, akTop, akBottom]
+        Anchors = [akTop, akLeft, akBottom]
         BorderSpacing.Left = 12
         BorderSpacing.Top = 12
         BorderSpacing.Bottom = 12
@@ -759,10 +759,10 @@ object Form1: TForm1
         AnchorSideBottom.Control = shapeBase
         AnchorSideBottom.Side = asrBottom
         Left = 32
-        Height = 423
+        Height = 403
         Top = 32
         Width = 259
-        Anchors = [akLeft, akTop, akRight, akBottom]
+        Anchors = [akTop, akLeft, akRight, akBottom]
         BorderSpacing.Bottom = 60
         BorderSpacing.Around = 20
         Pen.Width = 10
@@ -883,7 +883,7 @@ object Form1: TForm1
         Height = 38
         Top = 405
         Width = 111
-        Anchors = [akLeft, akTop, akRight, akBottom]
+        Anchors = [akTop, akLeft, akRight, akBottom]
         BorderSpacing.Left = 8
         Caption = 'Start repetitions'
         OnClick = btnStartClick
@@ -907,7 +907,7 @@ object Form1: TForm1
           Height = 96
           Top = 8
           Width = 163
-          Anchors = [akLeft, akTop, akRight]
+          Anchors = [akTop, akLeft, akRight]
           AutoFill = True
           BorderSpacing.Around = 8
           Caption = 'Direction'
@@ -953,7 +953,7 @@ object Form1: TForm1
           Height = 23
           Top = 202
           Width = 163
-          Anchors = [akLeft, akTop, akRight]
+          Anchors = [akTop, akLeft, akRight]
           BorderSpacing.Around = 8
           NumbersOnly = True
           TabOrder = 1
@@ -969,7 +969,7 @@ object Form1: TForm1
           Height = 15
           Top = 241
           Width = 163
-          Anchors = [akLeft, akTop, akRight]
+          Anchors = [akTop, akLeft, akRight]
           BorderSpacing.Top = 8
           BorderSpacing.Around = 8
           Caption = 'Accel [mm/s]'
@@ -984,7 +984,7 @@ object Form1: TForm1
           Height = 23
           Top = 264
           Width = 163
-          Anchors = [akLeft, akTop, akRight]
+          Anchors = [akTop, akLeft, akRight]
           BorderSpacing.Around = 8
           NumbersOnly = True
           TabOrder = 2
@@ -1012,7 +1012,7 @@ object Form1: TForm1
           Height = 23
           Top = 140
           Width = 163
-          Anchors = [akLeft, akTop, akRight]
+          Anchors = [akTop, akLeft, akRight]
           BorderSpacing.Around = 8
           OnKeyPress = editDistKeyPress
           TabOrder = 3
@@ -1030,7 +1030,7 @@ object Form1: TForm1
           Height = 46
           Top = 303
           Width = 75
-          Anchors = [akLeft, akTop, akBottom]
+          Anchors = [akTop, akLeft, akBottom]
           BorderSpacing.Top = 8
           BorderSpacing.Around = 8
           Caption = 'Testrun'
@@ -1059,7 +1059,7 @@ object Form1: TForm1
     end
     object tabRawCommands: TTabSheet
       Caption = 'Raw Commands'
-      ClientHeight = 547
+      ClientHeight = 527
       ClientWidth = 518
       object pageRawCommands: TPageControl
         AnchorSideLeft.Control = tabRawCommands
@@ -1068,12 +1068,12 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = rgSubClass
         Left = 4
-        Height = 424
+        Height = 404
         Top = 4
         Width = 506
         ActivePage = tabVMDrive
         Align = alTop
-        Anchors = [akLeft, akTop, akRight, akBottom]
+        Anchors = [akTop, akLeft, akRight, akBottom]
         BorderSpacing.Left = 4
         BorderSpacing.Top = 4
         BorderSpacing.Right = 8
@@ -1083,11 +1083,11 @@ object Form1: TForm1
         OnChange = pageRawCommandsChange
         object tabVMControl: TTabSheet
           Caption = 'VM-Control'
-          ClientHeight = 396
+          ClientHeight = 376
           ClientWidth = 498
           object lbVMSYSTEMCOMMANDS: TListBox
             Left = 0
-            Height = 396
+            Height = 376
             Top = 0
             Width = 498
             Align = alClient
@@ -1099,11 +1099,11 @@ object Form1: TForm1
         end
         object tabVMAxis: TTabSheet
           Caption = 'VM-Axis'
-          ClientHeight = 396
+          ClientHeight = 376
           ClientWidth = 498
           object lbVMAXISCOMMANDS: TListBox
             Left = 0
-            Height = 396
+            Height = 376
             Top = 0
             Width = 498
             Align = alClient
@@ -1115,11 +1115,11 @@ object Form1: TForm1
         end
         object tabVMTask: TTabSheet
           Caption = 'VM-Task'
-          ClientHeight = 396
+          ClientHeight = 376
           ClientWidth = 498
           object lbVMTASKCOMMANDS: TListBox
             Left = 0
-            Height = 396
+            Height = 376
             Top = 0
             Width = 498
             Align = alClient
@@ -1136,11 +1136,11 @@ object Form1: TForm1
           ChildSizing.EnlargeVertical = crsHomogenousChildResize
           ChildSizing.Layout = cclLeftToRightThenTopToBottom
           ChildSizing.ControlsPerLine = 1
-          ClientHeight = 396
+          ClientHeight = 376
           ClientWidth = 498
           object lbSERCOSPARAMS: TListBox
             Left = 0
-            Height = 188
+            Height = 178
             Top = 0
             Width = 498
             ExtendedSelect = False
@@ -1150,8 +1150,8 @@ object Form1: TForm1
           end
           object lbSERCOSCOMMANDS: TListBox
             Left = 0
-            Height = 188
-            Top = 208
+            Height = 178
+            Top = 198
             Width = 498
             ExtendedSelect = False
             ItemHeight = 0
@@ -1161,11 +1161,11 @@ object Form1: TForm1
         end
         object tabVMRegister: TTabSheet
           Caption = 'VM-Register'
-          ClientHeight = 396
+          ClientHeight = 376
           ClientWidth = 498
           object lbVMREGISTERS: TListBox
             Left = 0
-            Height = 396
+            Height = 376
             Top = 0
             Width = 498
             Align = alClient
@@ -1182,7 +1182,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 4
         Height = 103
-        Top = 436
+        Top = 416
         Width = 296
         Anchors = [akLeft, akBottom]
         AutoFill = True
@@ -1208,9 +1208,9 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         Left = 395
         Height = 23
-        Top = 436
+        Top = 416
         Width = 115
-        Anchors = [akLeft, akTop, akRight]
+        Anchors = [akTop, akLeft, akRight]
         TabOrder = 2
       end
       object editValue: TEdit
@@ -1221,9 +1221,9 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         Left = 395
         Height = 23
-        Top = 463
+        Top = 443
         Width = 115
-        Anchors = [akLeft, akTop, akRight]
+        Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Top = 4
         TabOrder = 3
       end
@@ -1234,7 +1234,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 395
         Height = 25
-        Top = 514
+        Top = 494
         Width = 115
         Anchors = [akRight, akBottom]
         AutoSize = True
@@ -1247,7 +1247,7 @@ object Form1: TForm1
     end
     object tabProgramme: TTabSheet
       Caption = 'Programme'
-      ClientHeight = 547
+      ClientHeight = 527
       ClientWidth = 518
       object ValueListEditor1: TValueListEditor
         AnchorSideLeft.Control = tabProgramme
@@ -1255,10 +1255,10 @@ object Form1: TForm1
         AnchorSideBottom.Control = tabProgramme
         AnchorSideBottom.Side = asrBottom
         Left = 8
-        Height = 531
+        Height = 511
         Top = 8
         Width = 264
-        Anchors = [akLeft, akTop, akBottom]
+        Anchors = [akTop, akLeft, akBottom]
         AutoEdit = False
         BorderSpacing.Around = 8
         ExtendedSelect = False
@@ -1316,7 +1316,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 282
         Height = 160
-        Top = 121
+        Top = 114
         Width = 232
         Anchors = []
         BorderSpacing.Around = 8
@@ -1389,7 +1389,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 282
         Height = 144
-        Top = 376
+        Top = 360
         Width = 232
         Anchors = []
         BorderSpacing.Around = 8
@@ -1484,7 +1484,7 @@ object Form1: TForm1
       Height = 201
       Top = 158
       Width = 322
-      Anchors = [akLeft, akTop, akRight]
+      Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Top = 12
       BorderSpacing.Right = 8
       Caption = 'Drive Commands'
@@ -1609,7 +1609,7 @@ object Form1: TForm1
       Height = 23
       Top = 120
       Width = 208
-      Anchors = [akLeft, akTop, akRight]
+      Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Left = 4
       BorderSpacing.Right = 8
       ItemHeight = 15
@@ -1628,7 +1628,7 @@ object Form1: TForm1
       Height = 116
       Top = 196
       Width = 242
-      Anchors = [akLeft, akTop, akRight]
+      Anchors = [akTop, akLeft, akRight]
       AutoSize = True
       BorderSpacing.Left = 2
       Caption = 'Drive Info'
@@ -1719,7 +1719,7 @@ object Form1: TForm1
         Top = 72
         Width = 230
         Alignment = taCenter
-        Anchors = [akLeft, akTop, akRight]
+        Anchors = [akTop, akLeft, akRight]
         AutoSize = True
         BorderSpacing.Around = 4
         BorderStyle = sbsSingle
@@ -1738,7 +1738,7 @@ object Form1: TForm1
         Top = 0
         Width = 230
         Alignment = taCenter
-        Anchors = [akLeft, akTop, akRight]
+        Anchors = [akTop, akLeft, akRight]
         AutoSize = True
         BorderSpacing.Left = 4
         BorderSpacing.Right = 4
@@ -1768,7 +1768,7 @@ object Form1: TForm1
         Height = 28
         Top = 4
         Width = 232
-        Anchors = [akLeft, akTop, akRight]
+        Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Around = 4
         ChildSizing.LeftRightSpacing = 2
         ChildSizing.TopBottomSpacing = 2
@@ -1872,7 +1872,7 @@ object Form1: TForm1
         Height = 60
         Top = 36
         Width = 211
-        Anchors = [akLeft, akTop, akRight]
+        Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Around = 4
         Constraints.MinHeight = 60
         TabOrder = 1
@@ -1889,7 +1889,7 @@ object Form1: TForm1
         Height = 40
         Top = 100
         Width = 232
-        Anchors = [akLeft, akTop, akRight]
+        Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Around = 4
         TabOrder = 2
         OnResize = panelDriveFeedbackResize
@@ -1921,7 +1921,7 @@ object Form1: TForm1
       Height = 64
       Top = 316
       Width = 242
-      Anchors = [akLeft, akTop, akRight]
+      Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Top = 4
       ItemHeight = 0
       TabOrder = 6
@@ -1935,7 +1935,7 @@ object Form1: TForm1
       Height = 80
       Top = 32
       Width = 274
-      Anchors = [akLeft, akTop, akRight]
+      Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Left = 8
       BorderSpacing.Right = 8
       Caption = 'Drive Status'
@@ -2083,9 +2083,9 @@ object Form1: TForm1
       Left = 542
       Height = 19
       Hint = 'Change drive address'
-      Top = 94
+      Top = 86
       Width = 40
-      Anchors = [akLeft, akTop, akRight]
+      Anchors = [akTop, akLeft, akRight]
       ArrowKeys = False
       Min = 1
       OnClick = UpDownDriveAddressClick
@@ -2130,7 +2130,7 @@ object Form1: TForm1
     AnchorSideTop.Control = Owner
     Left = 552
     Height = 15
-    Top = 16
+    Top = 15
     Width = 149
     Anchors = []
     AutoSize = False
@@ -2169,7 +2169,7 @@ object Form1: TForm1
     AnchorSideBottom.Side = asrBottom
     Left = 8
     Height = 23
-    Top = 564
+    Top = 544
     Width = 592
     Anchors = [akLeft, akRight, akBottom]
     BorderSpacing.Left = 8

@@ -584,11 +584,11 @@ begin
       end;
 
       dr:=false;
-      if Owner.FSynSer.CanRead(25) then
+      if Owner.FSynSer.CanRead(100) then
       begin
         if te then
         begin
-          DataString:=Owner.FSynSer.RecvTerminated(25,Owner.Terminator);
+          DataString:=Owner.FSynSer.RecvTerminated(10,Owner.Terminator);
           dr:=((Owner.FSynSer.LastError<>ErrTimeout) AND (Length(DataString)>0));
           if dr then Owner.FData:=DataString+Owner.Terminator;
         end
@@ -596,7 +596,7 @@ begin
         begin
           DataString:='';
           repeat
-            FBuffer:=Owner.FSynSer.RecvPacket(25);
+            FBuffer:=Owner.FSynSer.RecvPacket(10);
             x:=Length(FBuffer);
             if (x>0) then DataString:=DataString+FBuffer;
           until ((x=0) OR (Terminated));
@@ -606,6 +606,8 @@ begin
       end;
 
       if dr then Synchronize(@CallEvent);
+
+      TThread.Yield();
 
     end;
   except
