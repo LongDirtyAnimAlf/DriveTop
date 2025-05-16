@@ -419,6 +419,7 @@ begin
   IDN:=GetIDN(CD);
 
   case CD.CSUBCLASS of
+    mscNone          : be:=CSMD_SERC_ELEM1;
     mscAttributes    : be:=CSMD_SERC_ELEM3;
     mscUpperLimit    : be:=CSMD_SERC_ELEM6;
     mscLowerLimit    : be:=CSMD_SERC_ELEM5;

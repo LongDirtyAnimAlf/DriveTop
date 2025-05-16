@@ -65,8 +65,8 @@ type
     btnRefreshDriveData: TButton;
     btnConnectVMRS232: TButton;
     Button1: TButton;
-    Button2: TButton;
     btnStop: TButton;
+    btnGetDriveData: TButton;
     chkAutoLoadDriveData: TCheckBox;
     cmboSerialPorts: TComboBox;
     comboDriveModes: TComboBox;
@@ -171,7 +171,7 @@ type
     procedure btnManualAxisClick({%H-}Sender: TObject);
     procedure btnDriveInfoClick({%H-}Sender: TObject);
     procedure Button1Click(Sender: TObject);
-    procedure Button2Click(Sender: TObject);
+    procedure btnGetDriveDataClick(Sender: TObject);
     procedure cmboSerialPortsChange({%H-}Sender: TObject);
     procedure editDistKeyPress(Sender: TObject; var Key: char);
     procedure editStatusChange(Sender: TObject);
@@ -290,7 +290,7 @@ type
     procedure OnCommData(const s:string);
   public
     { public declarations }
-    function  ProcessCommand(const CD:TCOMMANDDATA;out response:string; verbose:boolean=false; prio:boolean=false; blocking:boolean=false):boolean;
+    function  ProcessCommand(const CD:TCOMMANDDATA;out response:string; prio:boolean=false; blocking:boolean=false; verbose:boolean=false):boolean;
     function  JogAxis(aDir:TAXISDIRECTION;Engage:boolean):boolean;
   end;
 
@@ -670,12 +670,13 @@ begin
   result:=false;
 
   CD:=aCD;
+  CD.CSUBCLASS:=mscParameterData;
 
   // Execute command
   SCS.Raw:=0;
   SCS.Data.CommandSetInDrive:=1;
   SCS.Data.ExecutionOfCommandInDriveEnabled:=1;
-  CD.DATA:=DecimalToBinaryString(SCS.Raw,DirectDrive);
+  CD.DATA:=DecimalToBinaryString(SCS.Raw,2,DirectDrive);
   success:=ProcessCommand(CD,s,false,true);
 
   // Sleep at least 64 ms
@@ -721,7 +722,9 @@ begin
 
   // Clear command
   CD:=aCD;
-  CD.DATA:='0';
+  CD.CSUBCLASS:=mscParameterData;
+  SCS.Raw:=0;
+  CD.DATA:=DecimalToBinaryString(SCS.Raw,2,DirectDrive);
   success:=ProcessCommand(CD,s,false,true);
   //success:=(s<>sERR);
 
@@ -800,6 +803,7 @@ begin
   success:=ProcessCommand(CD,s);
 
   // Execute command "set absolute measuring"
+  // C300 Command Set absolute measuring
   CD.CCLASS:=ccDriveSpecific;
   CD.CSUBCLASS:=mscParameterData;
   CD.NUMID:=12;
@@ -932,24 +936,24 @@ begin
 
     CD.NUMID:=4021;
     CD.DATA:='0';
-    Success:=ProcessCommand(CD,s,false,false,true);
+    Success:=ProcessCommand(CD,s,false,true);
     Memo1.Lines.Append(s);
 
     CD.NUMID:=4050;
     CD.DATA:='10';
-    Success:=ProcessCommand(CD,s,false,false,true);
+    Success:=ProcessCommand(CD,s,false,true);
     Memo1.Lines.Append(s);
 
     CD.CCLASS:=ccDrive;
     CD.NUMID:=265;
     CD.DATA:='1';
-    Success:=ProcessCommand(CD,s,false,false,true);
+    Success:=ProcessCommand(CD,s,false,true);
     Memo1.Lines.Append(s);
 
     CD.CCLASS:=ccDriveSpecific;
     CD.NUMID:=5;
     CD.DATA:='1';
-    Success:=ProcessCommand(CD,s,false,false,true);
+    Success:=ProcessCommand(CD,s,false,true);
     Memo1.Lines.Append(s);
 
     c:=Format('BCD:%.2d',[ActiveDriveInfo.DRIVEADDRESS]);
@@ -1143,30 +1147,36 @@ begin
 
   if (Sender=btnPhase2) then
   begin
+    // C400 Communication phase 2 transition
     CD.CCLASS:=ccDriveSpecific;
-    CD.CSUBCLASS:=mscParameterData;
+    //CD.CSUBCLASS:=mscParameterData;
     CD.NUMID:=4023;
     m:='Axis back in Phase 2';
   end;
+
   if (Sender=btnPhase3) then
   begin
+    // C100 Communication phase 3 transition check
     CD.CCLASS:=ccDrive;
-    CD.CSUBCLASS:=mscParameterData;
+    //CD.CSUBCLASS:=mscParameterData;
     CD.NUMID:=127;
     m:='Axis from Phase 2 to Phase 3';
   end;
+
   if (Sender=btnPhase4) then
   begin
+    // C200 Communication phase 4 transition check
     CD.CCLASS:=ccDrive;
-    CD.CSUBCLASS:=mscParameterData;
+    //CD.CSUBCLASS:=mscParameterData;
     CD.NUMID:=128;
     m:='Axis from Phase 3 to Phase 4'
   end;
 
   if (Sender=btnClearErrors) then
   begin
+    // C500 Reset class 1 diagnostics
     CD.CCLASS:=ccDrive;
-    CD.CSUBCLASS:=mscParameterData;
+    //CD.CSUBCLASS:=mscParameterData;
     CD.NUMID:=99;
     m:='Cleared all drive errors';
   end;
@@ -1181,7 +1191,7 @@ begin
     if (Sender=btnPhase3) then DP14.Data.CommPhase:=3;
     if (Sender=btnPhase4) then DP14.Data.CommPhase:=4;
     CD.DATA:=DecimalToBinaryString(DP14.Raw,DirectDrive);
-    success:=ProcessCommand(CD,m,false,false,true);
+    success:=ProcessCommand(CD,m,false,true);
   end;
 end;
 
@@ -1224,6 +1234,7 @@ begin
   success:=ProcessCommand(CD,s);
 
   // Execute command Drive-Controlled Homing Procedure
+  // C600 Drive-controlled homing procedure command
   CD.NUMID:=148;
   success:=CommandExecuteAndWait(CD);
 
@@ -1481,7 +1492,7 @@ begin
     for CC in REALTIMEDRIVEDATA do
     begin
       CD:=COMMAND2CD(CC,ActiveDrive);
-      success:=ProcessCommand(CD,s,false,true,false);
+      success:=ProcessCommand(CD,s,true,false);
     end;
   end;
 
@@ -1492,7 +1503,7 @@ begin
     for CC in BASICDRIVEDATA do
     begin
       CD:=COMMAND2CD(CC,ActiveDrive);
-      success:=ProcessCommand(CD,s,false,(NOT BLOCK),BLOCK);
+      success:=ProcessCommand(CD,s,(NOT BLOCK),BLOCK);
       if BLOCK then OnCommData(s);
     end;
   end;
@@ -1781,7 +1792,8 @@ begin
   CD:=Default(TCOMMANDDATA);
   CD.CCLASS:=ccAxis;
   CD.CSUBCLASS:=mscParameterData;
-  for axis:=1 to 2 do
+  //for axis:=1 to 2 do
+  for axis:=ActiveDrive to ActiveDrive do
   begin
     CD.SETID:=axis;
 
@@ -1943,7 +1955,7 @@ begin
   ProcessCommResult(CD);
 end;
 
-procedure TForm1.Button2Click(Sender: TObject);
+procedure TForm1.btnGetDriveDataClick(Sender: TObject);
 begin
   GetDriveData;
 end;
@@ -2993,7 +3005,7 @@ begin
   {$endif UNIX}
 end;
 
-function TForm1.ProcessCommand(const CD:TCOMMANDDATA;out response:string; verbose:boolean; prio:boolean; blocking:boolean):boolean;
+function TForm1.ProcessCommand(const CD:TCOMMANDDATA;out response:string; prio:boolean=false; blocking:boolean=false; verbose:boolean=false):boolean;
 var
   s,c      : string;
   success  : boolean;
@@ -3254,7 +3266,7 @@ begin
         begin
           CD.CSUBCLASS:=mscParameterData;
           CD.DATA:=data;
-          ProcessCommand(CD,s,false,true,false);
+          ProcessCommand(CD,s,true,false);
         end;
       end;
     end;
@@ -3329,7 +3341,7 @@ begin
     SC135.Raw:=BinaryStringToDecimal(CD.DATA);
     SetInfoPanel(PanelControl,(SC135.Data.DriveReady>0));
     SetInfoPanel(PanelPower,(SC135.Data.DriveReady>1));
-    //SetInfoPanel(PanelEnable,(SC135.Data.DriveReady>2));
+    SetInfoPanel(PanelEnable,(SC135.Data.DriveReady>2));
   end;
 end;
 
@@ -3819,9 +3831,18 @@ begin
 
   data:=s;
 
+  if Pos('Error',data)=1 then
+  begin
+    // ToDo: handle error
+    Result.CCLASS:=ccError;
+    Result.ERROR:='We got an error !!';
+    exit;
+  end;
+
   if DirectDrive then
   begin
     Result:=IDN2CD(s,0);
+    //Result:=IDN2CD(s,ActiveDrive);
     if ((Result.CCLASS=ccDrive) OR (Result.CCLASS=ccDriveSpecific)) then
     try
       Delete(s,1,9); // delete IDN and comma
@@ -4072,6 +4093,19 @@ var
 begin
   LocalCD:=CD;
 
+  if ((LocalCD.CCLASS=ccNone) OR (Length(LocalCD.ERROR)>0)) then
+  begin
+    s:=LocalCD.DATA;
+    //if (Length(s)=0) then
+    begin
+      i:=HexStringToDecimal(LocalCD.ERROR);
+      s:=GetDriveErrorDescription(i);
+    end;
+    ShowDataUpdateInfo('Error !!!');
+    ShowDataUpdateInfo('Error message: '+s);
+    exit;
+  end;
+
   if ((LocalCD.CCLASS=ccNone) AND (LocalCD.CCLASSCHAR=VMCOMMANDCLASS[ccRegister])) then
   begin
     // SETID is always 0 with ccRegister
@@ -4085,19 +4119,6 @@ begin
     end;
   end;
 
-  if Length(LocalCD.ERROR)>0 then
-  begin
-    s:=LocalCD.DATA;
-    //if (Length(s)=0) then
-    begin
-      i:=HexStringToDecimal(LocalCD.ERROR);
-      s:=GetDriveErrorDescription(i);
-    end;
-    ShowDataUpdateInfo('Error !!!');
-    ShowDataUpdateInfo('Error message: '+s);
-    exit;
-  end;
-
   list:=false;
   ATT.Raw:=GetDriveAttribute(LocalCD);
   list:=((ATT.Data.List=1) AND (ATT.Data.DataLength<>0));
@@ -4108,7 +4129,7 @@ begin
     LocalCD.CSUBCLASS:=mscList;
     LocalCD.STEPID:=STEPLISTSTART;
     LocalCD.DATA:='';
-    success:=ProcessCommand(LocalCD,s,false,true,false);
+    success:=ProcessCommand(LocalCD,s,true,false);
     exit;
   end;
 

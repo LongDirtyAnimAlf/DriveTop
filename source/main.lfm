@@ -1,23 +1,23 @@
 object Form1: TForm1
-  Left = 661
+  Left = 269
   Height = 591
-  Top = 172
+  Top = 169
   Width = 1142
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'DriveTop'
-  ClientHeight = 571
+  ClientHeight = 591
   ClientWidth = 1142
   Menu = MainMenu1
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  LCLVersion = '2.3.0.0'
+  LCLVersion = '3.2.0.0'
   object btnConnectDDE: TButton
     AnchorSideLeft.Control = btnConnectVMRS232
     AnchorSideTop.Control = btnConnectVMRS232
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = btnConnectVMRS232
     AnchorSideRight.Side = asrBottom
-    Left = 192
+    Left = 193
     Height = 25
     Top = 33
     Width = 152
@@ -25,8 +25,8 @@ object Form1: TForm1
     AutoSize = True
     BorderSpacing.Top = 4
     Caption = 'Connect with VM DDE'
-    OnClick = btnConnectDDEClick
     TabOrder = 3
+    OnClick = btnConnectDDEClick
   end
   object Memo1: TMemo
     AnchorSideLeft.Control = Owner
@@ -34,7 +34,7 @@ object Form1: TForm1
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = editStatus
     Left = 8
-    Height = 44
+    Height = 64
     Top = 496
     Width = 592
     Anchors = [akTop, akLeft, akRight, akBottom]
@@ -52,13 +52,13 @@ object Form1: TForm1
     Left = 8
     Height = 25
     Top = 33
-    Width = 172
+    Width = 173
     Anchors = [akTop, akLeft, akRight]
     AutoSize = True
     BorderSpacing.Top = 4
     Caption = 'Connect as  DriveTop RS485'
-    OnClick = btnConnectSerialClick
     TabOrder = 1
+    OnClick = btnConnectSerialClick
   end
   object cmboSerialPorts: TComboBox
     AnchorSideLeft.Control = btnConnectDriveRS485
@@ -69,12 +69,12 @@ object Form1: TForm1
     Left = 8
     Height = 23
     Top = 66
-    Width = 172
+    Width = 173
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Top = 8
     ItemHeight = 15
-    OnChange = cmboSerialPortsChange
     TabOrder = 2
+    OnChange = cmboSerialPortsChange
   end
   object editDLLFileName: TEdit
     AnchorSideLeft.Control = btnConnectDDE
@@ -82,7 +82,7 @@ object Form1: TForm1
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = btnConnectDDE
     AnchorSideRight.Side = asrBottom
-    Left = 192
+    Left = 193
     Height = 23
     Hint = 'Location of the DLL executable'
     Top = 66
@@ -91,12 +91,12 @@ object Form1: TForm1
     AutoSelect = False
     BorderSpacing.Top = 8
     HideSelection = False
-    OnClick = editDLLFileNameClick
     ParentShowHint = False
     ReadOnly = True
     ShowHint = True
     TabOrder = 4
     Text = 'clc_dde.exe'
+    OnClick = editDLLFileNameClick
   end
   object PageControl2: TPageControl
     AnchorSideTop.Control = Owner
@@ -105,19 +105,19 @@ object Form1: TForm1
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 608
-    Height = 555
+    Height = 575
     Top = 8
     Width = 526
-    ActivePage = tabRawCommands
+    ActivePage = TabSheet1
     Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Top = 8
     BorderSpacing.Right = 8
     BorderSpacing.Bottom = 8
-    TabIndex = 2
+    TabIndex = 0
     TabOrder = 6
     object TabSheet1: TTabSheet
       Caption = 'Drive data'
-      ClientHeight = 527
+      ClientHeight = 547
       ClientWidth = 518
       object lvParameters: TListView
         AnchorSideLeft.Control = TabSheet1
@@ -126,7 +126,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = vleParamDetails
         Left = 8
-        Height = 343
+        Height = 363
         Top = 8
         Width = 502
         Anchors = [akTop, akLeft, akRight, akBottom]
@@ -162,7 +162,7 @@ object Form1: TForm1
         AnchorSideBottom.Control = synDataUpdate
         Left = 8
         Height = 19
-        Top = 366
+        Top = 386
         Width = 101
         Anchors = [akLeft, akBottom]
         BorderSpacing.Left = 8
@@ -180,15 +180,15 @@ object Form1: TForm1
         AnchorSideBottom.Control = synDataUpdate
         Left = 246
         Height = 25
-        Top = 362
+        Top = 382
         Width = 122
         Anchors = [akRight, akBottom]
         AutoSize = True
         BorderSpacing.Left = 8
         BorderSpacing.Bottom = 8
         Caption = 'Refresh Drive Data'
-        OnClick = btnRefreshDriveDataClick
         TabOrder = 2
+        OnClick = btnRefreshDriveDataClick
       end
       inline synDataUpdate: TSynEdit
         AnchorSideLeft.Control = TabSheet1
@@ -199,7 +199,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 8
         Height = 124
-        Top = 395
+        Top = 415
         Width = 360
         BorderSpacing.Around = 8
         Anchors = [akLeft, akBottom]
@@ -696,7 +696,7 @@ object Form1: TForm1
         Left = 376
         Height = 160
         Hint = 'Edit value field to update data.'
-        Top = 359
+        Top = 379
         Width = 134
         Anchors = [akLeft, akRight, akBottom]
         AutoEdit = False
@@ -728,13 +728,13 @@ object Form1: TForm1
         )
         ColWidths = (
           64
-          52
+          69
         )
       end
     end
     object tabMove: TTabSheet
       Caption = 'Movement'
-      ClientHeight = 527
+      ClientHeight = 547
       ClientWidth = 518
       object shapeBase: TShape
         AnchorSideLeft.Control = tabMove
@@ -742,7 +742,7 @@ object Form1: TForm1
         AnchorSideBottom.Control = tabMove
         AnchorSideBottom.Side = asrBottom
         Left = 12
-        Height = 503
+        Height = 523
         Top = 12
         Width = 299
         Anchors = [akTop, akLeft, akBottom]
@@ -759,7 +759,7 @@ object Form1: TForm1
         AnchorSideBottom.Control = shapeBase
         AnchorSideBottom.Side = asrBottom
         Left = 32
-        Height = 403
+        Height = 423
         Top = 32
         Width = 259
         Anchors = [akTop, akLeft, akRight, akBottom]
@@ -886,8 +886,8 @@ object Form1: TForm1
         Anchors = [akTop, akLeft, akRight, akBottom]
         BorderSpacing.Left = 8
         Caption = 'Start repetitions'
-        OnClick = btnStartClick
         TabOrder = 1
+        OnClick = btnStartClick
       end
       object grpSettings: TGroupBox
         Left = 328
@@ -1014,9 +1014,9 @@ object Form1: TForm1
           Width = 163
           Anchors = [akTop, akLeft, akRight]
           BorderSpacing.Around = 8
-          OnKeyPress = editDistKeyPress
           TabOrder = 3
           Text = '100'
+          OnKeyPress = editDistKeyPress
         end
         object btnTest: TButton
           AnchorSideLeft.Control = grpSettings
@@ -1034,8 +1034,8 @@ object Form1: TForm1
           BorderSpacing.Top = 8
           BorderSpacing.Around = 8
           Caption = 'Testrun'
-          OnClick = btnTestClick
           TabOrder = 4
+          OnClick = btnTestClick
         end
         object btnMove: TButton
           AnchorSideTop.Control = editAccel
@@ -1052,14 +1052,14 @@ object Form1: TForm1
           BorderSpacing.Top = 8
           BorderSpacing.Around = 8
           Caption = 'Move'
-          OnClick = btnMoveClick
           TabOrder = 5
+          OnClick = btnMoveClick
         end
       end
     end
     object tabRawCommands: TTabSheet
       Caption = 'Raw Commands'
-      ClientHeight = 527
+      ClientHeight = 547
       ClientWidth = 518
       object pageRawCommands: TPageControl
         AnchorSideLeft.Control = tabRawCommands
@@ -1068,7 +1068,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = rgSubClass
         Left = 4
-        Height = 404
+        Height = 424
         Top = 4
         Width = 506
         ActivePage = tabVMDrive
@@ -1083,50 +1083,50 @@ object Form1: TForm1
         OnChange = pageRawCommandsChange
         object tabVMControl: TTabSheet
           Caption = 'VM-Control'
-          ClientHeight = 376
+          ClientHeight = 396
           ClientWidth = 498
           object lbVMSYSTEMCOMMANDS: TListBox
             Left = 0
-            Height = 376
+            Height = 396
             Top = 0
             Width = 498
             Align = alClient
             ExtendedSelect = False
             ItemHeight = 0
-            OnDblClick = lbCOMMANDSDblClick
             TabOrder = 0
+            OnDblClick = lbCOMMANDSDblClick
           end
         end
         object tabVMAxis: TTabSheet
           Caption = 'VM-Axis'
-          ClientHeight = 376
+          ClientHeight = 396
           ClientWidth = 498
           object lbVMAXISCOMMANDS: TListBox
             Left = 0
-            Height = 376
+            Height = 396
             Top = 0
             Width = 498
             Align = alClient
             ExtendedSelect = False
             ItemHeight = 0
-            OnDblClick = lbCOMMANDSDblClick
             TabOrder = 0
+            OnDblClick = lbCOMMANDSDblClick
           end
         end
         object tabVMTask: TTabSheet
           Caption = 'VM-Task'
-          ClientHeight = 376
+          ClientHeight = 396
           ClientWidth = 498
           object lbVMTASKCOMMANDS: TListBox
             Left = 0
-            Height = 376
+            Height = 396
             Top = 0
             Width = 498
             Align = alClient
             ExtendedSelect = False
             ItemHeight = 0
-            OnDblClick = lbCOMMANDSDblClick
             TabOrder = 0
+            OnDblClick = lbCOMMANDSDblClick
           end
         end
         object tabVMDrive: TTabSheet
@@ -1136,43 +1136,43 @@ object Form1: TForm1
           ChildSizing.EnlargeVertical = crsHomogenousChildResize
           ChildSizing.Layout = cclLeftToRightThenTopToBottom
           ChildSizing.ControlsPerLine = 1
-          ClientHeight = 376
+          ClientHeight = 396
           ClientWidth = 498
           object lbSERCOSPARAMS: TListBox
             Left = 0
-            Height = 178
+            Height = 188
             Top = 0
             Width = 498
             ExtendedSelect = False
             ItemHeight = 0
-            OnDblClick = lbCOMMANDSDblClick
             TabOrder = 0
+            OnDblClick = lbCOMMANDSDblClick
           end
           object lbSERCOSCOMMANDS: TListBox
             Left = 0
-            Height = 178
-            Top = 198
+            Height = 188
+            Top = 208
             Width = 498
             ExtendedSelect = False
             ItemHeight = 0
-            OnDblClick = lbCOMMANDSDblClick
             TabOrder = 1
+            OnDblClick = lbCOMMANDSDblClick
           end
         end
         object tabVMRegister: TTabSheet
           Caption = 'VM-Register'
-          ClientHeight = 376
+          ClientHeight = 396
           ClientWidth = 498
           object lbVMREGISTERS: TListBox
             Left = 0
-            Height = 376
+            Height = 396
             Top = 0
             Width = 498
             Align = alClient
             ExtendedSelect = False
             ItemHeight = 0
-            OnDblClick = lbCOMMANDSDblClick
             TabOrder = 0
+            OnDblClick = lbCOMMANDSDblClick
           end
         end
       end
@@ -1182,7 +1182,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 4
         Height = 103
-        Top = 416
+        Top = 436
         Width = 296
         Anchors = [akLeft, akBottom]
         AutoFill = True
@@ -1208,7 +1208,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         Left = 395
         Height = 23
-        Top = 416
+        Top = 436
         Width = 115
         Anchors = [akTop, akLeft, akRight]
         TabOrder = 2
@@ -1221,7 +1221,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         Left = 395
         Height = 23
-        Top = 443
+        Top = 463
         Width = 115
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Top = 4
@@ -1234,20 +1234,20 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 395
         Height = 25
-        Top = 494
+        Top = 514
         Width = 115
         Anchors = [akRight, akBottom]
         AutoSize = True
         BorderSpacing.Right = 8
         BorderSpacing.Bottom = 8
         Caption = 'Send and receive'
-        OnClick = btnSendReceiveClick
         TabOrder = 4
+        OnClick = btnSendReceiveClick
       end
     end
     object tabProgramme: TTabSheet
       Caption = 'Programme'
-      ClientHeight = 527
+      ClientHeight = 547
       ClientWidth = 518
       object ValueListEditor1: TValueListEditor
         AnchorSideLeft.Control = tabProgramme
@@ -1255,7 +1255,7 @@ object Form1: TForm1
         AnchorSideBottom.Control = tabProgramme
         AnchorSideBottom.Side = asrBottom
         Left = 8
-        Height = 511
+        Height = 531
         Top = 8
         Width = 264
         Anchors = [akTop, akLeft, akBottom]
@@ -1303,8 +1303,8 @@ object Form1: TForm1
         Top = 8
         Width = 96
         Caption = 'Start TaskA'
-        OnClick = btnStartTaskAClick
         TabOrder = 1
+        OnClick = btnStartTaskAClick
       end
       object PointTableEditor: TValueListEditor
         AnchorSideLeft.Control = ValueListEditor1
@@ -1316,7 +1316,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 282
         Height = 160
-        Top = 114
+        Top = 121
         Width = 232
         Anchors = []
         BorderSpacing.Around = 8
@@ -1367,8 +1367,8 @@ object Form1: TForm1
         Top = 48
         Width = 96
         Caption = 'Get Points'
-        OnClick = btnGetTableClick
         TabOrder = 3
+        OnClick = btnGetTableClick
       end
       object btnGetEvents: TButton
         Left = 284
@@ -1376,8 +1376,8 @@ object Form1: TForm1
         Top = 264
         Width = 96
         Caption = 'Get Events'
-        OnClick = btnGetTableClick
         TabOrder = 4
+        OnClick = btnGetTableClick
       end
       object EventEditor: TValueListEditor
         AnchorSideLeft.Control = ValueListEditor1
@@ -1389,7 +1389,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 282
         Height = 144
-        Top = 360
+        Top = 376
         Width = 232
         Anchors = []
         BorderSpacing.Around = 8
@@ -1440,8 +1440,8 @@ object Form1: TForm1
         Top = 16
         Width = 61
         Caption = 'Get Lists'
-        OnClick = btnGetListsClick
         TabOrder = 6
+        OnClick = btnGetListsClick
       end
     end
   end
@@ -1451,13 +1451,13 @@ object Form1: TForm1
     Left = 8
     Height = 25
     Top = 4
-    Width = 172
+    Width = 173
     AutoSize = True
     BorderSpacing.Left = 8
     BorderSpacing.Top = 4
     Caption = 'Connect as  DriveTop RS232'
-    OnClick = btnConnectSerialClick
     TabOrder = 0
+    OnClick = btnConnectSerialClick
   end
   object TabControl1: TTabControl
     AnchorSideLeft.Control = Owner
@@ -1492,98 +1492,107 @@ object Form1: TForm1
       ClientWidth = 318
       TabOrder = 1
       object btnAxisStatus: TButton
-        Left = 104
+        Left = 188
         Height = 26
-        Top = 96
-        Width = 90
+        Top = 38
+        Width = 80
         Caption = 'Axis Status'
-        OnClick = btnAxisStatusClick
         TabOrder = 0
+        OnClick = btnAxisStatusClick
       end
       object btnResetAxis: TButton
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Side = asrBottom
-        Left = 8
+        Left = 188
         Height = 26
-        Top = 96
-        Width = 90
+        Top = 8
+        Width = 80
         BorderSpacing.Top = 8
         BorderSpacing.Around = 8
         Caption = 'Axis Reset'
-        OnClick = btnResetAxisClick
         TabOrder = 1
+        OnClick = btnResetAxisClick
       end
       object btnManualAxis: TButton
         Left = 8
         Height = 26
         Top = 8
-        Width = 74
+        Width = 80
         Caption = 'Manual Axis'
-        OnClick = btnManualAxisClick
         TabOrder = 2
+        OnClick = btnManualAxisClick
       end
       object btnPhase2: TButton
-        Left = 192
+        Left = 16
         Height = 26
-        Top = 0
+        Top = 112
         Width = 50
         Caption = 'Phase2'
-        OnClick = btnAxisCommandClick
         TabOrder = 3
+        OnClick = btnAxisCommandClick
       end
       object btnPhase3: TButton
-        Left = 192
+        Left = 72
         Height = 26
-        Top = 32
+        Top = 110
         Width = 50
         Caption = 'Phase3'
-        OnClick = btnAxisCommandClick
         TabOrder = 4
+        OnClick = btnAxisCommandClick
       end
       object btnPhase4: TButton
-        Left = 192
+        Left = 128
         Height = 26
-        Top = 64
+        Top = 110
         Width = 50
         Caption = 'Phase4'
-        OnClick = btnAxisCommandClick
         TabOrder = 5
+        OnClick = btnAxisCommandClick
       end
       object btnAxisHome: TButton
         Left = 96
         Height = 26
         Top = 40
-        Width = 74
+        Width = 80
         Caption = 'Axis Home'
-        OnClick = btnAxisHomeClick
         TabOrder = 6
+        OnClick = btnAxisHomeClick
       end
       object btnSpeedLimit: TButton
         Left = 8
         Height = 26
         Top = 40
-        Width = 74
+        Width = 80
         Caption = 'Speed Limit'
-        OnClick = btnSpeedLimitClick
         TabOrder = 7
+        OnClick = btnSpeedLimitClick
       end
       object btnClearErrors: TButton
         Left = 96
         Height = 26
         Top = 8
-        Width = 74
+        Width = 80
         Caption = 'Clear Errors'
-        OnClick = btnAxisCommandClick
         TabOrder = 8
+        OnClick = btnAxisCommandClick
       end
       object btnDriveInfo: TButton
-        Left = 232
+        Left = 192
         Height = 24
-        Top = 96
-        Width = 66
+        Top = 72
+        Width = 80
         Caption = 'Drive Info'
-        OnClick = btnDriveInfoClick
         TabOrder = 9
+        OnClick = btnDriveInfoClick
+      end
+      object btnGetDriveData: TButton
+        Left = 8
+        Height = 17
+        Top = 79
+        Width = 168
+        Caption = 'Get DriveData'
+        TabOrder = 10
+        OnClick = btnGetDriveDataClick
       end
     end
     object btnSetMode: TButton
@@ -1596,8 +1605,8 @@ object Form1: TForm1
       Width = 110
       BorderSpacing.Top = 8
       Caption = 'Set Drive Mode'
-      OnClick = btnSetModeClick
       TabOrder = 2
+      OnClick = btnSetModeClick
     end
     object comboDriveModes: TComboBox
       AnchorSideLeft.Control = btnSetMode
@@ -2130,7 +2139,7 @@ object Form1: TForm1
     AnchorSideTop.Control = Owner
     Left = 552
     Height = 15
-    Top = 15
+    Top = 16
     Width = 149
     Anchors = []
     AutoSize = False
@@ -2141,7 +2150,7 @@ object Form1: TForm1
     AnchorSideLeft.Control = btnConnectDriveRS232
     AnchorSideLeft.Side = asrBottom
     AnchorSideTop.Control = Owner
-    Left = 192
+    Left = 193
     Height = 25
     Top = 4
     Width = 152
@@ -2149,8 +2158,8 @@ object Form1: TForm1
     BorderSpacing.Left = 12
     BorderSpacing.Top = 4
     Caption = 'Connect with VM RS232'
-    OnClick = btnConnectSerialClick
     TabOrder = 8
+    OnClick = btnConnectSerialClick
   end
   object Button1: TButton
     Left = 456
@@ -2158,8 +2167,8 @@ object Form1: TForm1
     Top = 32
     Width = 121
     Caption = 'Button1'
-    OnClick = Button1Click
     TabOrder = 9
+    OnClick = Button1Click
   end
   object editStatus: TEdit
     AnchorSideLeft.Control = Owner
@@ -2169,26 +2178,17 @@ object Form1: TForm1
     AnchorSideBottom.Side = asrBottom
     Left = 8
     Height = 23
-    Top = 544
+    Top = 564
     Width = 592
     Anchors = [akLeft, akRight, akBottom]
     BorderSpacing.Left = 8
     BorderSpacing.Bottom = 4
     Color = clBlack
     Font.Color = clAqua
-    OnChange = editStatusChange
     ParentFont = False
     ReadOnly = True
     TabOrder = 10
-  end
-  object Button2: TButton
-    Left = 488
-    Height = 17
-    Top = 72
-    Width = 106
-    Caption = 'Button2'
-    OnClick = Button2Click
-    TabOrder = 11
+    OnChange = editStatusChange
   end
   object btnStop: TButton
     Left = 353
@@ -2196,8 +2196,8 @@ object Form1: TForm1
     Top = 4
     Width = 63
     Caption = 'STOP'
+    TabOrder = 11
     OnClick = btnStopClick
-    TabOrder = 12
   end
   object OpenDialog1: TOpenDialog
     Left = 712

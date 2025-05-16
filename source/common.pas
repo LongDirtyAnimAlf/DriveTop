@@ -22,7 +22,7 @@ type
   PSCA = ^TSCA;
   TSCA = array[0..(MaxInt div SizeOf(TCAPSCHAR)) -1] of TCAPSCHAR;
 
-  TVMCOMMANDCLASS                   = (ccNone,ccAxis,ccControl,ccDrive,ccDriveSpecific,ccTask,ccFloat,ccGlobalFloat,ccGlobalInteger,ccInteger,ccPID,ccAbsPointTable,ccRelPointTable,ccEventTable,ccProgram,ccELS,ccFunction,ccRegister,ccSequencerList,ccSequenceTable,ccPLS,ccZones);
+  TVMCOMMANDCLASS                   = (ccNone,ccError,ccAxis,ccControl,ccDrive,ccDriveSpecific,ccTask,ccFloat,ccGlobalFloat,ccGlobalInteger,ccInteger,ccPID,ccAbsPointTable,ccRelPointTable,ccEventTable,ccProgram,ccELS,ccFunction,ccRegister,ccSequencerList,ccSequenceTable,ccPLS,ccZones);
   TVMPARAMETERCLASS                 = TVMCOMMANDCLASS.ccNone..TVMCOMMANDCLASS.ccTask;
   TVMCOMMANDPARAMETERSUBCLASS       = (mscNone,mscAttributes,mscBlock,mscList,mscUpperLimit,mscLowerLimit,mscParameterData,mscName,mscUnits);
 
@@ -30,7 +30,7 @@ const
   STEPLISTSTART                      : word = word(-1);
   CAPSCHARS                          : set of TCAPSCHAR = ['A'..'Z'];
 
-  VMCOMMANDCLASS                     : array[TVMCOMMANDCLASS] of TCAPSCHAR = ('-','A','C','D','D','T','F','G','H','I','M','X','Y','E','P','K','S','R','L','Q','W','Z');
+  VMCOMMANDCLASS                     : array[TVMCOMMANDCLASS] of TCAPSCHAR = ('-','-','A','C','D','D','T','F','G','H','I','M','X','Y','E','P','K','S','R','L','Q','W','Z');
   VMCOMMANDPARAMETERSUBCLASS         : array[TVMCOMMANDPARAMETERSUBCLASS] of TCAPSCHAR = ('-','A','B','D','H','L','P','T','U');
   VMCOMMANDPARAMETERSUBCLASSLONG     : array[TVMCOMMANDPARAMETERSUBCLASS] of ansistring = ('None','Attribute','Block','List','Max','Min','Value','Name','Unit');
 
@@ -248,6 +248,7 @@ type
   function DecimalToHexString(dw:dword; const dd:boolean):string;
 
   function BinaryStringToDecimal(const binstring:string):DWord;
+  function DecimalToBinaryString(const b:int64; const Size: byte; const dd:boolean):string;overload;
   function DecimalToBinaryString(const b:byte; const dd:boolean = false):string;overload;
   function DecimalToBinaryString(const w:word; const dd:boolean = false):string;overload;
   function DecimalToBinaryString(const dw:DWord; const dd:boolean = false):string;overload;
@@ -287,25 +288,25 @@ begin
   {$endif}
 end;
 
-function DecimalToBinaryStringBase(const b:int64; const Size: byte; const dd:boolean):string;
+function DecimalToBinaryString(const b:int64; const Size: byte; const dd:boolean):string;
 begin
-  result:=BinStr(b,size*8);
+  result:=BinStr(b,size);
   if dd then result:=result+'b';
 end;
 
 function DecimalToBinaryString(const b:byte; const dd:boolean):string;
 begin
-  result:=DecimalToBinaryStringBase(b,1,dd);
+  result:=DecimalToBinaryString(b,1*8,dd);
 end;
 
 function DecimalToBinaryString(const w:word; const dd:boolean):string;
 begin
-  result:=DecimalToBinaryStringBase(w,2,dd);
+  result:=DecimalToBinaryString(w,2*8,dd);
 end;
 
 function DecimalToBinaryString(const dw:DWord; const dd:boolean):string;
 begin
-  result:=DecimalToBinaryStringBase(dw,4,dd);
+  result:=DecimalToBinaryString(dw,4*8,dd);
 end;
 
 function BinaryStringToDecimal(const binstring:string):DWord;

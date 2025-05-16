@@ -284,6 +284,7 @@ begin
   ReadThread:=nil;
 
   FSynSer:=TBlockSerial.Create;
+  //FSynSer.EnableRTSToggle(true);
   FSynSer.LinuxLock:=false;
   FHardflow:=false;
   FSoftflow:=false;
@@ -476,7 +477,8 @@ begin
     //FSynSer.Flush;
     //FSynSer.Purge;
     FSynSer.SendString(cmd);
-    rcvd:=FSynSer.RecvTerminated(500,Terminator);
+    FSynSer.Flush;
+    rcvd:=FSynSer.RecvTerminated(1500,Terminator);
     if ((FSynSer.LastError=0) AND (Length(rcvd)>0)) then rcvd:=rcvd+Terminator;
     FData:=rcvd;
     dat:=rcvd;
@@ -552,7 +554,7 @@ procedure TComPortReadThread.Execute;
 var
   FBuffer:ansistring;
   DataString:ansistring;
-  s:ansistring;
+  //s:ansistring;
   TerminatorPos:word;
   dr,te:boolean;
   x,y:word;
@@ -572,7 +574,7 @@ begin
         begin
           if Owner.FSynSer.CanWrite(100) then
           begin
-            s:=Owner.FCommandList[0];
+            //s:=Owner.FCommandList[0];
             Owner.FSynSer.SendString(Owner.FCommandList[0]);
             Owner.FCommandList.Delete(0);
             //in most cases, we expect a read after a write ... wait for it ... ;-)
@@ -588,7 +590,7 @@ begin
       begin
         if te then
         begin
-          DataString:=Owner.FSynSer.RecvTerminated(10,Owner.Terminator);
+          DataString:=Owner.FSynSer.RecvTerminated(10000,Owner.Terminator);
           dr:=((Owner.FSynSer.LastError<>ErrTimeout) AND (Length(DataString)>0));
           if dr then Owner.FData:=DataString+Owner.Terminator;
         end
