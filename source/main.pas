@@ -82,6 +82,7 @@ type
     Panel1: TPanel;
     panelDriveFeedback: TPanel;
     panelDrivePosition: TPanel;
+    panelDriveTarget: TPanel;
     panelDriveStatus: TPanel;
     PanelControl: TPanel;
     PanelEnable: TPanel;
@@ -212,10 +213,10 @@ type
 
     VelocityDisplay        : TdsSevenSegmentMultiDisplay;
     PositionDisplay        : TdsSevenSegmentMultiDisplay;
+    TargetDisplay          : TdsSevenSegmentMultiDisplay;
     ForceDisplay           : TdsSevenSegmentMultiDisplay;
 
     MouseUpEvent           : TSimpleEvent;
-
 
     procedure IDNCompare(Sender: TObject; Item1, Item2: TListItem; {%H-}Data: Integer; var Compare: Integer);
     procedure ShowDataUpdateInfo(s:string);
@@ -288,6 +289,7 @@ type
     procedure ProcessMode(const CD: TCOMMANDDATA);
     procedure ProcessVelocity(const CD: TCOMMANDDATA);
     procedure ProcessPosition(const CD: TCOMMANDDATA);
+    procedure ProcessTarget(const CD: TCOMMANDDATA);
     procedure ProcessForce(const CD: TCOMMANDDATA);
 
     procedure ProcessDiskDriveData(const Drive: word; StoreOnDisk:boolean);
@@ -421,6 +423,23 @@ begin
     Hint:='Drive position';
     ShowHint:=True;
   end;
+
+  TargetDisplay:=TdsSevenSegmentMultiDisplay.Create(panelDriveTarget);
+  with TargetDisplay do
+  begin
+    Parent:=panelDriveTarget;
+    OnColor:=clBlue;
+    OffColor:=ChangeBrightness(OnColor,0.1);
+    DisplayCount:=7;
+    BorderWidth:=4;
+    //Anchors:=[akLeft,akRight];
+    //AnchorSide[akLeft].Control:=nil;
+    //AnchorSide[akTop].Control:=nil;
+    Align:=alClient;
+    Hint:='Drive position';
+    ShowHint:=True;
+  end;
+
 
   VelocityDisplay:=TdsSevenSegmentMultiDisplay.Create(panelDriveFeedback);
   with VelocityDisplay do
@@ -2025,8 +2044,8 @@ begin
   // Stop command "position spindle", just to be sure
   CD.NUMID:=152;
   SCS.Raw:=0;
-  CD.DATA:=DecimalToBinaryString(SCS.Raw,DirectDrive);
-  success:=ProcessCommand(CD,s);
+  CD.DATA:=DecimalToBinaryString(SCS.Raw,2,DirectDrive);
+  success:=ProcessCommand(CD,s,false,true);
 
   // Set relative via relative offset
   // If relative, use 0180 for offset
@@ -2069,8 +2088,8 @@ begin
   SCS.Raw:=0;
   SCS.Data.CommandSetInDrive:=1;
   SCS.Data.ExecutionOfCommandInDriveEnabled:=1;
-  CD.DATA:=DecimalToBinaryString(SCS.Raw,DirectDrive);
-  success:=ProcessCommand(CD,s);
+  CD.DATA:=DecimalToBinaryString(SCS.Raw,2,DirectDrive);
+  success:=ProcessCommand(CD,s,false,true);
 
   rep:=Reps;
   while (rep>0) do
@@ -2086,6 +2105,8 @@ begin
     // Read position during move
     repeat sleep(500) until WaitForPosition;
 
+    (*
+
     // Set offset
     CD.NUMID:=180;
     CD.DATA:='-'+editDist.Text;;
@@ -2094,6 +2115,8 @@ begin
 
     // Read position during move
     repeat sleep(50) until WaitForPosition;
+
+    *)
   end;
 
   // Stop command "position spindle"
@@ -2815,6 +2838,7 @@ begin
 
   VelocityDisplay.Value:=0;
   PositionDisplay.Value:=0;
+  TargetDisplay.Value:=0;
   ForceDisplay.Value:=0;
 
   CD.DATA:=sUN;
@@ -3542,6 +3566,16 @@ begin
   end;
 end;
 
+procedure TForm1.ProcessTarget(const CD: TCOMMANDDATA);
+begin
+  // This is a GUI update, so only process if we have data of the current visible drive
+  if (CD.SETID=ActiveDrive) then
+  begin
+    TargetDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
+  end;
+end;
+
+
 procedure TForm1.ProcessForce(const CD: TCOMMANDDATA);
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
@@ -4221,6 +4255,7 @@ begin
     with DRIVE_PRIMARYMODE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))         then ProcessMode(LocalCD);
     with DRIVE_SPEED do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))               then ProcessVelocity(LocalCD);
     with DRIVE_POSITION do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))            then ProcessPosition(LocalCD);
+    with DRIVE_TARGET do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))              then ProcessTarget(LocalCD);
     with DRIVE_TORQUE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))              then ProcessForce(LocalCD);
     with DRIVE_INTERFACE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))           then ProcessDR14(LocalCD);
     with DRIVE_CONTROLWORD do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))         then ProcessDR134(LocalCD);

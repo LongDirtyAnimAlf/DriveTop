@@ -36,8 +36,8 @@ object Form1: TForm1
     Left = 8
     Height = 141
     Top = 496
-    Width = 592
-    Anchors = [akTop, akLeft, akRight, akBottom]
+    Width = 408
+    Anchors = [akTop, akLeft, akBottom]
     BorderSpacing.Left = 8
     BorderSpacing.Bottom = 4
     ScrollBars = ssAutoVertical
@@ -728,7 +728,7 @@ object Form1: TForm1
         )
         ColWidths = (
           64
-          69
+          52
         )
       end
     end
@@ -1331,7 +1331,7 @@ object Form1: TForm1
         )
         ColWidths = (
           64
-          196
+          179
         )
       end
       object btnStartTaskA: TButton
@@ -1518,14 +1518,14 @@ object Form1: TForm1
       AnchorSideRight.Control = TabControl1
       AnchorSideRight.Side = asrBottom
       Left = 260
-      Height = 201
+      Height = 154
       Top = 158
       Width = 322
       Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Top = 12
       BorderSpacing.Right = 8
       Caption = 'Drive Commands'
-      ClientHeight = 181
+      ClientHeight = 134
       ClientWidth = 318
       TabOrder = 1
       object btnAxisStatus: TButton
@@ -1560,27 +1560,27 @@ object Form1: TForm1
         OnClick = btnManualAxisClick
       end
       object btnPhase2: TButton
-        Left = 16
+        Left = 8
         Height = 26
-        Top = 112
+        Top = 104
         Width = 50
         Caption = 'Phase2'
         TabOrder = 3
         OnClick = btnAxisCommandClick
       end
       object btnPhase3: TButton
-        Left = 72
+        Left = 64
         Height = 26
-        Top = 110
+        Top = 104
         Width = 50
         Caption = 'Phase3'
         TabOrder = 4
         OnClick = btnAxisCommandClick
       end
       object btnPhase4: TButton
-        Left = 128
+        Left = 120
         Height = 26
-        Top = 110
+        Top = 104
         Width = 50
         Caption = 'Phase4'
         TabOrder = 5
@@ -1672,7 +1672,7 @@ object Form1: TForm1
       AnchorSideRight.Side = asrBottom
       Left = 10
       Height = 116
-      Top = 196
+      Top = 272
       Width = 242
       Anchors = [akTop, akLeft, akRight]
       AutoSize = True
@@ -1795,12 +1795,12 @@ object Form1: TForm1
     end
     object grpDriveDashBoard: TGroupBox
       Left = 8
-      Height = 164
+      Height = 240
       Top = 32
       Width = 244
       AutoSize = True
       Caption = 'Drive Dashboard'
-      ClientHeight = 144
+      ClientHeight = 220
       ClientWidth = 240
       Constraints.MaxWidth = 244
       Constraints.MinWidth = 244
@@ -1925,15 +1925,15 @@ object Form1: TForm1
       end
       object panelDriveFeedback: TPanel
         AnchorSideLeft.Control = grpDriveDashBoard
-        AnchorSideTop.Control = panelDrivePosition
+        AnchorSideTop.Control = panelDriveTarget
         AnchorSideTop.Side = asrBottom
         AnchorSideRight.Control = grpDriveDashBoard
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = grpDriveDashBoard
         AnchorSideBottom.Side = asrBottom
         Left = 4
-        Height = 40
-        Top = 100
+        Height = 52
+        Top = 164
         Width = 232
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Around = 4
@@ -1956,21 +1956,21 @@ object Form1: TForm1
         Pen.Width = 3
         Shape = stCircle
       end
-    end
-    object lbDriveModes: TListBox
-      AnchorSideLeft.Control = grpDriveInfo
-      AnchorSideTop.Control = grpDriveInfo
-      AnchorSideTop.Side = asrBottom
-      AnchorSideRight.Control = grpDriveInfo
-      AnchorSideRight.Side = asrBottom
-      Left = 10
-      Height = 64
-      Top = 316
-      Width = 242
-      Anchors = [akTop, akLeft, akRight]
-      BorderSpacing.Top = 4
-      ItemHeight = 0
-      TabOrder = 6
+      object panelDriveTarget: TPanel
+        AnchorSideLeft.Control = grpDriveDashBoard
+        AnchorSideTop.Control = panelDrivePosition
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = shapeAlive
+        AnchorSideBottom.Control = panelDriveFeedback
+        Left = 4
+        Height = 60
+        Top = 100
+        Width = 211
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Around = 4
+        Constraints.MinHeight = 60
+        TabOrder = 3
+      end
     end
     object grpDriveStatus: TGroupBox
       AnchorSideLeft.Control = grpDriveDashBoard
@@ -1995,7 +1995,7 @@ object Form1: TForm1
       ChildSizing.ControlsPerLine = 3
       ClientHeight = 60
       ClientWidth = 270
-      TabOrder = 7
+      TabOrder = 6
       object panelInPosition: TPanel
         Left = 2
         Height = 26
@@ -2139,7 +2139,7 @@ object Form1: TForm1
       ParentShowHint = False
       Position = 1
       ShowHint = True
-      TabOrder = 8
+      TabOrder = 7
       Thousands = False
     end
     object stDriveAddress: TStaticText
@@ -2169,7 +2169,7 @@ object Form1: TForm1
       ParentColor = False
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 9
+      TabOrder = 8
     end
   end
   object lblTime: TLabel
@@ -2216,7 +2216,7 @@ object Form1: TForm1
     Left = 8
     Height = 23
     Top = 641
-    Width = 592
+    Width = 408
     Anchors = [akLeft, akRight, akBottom]
     BorderSpacing.Left = 8
     BorderSpacing.Bottom = 4
@@ -2235,6 +2235,24 @@ object Form1: TForm1
     Caption = 'STOP'
     TabOrder = 11
     OnClick = btnStopClick
+  end
+  object lbDriveModes: TListBox
+    AnchorSideLeft.Control = Memo1
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = Memo1
+    AnchorSideRight.Control = TabControl1
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 421
+    Height = 168
+    Top = 496
+    Width = 179
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    BorderSpacing.Left = 5
+    BorderSpacing.Bottom = 4
+    ItemHeight = 0
+    TabOrder = 12
   end
   object OpenDialog1: TOpenDialog
     Left = 712
