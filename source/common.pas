@@ -367,17 +367,24 @@ begin
 end;
 
 function IDN2CD(const IDN:string; const DriveNumber:byte):TCOMMANDDATA;
+var
+  i:integer;
 begin
   Result:=Default(TCOMMANDDATA);
   if (Length(IDN)>7) then
   begin
+    i:=0;
+    while IDN[i+1] in ['S','P','T','C','A','-','0'..'9'] do
+    begin
+     Inc(i);
+     if i=Length(IDN) then break;
+    end;
     if IDN[1]='S' then Result.CCLASS:=ccDrive;
     if IDN[1]='P' then Result.CCLASS:=ccDriveSpecific;
     if IDN[1]='T' then Result.CCLASS:=ccTask;
     if IDN[1]='C' then Result.CCLASS:=ccControl;
     if IDN[1]='A' then Result.CCLASS:=ccAxis;
-    Result.MEMORY:=(Pos('-7-',IDN)=2);
-    Result.NUMID:=StrToInt(Copy(IDN,5,4));
+    if i>4 then Result.NUMID:=StrToInt(Copy(IDN,5,i-4));
     Result.SETID:=DriveNumber;
   end;
 end;

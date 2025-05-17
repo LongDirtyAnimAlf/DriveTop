@@ -578,7 +578,7 @@ begin
             Owner.FSynSer.SendString(Owner.FCommandList[0]);
             Owner.FCommandList.Delete(0);
             //in most cases, we expect a read after a write ... wait for it ... ;-)
-            //Owner.FSynSer.CanRead(100);
+            Owner.FSynSer.CanRead(100);
           end;
         end;
       finally
@@ -586,7 +586,7 @@ begin
       end;
 
       dr:=false;
-      if Owner.FSynSer.CanRead(100) then
+      if Owner.FSynSer.CanRead(1) then
       begin
         if te then
         begin

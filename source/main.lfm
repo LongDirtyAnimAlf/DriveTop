@@ -1,11 +1,11 @@
 object Form1: TForm1
   Left = 269
-  Height = 591
+  Height = 668
   Top = 169
   Width = 1142
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'DriveTop'
-  ClientHeight = 591
+  ClientHeight = 668
   ClientWidth = 1142
   Menu = MainMenu1
   OnCreate = FormCreate
@@ -34,7 +34,7 @@ object Form1: TForm1
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = editStatus
     Left = 8
-    Height = 64
+    Height = 141
     Top = 496
     Width = 592
     Anchors = [akTop, akLeft, akRight, akBottom]
@@ -105,19 +105,19 @@ object Form1: TForm1
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 608
-    Height = 575
+    Height = 652
     Top = 8
     Width = 526
-    ActivePage = TabSheet1
+    ActivePage = tabMove
     Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Top = 8
     BorderSpacing.Right = 8
     BorderSpacing.Bottom = 8
-    TabIndex = 0
+    TabIndex = 1
     TabOrder = 6
     object TabSheet1: TTabSheet
       Caption = 'Drive data'
-      ClientHeight = 547
+      ClientHeight = 624
       ClientWidth = 518
       object lvParameters: TListView
         AnchorSideLeft.Control = TabSheet1
@@ -126,7 +126,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = vleParamDetails
         Left = 8
-        Height = 363
+        Height = 440
         Top = 8
         Width = 502
         Anchors = [akTop, akLeft, akRight, akBottom]
@@ -162,7 +162,7 @@ object Form1: TForm1
         AnchorSideBottom.Control = synDataUpdate
         Left = 8
         Height = 19
-        Top = 386
+        Top = 463
         Width = 101
         Anchors = [akLeft, akBottom]
         BorderSpacing.Left = 8
@@ -180,7 +180,7 @@ object Form1: TForm1
         AnchorSideBottom.Control = synDataUpdate
         Left = 246
         Height = 25
-        Top = 382
+        Top = 459
         Width = 122
         Anchors = [akRight, akBottom]
         AutoSize = True
@@ -199,7 +199,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 8
         Height = 124
-        Top = 415
+        Top = 492
         Width = 360
         BorderSpacing.Around = 8
         Anchors = [akLeft, akBottom]
@@ -696,7 +696,7 @@ object Form1: TForm1
         Left = 376
         Height = 160
         Hint = 'Edit value field to update data.'
-        Top = 379
+        Top = 456
         Width = 134
         Anchors = [akLeft, akRight, akBottom]
         AutoEdit = False
@@ -734,332 +734,369 @@ object Form1: TForm1
     end
     object tabMove: TTabSheet
       Caption = 'Movement'
-      ClientHeight = 547
+      ClientHeight = 624
       ClientWidth = 518
-      object shapeBase: TShape
+      object MovementPanel1: TPanel
         AnchorSideLeft.Control = tabMove
         AnchorSideTop.Control = tabMove
-        AnchorSideBottom.Control = tabMove
-        AnchorSideBottom.Side = asrBottom
-        Left = 12
-        Height = 523
-        Top = 12
-        Width = 299
-        Anchors = [akTop, akLeft, akBottom]
-        BorderSpacing.Left = 12
-        BorderSpacing.Top = 12
-        BorderSpacing.Bottom = 12
-        Pen.Width = 10
-      end
-      object shapeWork: TShape
-        AnchorSideLeft.Control = shapeBase
-        AnchorSideTop.Control = shapeBase
-        AnchorSideRight.Control = shapeBase
+        AnchorSideRight.Control = tabMove
         AnchorSideRight.Side = asrBottom
-        AnchorSideBottom.Control = shapeBase
-        AnchorSideBottom.Side = asrBottom
-        Left = 32
-        Height = 423
-        Top = 32
-        Width = 259
-        Anchors = [akTop, akLeft, akRight, akBottom]
-        BorderSpacing.Bottom = 60
-        BorderSpacing.Around = 20
-        Pen.Width = 10
-      end
-      object shapeStar: TShape
-        Left = 140
-        Height = 52
-        Top = 154
-        Width = 44
-        Brush.Color = clRed
-        Pen.Width = 4
-        Shape = stStar
-      end
-      object shapeArrowUp: TShape
-        AnchorSideLeft.Control = shapeStar
-        AnchorSideLeft.Side = asrCenter
-        AnchorSideTop.Side = asrBottom
-        AnchorSideBottom.Control = shapeStar
-        Left = 149
-        Height = 26
-        Hint = 'Move up'
-        Top = 120
-        Width = 26
-        Anchors = [akLeft, akBottom]
-        BorderSpacing.Bottom = 8
-        Brush.Color = clLime
-        Pen.Width = 2
-        OnMouseDown = ArrowMouseDown
-        OnMouseUp = ArrowMouseUp
-        Shape = stTriangle
-      end
-      object shapeArrowDown: TShape
-        AnchorSideLeft.Control = shapeStar
-        AnchorSideLeft.Side = asrCenter
-        AnchorSideTop.Control = shapeStar
-        AnchorSideTop.Side = asrBottom
-        Left = 149
-        Height = 26
-        Hint = 'Move down'
-        Top = 214
-        Width = 26
-        BorderSpacing.Top = 8
-        Brush.Color = clLime
-        Pen.Width = 2
-        OnMouseDown = ArrowMouseDown
-        OnMouseUp = ArrowMouseUp
-        Shape = stTriangleDown
-      end
-      object shapeArrowRight: TShape
-        AnchorSideLeft.Control = shapeStar
-        AnchorSideLeft.Side = asrBottom
-        AnchorSideTop.Control = shapeStar
-        AnchorSideTop.Side = asrCenter
-        Left = 196
-        Height = 26
-        Hint = 'Move right'
-        Top = 167
-        Width = 26
-        BorderSpacing.Left = 12
-        Brush.Color = clLime
-        Pen.Width = 2
-        OnMouseDown = ArrowMouseDown
-        OnMouseUp = ArrowMouseUp
-        Shape = stTriangleRight
-      end
-      object shapeArrowLeft: TShape
-        AnchorSideTop.Control = shapeStar
-        AnchorSideTop.Side = asrCenter
-        AnchorSideRight.Control = shapeStar
-        Left = 102
-        Height = 26
-        Hint = 'Move left'
-        Top = 167
-        Width = 26
-        Anchors = [akTop, akRight]
-        BorderSpacing.Right = 12
-        Brush.Color = clLime
-        Pen.Width = 2
-        OnMouseDown = ArrowMouseDown
-        OnMouseUp = ArrowMouseUp
-        Shape = stTriangleLeft
-      end
-      object labelReps: TLabel
-        Left = 336
-        Height = 15
-        Top = 352
-        Width = 59
-        Caption = 'Repetitions'
-      end
-      object editReps: TEdit
-        AnchorSideLeft.Control = grpSettings
-        AnchorSideTop.Control = grpSettings
-        AnchorSideTop.Side = asrBottom
-        Left = 328
-        Height = 38
-        Top = 405
-        Width = 64
-        BorderSpacing.Top = 16
-        Font.CharSet = ANSI_CHARSET
-        Font.Height = -21
-        Font.Pitch = fpVariable
-        Font.Quality = fqDraft
-        Font.Style = [fsBold]
-        NumbersOnly = True
-        ParentFont = False
+        Left = 0
+        Height = 457
+        Top = 0
+        Width = 518
+        Anchors = [akTop, akLeft, akRight]
+        BevelOuter = bvNone
+        ClientHeight = 457
+        ClientWidth = 518
         TabOrder = 0
-        Text = '100'
-      end
-      object btnStart: TButton
-        AnchorSideLeft.Control = editReps
-        AnchorSideLeft.Side = asrBottom
-        AnchorSideTop.Control = editReps
-        AnchorSideRight.Control = grpSettings
-        AnchorSideRight.Side = asrBottom
-        AnchorSideBottom.Control = editReps
-        AnchorSideBottom.Side = asrBottom
-        Left = 400
-        Height = 38
-        Top = 405
-        Width = 111
-        Anchors = [akTop, akLeft, akRight, akBottom]
-        BorderSpacing.Left = 8
-        Caption = 'Start repetitions'
-        TabOrder = 1
-        OnClick = btnStartClick
-      end
-      object grpSettings: TGroupBox
-        Left = 328
-        Height = 377
-        Top = 12
-        Width = 183
-        Caption = 'Movement settings'
-        ClientHeight = 357
-        ClientWidth = 179
-        TabOrder = 2
-        object selectDirection: TRadioGroup
+        object shapeBase: TShape
+          AnchorSideLeft.Control = MovementPanel1
+          AnchorSideTop.Control = MovementPanel1
+          AnchorSideBottom.Control = MovementPanel1
+          AnchorSideBottom.Side = asrBottom
+          Left = 12
+          Height = 430
+          Top = 12
+          Width = 299
+          BorderSpacing.Left = 12
+          BorderSpacing.Top = 12
+          BorderSpacing.Bottom = 12
+          Pen.Width = 10
+        end
+        object shapeWork: TShape
+          AnchorSideLeft.Control = shapeBase
+          AnchorSideTop.Control = shapeBase
+          AnchorSideRight.Control = shapeBase
+          AnchorSideRight.Side = asrBottom
+          AnchorSideBottom.Control = shapeBase
+          AnchorSideBottom.Side = asrBottom
+          Left = 32
+          Height = 330
+          Top = 32
+          Width = 259
+          Anchors = [akTop, akLeft, akRight, akBottom]
+          BorderSpacing.Bottom = 60
+          BorderSpacing.Around = 20
+          Pen.Width = 10
+        end
+        object shapeStar: TShape
+          Left = 140
+          Height = 52
+          Top = 154
+          Width = 44
+          Brush.Color = clRed
+          Pen.Width = 4
+          Shape = stStar
+        end
+        object shapeArrowUp: TShape
+          AnchorSideLeft.Control = shapeStar
+          AnchorSideLeft.Side = asrCenter
+          AnchorSideTop.Side = asrBottom
+          AnchorSideBottom.Control = shapeStar
+          Left = 149
+          Height = 26
+          Hint = 'Move up'
+          Top = 120
+          Width = 26
+          Anchors = [akLeft, akBottom]
+          BorderSpacing.Bottom = 8
+          Brush.Color = clLime
+          Pen.Width = 2
+          OnMouseDown = ArrowMouseDown
+          OnMouseUp = ArrowMouseUp
+          Shape = stTriangle
+        end
+        object shapeArrowDown: TShape
+          AnchorSideLeft.Control = shapeStar
+          AnchorSideLeft.Side = asrCenter
+          AnchorSideTop.Control = shapeStar
+          AnchorSideTop.Side = asrBottom
+          Left = 149
+          Height = 26
+          Hint = 'Move down'
+          Top = 214
+          Width = 26
+          BorderSpacing.Top = 8
+          Brush.Color = clLime
+          Pen.Width = 2
+          OnMouseDown = ArrowMouseDown
+          OnMouseUp = ArrowMouseUp
+          Shape = stTriangleDown
+        end
+        object shapeArrowRight: TShape
+          AnchorSideLeft.Control = shapeStar
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = shapeStar
+          AnchorSideTop.Side = asrCenter
+          Left = 196
+          Height = 26
+          Hint = 'Move right'
+          Top = 167
+          Width = 26
+          BorderSpacing.Left = 12
+          Brush.Color = clLime
+          Pen.Width = 2
+          OnMouseDown = ArrowMouseDown
+          OnMouseUp = ArrowMouseUp
+          Shape = stTriangleRight
+        end
+        object shapeArrowLeft: TShape
+          AnchorSideTop.Control = shapeStar
+          AnchorSideTop.Side = asrCenter
+          AnchorSideRight.Control = shapeStar
+          Left = 102
+          Height = 26
+          Hint = 'Move left'
+          Top = 167
+          Width = 26
+          Anchors = [akTop, akRight]
+          BorderSpacing.Right = 12
+          Brush.Color = clLime
+          Pen.Width = 2
+          OnMouseDown = ArrowMouseDown
+          OnMouseUp = ArrowMouseUp
+          Shape = stTriangleLeft
+        end
+        object labelReps: TLabel
+          AnchorSideLeft.Control = editReps
+          AnchorSideTop.Control = editReps
+          AnchorSideTop.Side = asrBottom
+          AnchorSideBottom.Control = editReps
+          Left = 335
+          Height = 15
+          Top = 435
+          Width = 59
+          Caption = 'Repetitions'
+        end
+        object editReps: TEdit
           AnchorSideLeft.Control = grpSettings
           AnchorSideTop.Control = grpSettings
-          AnchorSideRight.Control = grpSettings
-          AnchorSideRight.Side = asrBottom
-          Left = 8
-          Height = 96
-          Top = 8
-          Width = 163
-          Anchors = [akTop, akLeft, akRight]
-          AutoFill = True
-          BorderSpacing.Around = 8
-          Caption = 'Direction'
-          ChildSizing.LeftRightSpacing = 6
-          ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
-          ChildSizing.EnlargeVertical = crsHomogenousChildResize
-          ChildSizing.ShrinkHorizontal = crsScaleChilds
-          ChildSizing.ShrinkVertical = crsScaleChilds
-          ChildSizing.Layout = cclLeftToRightThenTopToBottom
-          ChildSizing.ControlsPerLine = 1
-          ClientHeight = 76
-          ClientWidth = 159
-          Items.Strings = (
-            'Up/down'
-            'Left/right'
-            'Jog'
-          )
-          OnClick = selectDirectionClick
-          OnSelectionChanged = selectDirectionSelectionChanged
+          AnchorSideTop.Side = asrBottom
+          Left = 335
+          Height = 38
+          Top = 397
+          Width = 64
+          BorderSpacing.Top = 16
+          Font.CharSet = ANSI_CHARSET
+          Font.Height = -21
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          NumbersOnly = True
+          ParentFont = False
           TabOrder = 0
-        end
-        object labelSpeed: TLabel
-          AnchorSideLeft.Control = grpSettings
-          AnchorSideTop.Control = editDist
-          AnchorSideTop.Side = asrBottom
-          AnchorSideRight.Control = grpSettings
-          AnchorSideRight.Side = asrBottom
-          Left = 8
-          Height = 15
-          Top = 179
-          Width = 75
-          BorderSpacing.Top = 8
-          BorderSpacing.Around = 8
-          Caption = 'Speed [mm/s]'
-        end
-        object editSpeed: TEdit
-          AnchorSideLeft.Control = grpSettings
-          AnchorSideTop.Control = labelSpeed
-          AnchorSideTop.Side = asrBottom
-          AnchorSideRight.Control = grpSettings
-          AnchorSideRight.Side = asrBottom
-          Left = 8
-          Height = 23
-          Top = 202
-          Width = 163
-          Anchors = [akTop, akLeft, akRight]
-          BorderSpacing.Around = 8
-          NumbersOnly = True
-          TabOrder = 1
-          Text = '10000'
-        end
-        object labelAccel: TLabel
-          AnchorSideLeft.Control = grpSettings
-          AnchorSideTop.Control = editSpeed
-          AnchorSideTop.Side = asrBottom
-          AnchorSideRight.Control = grpSettings
-          AnchorSideRight.Side = asrBottom
-          Left = 8
-          Height = 15
-          Top = 241
-          Width = 163
-          Anchors = [akTop, akLeft, akRight]
-          BorderSpacing.Top = 8
-          BorderSpacing.Around = 8
-          Caption = 'Accel [mm/s]'
-        end
-        object editAccel: TEdit
-          AnchorSideLeft.Control = grpSettings
-          AnchorSideTop.Control = labelAccel
-          AnchorSideTop.Side = asrBottom
-          AnchorSideRight.Control = grpSettings
-          AnchorSideRight.Side = asrBottom
-          Left = 8
-          Height = 23
-          Top = 264
-          Width = 163
-          Anchors = [akTop, akLeft, akRight]
-          BorderSpacing.Around = 8
-          NumbersOnly = True
-          TabOrder = 2
-          Text = '200'
-        end
-        object labelDist: TLabel
-          AnchorSideLeft.Control = grpSettings
-          AnchorSideTop.Control = selectDirection
-          AnchorSideTop.Side = asrBottom
-          Left = 8
-          Height = 15
-          Top = 117
-          Width = 78
-          BorderSpacing.Top = 5
-          BorderSpacing.Around = 8
-          Caption = 'Distance [mm]'
-        end
-        object editDist: TEdit
-          AnchorSideLeft.Control = grpSettings
-          AnchorSideTop.Control = labelDist
-          AnchorSideTop.Side = asrBottom
-          AnchorSideRight.Control = grpSettings
-          AnchorSideRight.Side = asrBottom
-          Left = 8
-          Height = 23
-          Top = 140
-          Width = 163
-          Anchors = [akTop, akLeft, akRight]
-          BorderSpacing.Around = 8
-          TabOrder = 3
           Text = '100'
-          OnKeyPress = editDistKeyPress
         end
-        object btnTest: TButton
-          AnchorSideLeft.Control = grpSettings
-          AnchorSideTop.Control = editAccel
-          AnchorSideTop.Side = asrBottom
+        object btnStart: TButton
+          AnchorSideLeft.Control = editReps
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = editReps
           AnchorSideRight.Control = grpSettings
           AnchorSideRight.Side = asrBottom
-          AnchorSideBottom.Control = grpSettings
+          AnchorSideBottom.Control = editReps
           AnchorSideBottom.Side = asrBottom
-          Left = 8
-          Height = 46
-          Top = 303
-          Width = 75
-          Anchors = [akTop, akLeft, akBottom]
-          BorderSpacing.Top = 8
-          BorderSpacing.Around = 8
-          Caption = 'Testrun'
-          TabOrder = 4
-          OnClick = btnTestClick
+          Left = 407
+          Height = 38
+          Top = 397
+          Width = 111
+          Anchors = [akTop, akLeft, akRight, akBottom]
+          BorderSpacing.Left = 8
+          Caption = 'Start repetitions'
+          TabOrder = 1
+          OnClick = btnStartClick
         end
-        object btnMove: TButton
-          AnchorSideTop.Control = editAccel
-          AnchorSideTop.Side = asrBottom
-          AnchorSideRight.Control = grpSettings
+        object grpSettings: TGroupBox
+          AnchorSideTop.Control = MovementPanel1
+          AnchorSideRight.Control = MovementPanel1
           AnchorSideRight.Side = asrBottom
-          AnchorSideBottom.Control = grpSettings
-          AnchorSideBottom.Side = asrBottom
-          Left = 96
-          Height = 46
-          Top = 303
-          Width = 75
-          Anchors = [akTop, akRight, akBottom]
-          BorderSpacing.Top = 8
-          BorderSpacing.Around = 8
-          Caption = 'Move'
-          TabOrder = 5
-          OnClick = btnMoveClick
+          Left = 335
+          Height = 377
+          Top = 4
+          Width = 183
+          Anchors = [akTop, akRight]
+          BorderSpacing.Top = 4
+          Caption = 'Movement settings'
+          ClientHeight = 357
+          ClientWidth = 179
+          TabOrder = 2
+          object selectDirection: TRadioGroup
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = grpSettings
+            AnchorSideRight.Control = grpSettings
+            AnchorSideRight.Side = asrBottom
+            Left = 8
+            Height = 96
+            Top = 8
+            Width = 163
+            Anchors = [akTop, akLeft, akRight]
+            AutoFill = True
+            BorderSpacing.Around = 8
+            Caption = 'Direction'
+            ChildSizing.LeftRightSpacing = 6
+            ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+            ChildSizing.EnlargeVertical = crsHomogenousChildResize
+            ChildSizing.ShrinkHorizontal = crsScaleChilds
+            ChildSizing.ShrinkVertical = crsScaleChilds
+            ChildSizing.Layout = cclLeftToRightThenTopToBottom
+            ChildSizing.ControlsPerLine = 1
+            ClientHeight = 76
+            ClientWidth = 159
+            Items.Strings = (
+              'Up/down'
+              'Left/right'
+              'Jog'
+            )
+            OnClick = selectDirectionClick
+            OnSelectionChanged = selectDirectionSelectionChanged
+            TabOrder = 0
+          end
+          object labelSpeed: TLabel
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = editDist
+            AnchorSideTop.Side = asrBottom
+            AnchorSideRight.Control = grpSettings
+            AnchorSideRight.Side = asrBottom
+            Left = 8
+            Height = 15
+            Top = 179
+            Width = 75
+            BorderSpacing.Top = 8
+            BorderSpacing.Around = 8
+            Caption = 'Speed [mm/s]'
+          end
+          object editSpeed: TEdit
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = labelSpeed
+            AnchorSideTop.Side = asrBottom
+            AnchorSideRight.Control = grpSettings
+            AnchorSideRight.Side = asrBottom
+            Left = 8
+            Height = 23
+            Top = 202
+            Width = 163
+            Anchors = [akTop, akLeft, akRight]
+            BorderSpacing.Around = 8
+            NumbersOnly = True
+            TabOrder = 1
+            Text = '10000'
+          end
+          object labelAccel: TLabel
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = editSpeed
+            AnchorSideTop.Side = asrBottom
+            AnchorSideRight.Control = grpSettings
+            AnchorSideRight.Side = asrBottom
+            Left = 8
+            Height = 15
+            Top = 241
+            Width = 163
+            Anchors = [akTop, akLeft, akRight]
+            BorderSpacing.Top = 8
+            BorderSpacing.Around = 8
+            Caption = 'Accel [mm/s]'
+          end
+          object editAccel: TEdit
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = labelAccel
+            AnchorSideTop.Side = asrBottom
+            AnchorSideRight.Control = grpSettings
+            AnchorSideRight.Side = asrBottom
+            Left = 8
+            Height = 23
+            Top = 264
+            Width = 163
+            Anchors = [akTop, akLeft, akRight]
+            BorderSpacing.Around = 8
+            NumbersOnly = True
+            TabOrder = 2
+            Text = '200'
+          end
+          object labelDist: TLabel
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = selectDirection
+            AnchorSideTop.Side = asrBottom
+            Left = 8
+            Height = 15
+            Top = 117
+            Width = 78
+            BorderSpacing.Top = 5
+            BorderSpacing.Around = 8
+            Caption = 'Distance [mm]'
+          end
+          object editDist: TEdit
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = labelDist
+            AnchorSideTop.Side = asrBottom
+            AnchorSideRight.Control = grpSettings
+            AnchorSideRight.Side = asrBottom
+            Left = 8
+            Height = 23
+            Top = 140
+            Width = 163
+            Anchors = [akTop, akLeft, akRight]
+            BorderSpacing.Around = 8
+            TabOrder = 3
+            Text = '100'
+            OnKeyPress = editDistKeyPress
+          end
+          object btnTest: TButton
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = editAccel
+            AnchorSideTop.Side = asrBottom
+            AnchorSideRight.Control = grpSettings
+            AnchorSideRight.Side = asrBottom
+            AnchorSideBottom.Control = grpSettings
+            AnchorSideBottom.Side = asrBottom
+            Left = 8
+            Height = 46
+            Top = 303
+            Width = 75
+            Anchors = [akTop, akLeft, akBottom]
+            BorderSpacing.Top = 8
+            BorderSpacing.Around = 8
+            Caption = 'Testrun'
+            TabOrder = 4
+            OnClick = btnTestClick
+          end
+          object btnMove: TButton
+            AnchorSideTop.Control = editAccel
+            AnchorSideTop.Side = asrBottom
+            AnchorSideRight.Control = grpSettings
+            AnchorSideRight.Side = asrBottom
+            AnchorSideBottom.Control = grpSettings
+            AnchorSideBottom.Side = asrBottom
+            Left = 96
+            Height = 46
+            Top = 303
+            Width = 75
+            Anchors = [akTop, akRight, akBottom]
+            BorderSpacing.Top = 8
+            BorderSpacing.Around = 8
+            Caption = 'Move'
+            TabOrder = 5
+            OnClick = btnMoveClick
+          end
         end
+      end
+      object Panel1: TPanel
+        AnchorSideLeft.Control = tabMove
+        AnchorSideRight.Control = tabMove
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = tabMove
+        AnchorSideBottom.Side = asrBottom
+        Left = 0
+        Height = 165
+        Top = 459
+        Width = 518
+        Anchors = [akTop, akLeft, akRight, akBottom]
+        Caption = 'MovementPanel2'
+        TabOrder = 1
       end
     end
     object tabRawCommands: TTabSheet
       Caption = 'Raw Commands'
-      ClientHeight = 547
+      ClientHeight = 624
       ClientWidth = 518
       object pageRawCommands: TPageControl
         AnchorSideLeft.Control = tabRawCommands
@@ -1068,7 +1105,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = rgSubClass
         Left = 4
-        Height = 424
+        Height = 501
         Top = 4
         Width = 506
         ActivePage = tabVMDrive
@@ -1083,11 +1120,11 @@ object Form1: TForm1
         OnChange = pageRawCommandsChange
         object tabVMControl: TTabSheet
           Caption = 'VM-Control'
-          ClientHeight = 396
+          ClientHeight = 473
           ClientWidth = 498
           object lbVMSYSTEMCOMMANDS: TListBox
             Left = 0
-            Height = 396
+            Height = 473
             Top = 0
             Width = 498
             Align = alClient
@@ -1099,11 +1136,11 @@ object Form1: TForm1
         end
         object tabVMAxis: TTabSheet
           Caption = 'VM-Axis'
-          ClientHeight = 396
+          ClientHeight = 473
           ClientWidth = 498
           object lbVMAXISCOMMANDS: TListBox
             Left = 0
-            Height = 396
+            Height = 473
             Top = 0
             Width = 498
             Align = alClient
@@ -1115,11 +1152,11 @@ object Form1: TForm1
         end
         object tabVMTask: TTabSheet
           Caption = 'VM-Task'
-          ClientHeight = 396
+          ClientHeight = 473
           ClientWidth = 498
           object lbVMTASKCOMMANDS: TListBox
             Left = 0
-            Height = 396
+            Height = 473
             Top = 0
             Width = 498
             Align = alClient
@@ -1136,11 +1173,11 @@ object Form1: TForm1
           ChildSizing.EnlargeVertical = crsHomogenousChildResize
           ChildSizing.Layout = cclLeftToRightThenTopToBottom
           ChildSizing.ControlsPerLine = 1
-          ClientHeight = 396
+          ClientHeight = 473
           ClientWidth = 498
           object lbSERCOSPARAMS: TListBox
             Left = 0
-            Height = 188
+            Height = 227
             Top = 0
             Width = 498
             ExtendedSelect = False
@@ -1150,8 +1187,8 @@ object Form1: TForm1
           end
           object lbSERCOSCOMMANDS: TListBox
             Left = 0
-            Height = 188
-            Top = 208
+            Height = 226
+            Top = 247
             Width = 498
             ExtendedSelect = False
             ItemHeight = 0
@@ -1161,11 +1198,11 @@ object Form1: TForm1
         end
         object tabVMRegister: TTabSheet
           Caption = 'VM-Register'
-          ClientHeight = 396
+          ClientHeight = 473
           ClientWidth = 498
           object lbVMREGISTERS: TListBox
             Left = 0
-            Height = 396
+            Height = 473
             Top = 0
             Width = 498
             Align = alClient
@@ -1182,7 +1219,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 4
         Height = 103
-        Top = 436
+        Top = 513
         Width = 296
         Anchors = [akLeft, akBottom]
         AutoFill = True
@@ -1208,7 +1245,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         Left = 395
         Height = 23
-        Top = 436
+        Top = 513
         Width = 115
         Anchors = [akTop, akLeft, akRight]
         TabOrder = 2
@@ -1221,7 +1258,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         Left = 395
         Height = 23
-        Top = 463
+        Top = 540
         Width = 115
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Top = 4
@@ -1234,7 +1271,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 395
         Height = 25
-        Top = 514
+        Top = 591
         Width = 115
         Anchors = [akRight, akBottom]
         AutoSize = True
@@ -1247,7 +1284,7 @@ object Form1: TForm1
     end
     object tabProgramme: TTabSheet
       Caption = 'Programme'
-      ClientHeight = 547
+      ClientHeight = 624
       ClientWidth = 518
       object ValueListEditor1: TValueListEditor
         AnchorSideLeft.Control = tabProgramme
@@ -1255,7 +1292,7 @@ object Form1: TForm1
         AnchorSideBottom.Control = tabProgramme
         AnchorSideBottom.Side = asrBottom
         Left = 8
-        Height = 531
+        Height = 608
         Top = 8
         Width = 264
         Anchors = [akTop, akLeft, akBottom]
@@ -1294,7 +1331,7 @@ object Form1: TForm1
         )
         ColWidths = (
           64
-          179
+          196
         )
       end
       object btnStartTaskA: TButton
@@ -1316,7 +1353,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 282
         Height = 160
-        Top = 121
+        Top = 149
         Width = 232
         Anchors = []
         BorderSpacing.Around = 8
@@ -1389,7 +1426,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 282
         Height = 144
-        Top = 376
+        Top = 439
         Width = 232
         Anchors = []
         BorderSpacing.Around = 8
@@ -1577,20 +1614,20 @@ object Form1: TForm1
         OnClick = btnAxisCommandClick
       end
       object btnDriveInfo: TButton
-        Left = 192
+        Left = 148
         Height = 24
         Top = 72
-        Width = 80
-        Caption = 'Drive Info'
+        Width = 120
+        Caption = 'VM DriveData'
         TabOrder = 9
         OnClick = btnDriveInfoClick
       end
       object btnGetDriveData: TButton
         Left = 8
-        Height = 17
-        Top = 79
-        Width = 168
-        Caption = 'Get DriveData'
+        Height = 24
+        Top = 72
+        Width = 120
+        Caption = 'Direct DriveData'
         TabOrder = 10
         OnClick = btnGetDriveDataClick
       end
@@ -2139,7 +2176,7 @@ object Form1: TForm1
     AnchorSideTop.Control = Owner
     Left = 552
     Height = 15
-    Top = 16
+    Top = 19
     Width = 149
     Anchors = []
     AutoSize = False
@@ -2178,7 +2215,7 @@ object Form1: TForm1
     AnchorSideBottom.Side = asrBottom
     Left = 8
     Height = 23
-    Top = 564
+    Top = 641
     Width = 592
     Anchors = [akLeft, akRight, akBottom]
     BorderSpacing.Left = 8

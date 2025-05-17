@@ -24,6 +24,63 @@ type
   POMD = ^TOMD;
   TOMD = array[TOPERATIONMODE] of TOMDATA;
 
+  //S-0-0011, Class 1 diagnostics
+  TDRIVEPARAMETER_0011 = bitpacked record
+      case integer of
+          1 : (  Data : record
+                   Reserved0                               : T1BITS;
+                   AmplifierOvertemperatureShutdown        : T1BITS;
+                   MotorOvertemperatureShutdown            : T1BITS;
+                   Reserved1                               : T1BITS;
+                   ControlVoltageError                     : T1BITS;
+                   FeedbackError                           : T1BITS;
+                   Reserved2                               : T1BITS;
+                   Overcurrent                             : T1BITS;
+                   Reserved3                               : T1BITS;
+                   UndervoltageError                       : T1BITS;
+                   Reserved4                               : T1BITS;
+                   ExcessiveDeviation                      : T1BITS;
+                   CommunicationError                      : T1BITS;
+                   TravelLimitSwitchExceeded               : T1BITS;
+                   Reserved5                               : T1BITS;
+                   ManufacturerSpecificError               : T1BITS;
+                 end
+              );
+          2 : (
+               Bits            : bitpacked array[0..15] of T1BITS;
+              );
+          3 : (
+               Raw             : Word;
+              );
+
+  end;
+
+
+  //S-0-0012, Class 2 diagnostics
+  TDRIVEPARAMETER_0012 = bitpacked record
+      case integer of
+          1 : (  Data : record
+                   OverloadWarning                         : T1BITS;
+                   AmplifierOvertemperatureWarning         : T1BITS;
+                   MotorOvertemperatureWarning             : T1BITS;
+                   Reserved1                               : T2BITS;
+                   PositioningVelocity                     : T1BITS;
+                   Reserved2                               : T7BITS;
+                   TargetPositionOutsideTravellimitSwitch  : T1BITS;
+                   Reserved3                               : T1BITS;
+                   ManufacturerSpecificWarning             : T1BITS;
+                 end
+              );
+          2 : (
+               Bits            : bitpacked array[0..15] of T1BITS;
+              );
+          3 : (
+               Raw             : Word;
+              );
+
+  end;
+
+  //S-0-0013, Class 3 diagnostics
   TDRIVEPARAMETER_0013 = bitpacked record
       case integer of
           1 : (  Data : record
@@ -97,9 +154,9 @@ type
           1 : (  Data : record
                    ControlInfoServiceChannel : T6BITS;
                    RealtimeStatus            : T2BITS;
-                   CommandMode               : T3BITS;
-                   Reserved1                 : T1BITS;
-                   InterpolatorCycle         : T1BITS;
+                   CommandMode               : T2BITS;
+                   IPOSYNC                   : T1BITS;
+                   Reserved1                 : T2BITS;
                    DriveHalt                 : T1BITS;
                    DriveEnable               : T1BITS;
                    DriveOn                   : T1BITS;
@@ -164,7 +221,7 @@ type
   TDRIVEPARAMETER_0154 = bitpacked record
       case integer of
           1 : (  Data : record
-                   Direction          : T2BITS; // 0 = clocj ; 1 = counter-clock ; 2 = shortest
+                   Direction          : T2BITS; // 0 = clockwise ; 1 = counter-clockwise ; 2 = shortest
                    TraversingMethod   : T1BITS; // 0 = spindle angular position ; 1 = spindle path
                    Encoder            : T1BITS; // 0 = moto ; 1 = external
                    Reserved5          : T12BITS;
@@ -179,6 +236,7 @@ type
 
   end;
 
+  //S-0-0182, Manufacturer Class 3 Diagnostics
   TDRIVEPARAMETER_0182 = bitpacked record
       case integer of
           1 : (  Data : record
@@ -333,8 +391,10 @@ const
   DRIVE_SIGNAL_STATUSWORD      : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 144);
   DRIVE_SIGNAL_CONTROLWORD     : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 145);
 
-  DRIVE_DIAGNOSTIC_CLASS3      : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 182);
-
+  DRIVE_DIAGNOSTIC_CLASS1                   : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 11);
+  DRIVE_DIAGNOSTIC_CLASS2                   : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 12);
+  DRIVE_DIAGNOSTIC_CLASS3                   : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 13);
+  DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3      : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 182);
 
   function  SaveDriveRegisterData(const CD:TCOMMANDDATA):boolean;
   function  SaveDriveRegisterDataRaw(const DriveNumber:word; const RR:TRegisterRecord):boolean;overload;
@@ -369,7 +429,7 @@ var
   DriveOperationModes         : TOMD;
   DriveOperationModesLagLess  : TOMD;
   BASICDRIVEDATA              : array[0..5] of TCOMMAND;
-  REALTIMEDRIVEDATA           : array[0..7] of TCOMMAND;
+  REALTIMEDRIVEDATA           : array[0..10] of TCOMMAND;
 
 implementation
 
@@ -728,7 +788,10 @@ begin
   REALTIMEDRIVEDATA[4]:=DRIVE_STATUSWORD;
   REALTIMEDRIVEDATA[5]:=DRIVE_DIAGNOSTIC;
   REALTIMEDRIVEDATA[6]:=DRIVE_INTERFACE;
-  REALTIMEDRIVEDATA[7]:=DRIVE_DIAGNOSTIC_CLASS3;
+  REALTIMEDRIVEDATA[7]:=DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3;
+  REALTIMEDRIVEDATA[8]:=DRIVE_DIAGNOSTIC_CLASS1;
+  REALTIMEDRIVEDATA[9]:=DRIVE_DIAGNOSTIC_CLASS2;
+  REALTIMEDRIVEDATA[10]:=DRIVE_DIAGNOSTIC_CLASS3;
 
   //REALTIMEDRIVEDATA[8]:=DRIVE_SIGNAL_STATUSWORD;
   //REALTIMEDRIVEDATA[9]:=DRIVE_SIGNAL_CONTROLWORD;

@@ -78,6 +78,8 @@ type
     grpDriveStatus: TGroupBox;
     lbDriveModes: TListBox;
     lblTime: TLabel;
+    MovementPanel1: TPanel;
+    Panel1: TPanel;
     panelDriveFeedback: TPanel;
     panelDrivePosition: TPanel;
     panelDriveStatus: TPanel;
@@ -269,6 +271,9 @@ type
 
     procedure ProcessMotorSerial(const CD:TCOMMANDDATA);
 
+    procedure ProcessDR11(const CD: TCOMMANDDATA);
+    procedure ProcessDR12(const CD: TCOMMANDDATA);
+    procedure ProcessDR13(const CD: TCOMMANDDATA);
     procedure ProcessDR14(const CD: TCOMMANDDATA);
     procedure ProcessDR134(const CD: TCOMMANDDATA);
     procedure ProcessDR135(const CD: TCOMMANDDATA);
@@ -931,9 +936,10 @@ begin
     (FComDevice AS TLazSerial).Terminator:=TERDT;
 
     CD:=Default(TCOMMANDDATA);
-    CD.CCLASS:=ccDriveSpecific;
+
     CD.CSUBCLASS:=mscParameterData;
 
+    CD.CCLASS:=ccDriveSpecific;
     CD.NUMID:=4021;
     CD.DATA:='0';
     Success:=ProcessCommand(CD,s,false,true);
@@ -956,10 +962,20 @@ begin
     Success:=ProcessCommand(CD,s,false,true);
     Memo1.Lines.Append(s);
 
+    // Select drive
     c:=Format('BCD:%.2d',[ActiveDriveInfo.DRIVEADDRESS]);
     s:='';
     Success:=ProcessDirectDriveCommand(c,s,false,true);
     Memo1.Lines.Append('Select drive response: '+s);
+
+    // Deactivate resident memory mode to preserve EEPROM
+    CD.CCLASS:=ccDrive;
+    CD.SETID:=ActiveDrive;
+    CD.NUMID:=269;
+    CD.DATA:='1';
+    success:=ProcessCommand(CD,s);
+    Memo1.Lines.Append(s);
+
   end
   else
   begin
@@ -1838,94 +1854,96 @@ var
   ADriveList   : TStringList;
   c            : word;
 begin
-  CD:=Default(TCOMMANDDATA);
-
-  // Get the list length by a block command ... faster !
-  CD.CCLASS:=ccControl;
-  CD.CSUBCLASS:=mscBlock;
-  CD.NUMID:=2011;
-  CD.SETID:=ActiveDrive;
-
-  CD.STEPID:=STEPLISTSTART;
-  success:=ProcessCommand(CD,s);
-  listlength:=StringToIntSafe(s);
-  //success:=(s<>sERR);
-
-  if (listlength>0) then
+  if (NOT DirectDrive) then
   begin
-    ADriveList:=TStringList.Create;
-    ADriveList.Delimiter:=' ';
-    ADriveList.StrictDelimiter:=true;
-    try
-      CD.STEPID:=1;
-      success:=ProcessCommand(CD,s);
-      if (success AND (s<>sERR)) then
-      begin
-        ADriveList.DelimitedText:=s;
+    CD:=Default(TCOMMANDDATA);
 
-        CD:=Default(TCOMMANDDATA);
-        CD.CCLASS:=ccDrive;
+    // Get the list length by a block command ... faster !
+    CD.CCLASS:=ccControl;
+    CD.CSUBCLASS:=mscBlock;
+    CD.NUMID:=2011;
+    CD.SETID:=ActiveDrive;
 
-        // Get drive details
-        for i:=0 to Pred(ADriveList.Count) do
+    CD.STEPID:=STEPLISTSTART;
+    success:=ProcessCommand(CD,s);
+    listlength:=StringToIntSafe(s);
+    //success:=(s<>sERR);
+
+    if (listlength>0) then
+    begin
+      ADriveList:=TStringList.Create;
+      ADriveList.Delimiter:=' ';
+      ADriveList.StrictDelimiter:=true;
+      try
+        CD.STEPID:=1;
+        success:=ProcessCommand(CD,s);
+        if (success AND (s<>sERR)) then
         begin
-          s:=ADriveList[i];
-          CD.SETID:=StringToIntSafe(s);
-          if (CD.SETID=0) then continue;
-          Memo1.Lines.Append('Drive: '+s);
-          data:='Drive '+ADriveList[i]+'. ';
+          ADriveList.DelimitedText:=s;
 
-          for c in DRIVECOMMANDS do
+          CD:=Default(TCOMMANDDATA);
+          CD.CCLASS:=ccDrive;
+
+          // Get drive details
+          for i:=0 to Pred(ADriveList.Count) do
           begin
-            CD.NUMID:=c;
-            CD.CSUBCLASS:=mscName;
-            CD.DATA:='';
-            success:=ProcessCommand(CD,s);
-            data:=data+s+': ';
+            s:=ADriveList[i];
+            CD.SETID:=StringToIntSafe(s);
+            if (CD.SETID=0) then continue;
+            Memo1.Lines.Append('Drive: '+s);
+            data:='Drive '+ADriveList[i]+'. ';
 
-            CD.CSUBCLASS:=mscParameterData;
-            CD.DATA:='';
-            success:=ProcessCommand(CD,s);
-            if (success AND (s<>sERR) AND (CD.NUMID=32)) then s:=GetDriveModeDescription(s);
-            data:=data+s+'. ';
+            for c in DRIVECOMMANDS do
+            begin
+              CD.NUMID:=c;
+              CD.CSUBCLASS:=mscName;
+              CD.DATA:='';
+              success:=ProcessCommand(CD,s);
+              data:=data+s+': ';
+
+              CD.CSUBCLASS:=mscParameterData;
+              CD.DATA:='';
+              success:=ProcessCommand(CD,s);
+              if (success AND (s<>sERR) AND (CD.NUMID=32)) then s:=GetDriveModeDescription(s);
+              data:=data+s+'. ';
+            end;
+
+            Memo1.Lines.Append(data);
           end;
 
-          Memo1.Lines.Append(data);
-        end;
+          CD:=Default(TCOMMANDDATA);
+          CD.CCLASS:=ccDrive;
+          CD.CSUBCLASS:=mscList;
 
-        CD:=Default(TCOMMANDDATA);
-        CD.CCLASS:=ccDrive;
-        CD.CSUBCLASS:=mscList;
-
-        for i:=0 to Pred(ADriveList.Count) do
-        begin
-          s:=ADriveList[i];
-          CD.SETID:=StringToIntSafe(s);
-          if (CD.SETID=0) then continue;
-          for c in TELEGRAMCOMMANDS do
+          for i:=0 to Pred(ADriveList.Count) do
           begin
-            CD.NUMID:=c;
-            Memo1.Lines.Append('Drive: '+s);
-            CD.STEPID:=STEPLISTSTART;
-            success:=ProcessCommand(CD,s);
-            listlength:=StringToIntSafe(s);
-            for j:=1 to listlength do
+            s:=ADriveList[i];
+            CD.SETID:=StringToIntSafe(s);
+            if (CD.SETID=0) then continue;
+            for c in TELEGRAMCOMMANDS do
             begin
-              CD.STEPID:=j;
+              CD.NUMID:=c;
+              Memo1.Lines.Append('Drive: '+s);
+              CD.STEPID:=STEPLISTSTART;
               success:=ProcessCommand(CD,s);
-              //Memo1.Lines.Append(GetCommandDescription(CD.CCLASS,CD.NUMID)+': '+s);
-              Dec(listlength);
+              listlength:=StringToIntSafe(s);
+              for j:=1 to listlength do
+              begin
+                CD.STEPID:=j;
+                success:=ProcessCommand(CD,s);
+                //Memo1.Lines.Append(GetCommandDescription(CD.CCLASS,CD.NUMID)+': '+s);
+                Dec(listlength);
+              end;
             end;
           end;
+
         end;
-
+      finally
+        ADriveList.Free;
       end;
-    finally
-      ADriveList.Free;
+
     end;
-
   end;
-
 end;
 
 procedure TForm1.Button1Click(Sender: TObject);
@@ -2174,7 +2192,7 @@ begin
   *)
 
   // Wait for position
-  CD:=COMMAND2CD(DRIVE_DIAGNOSTIC_CLASS3,ActiveDrive);
+  CD:=COMMAND2CD(DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3,ActiveDrive);
   i:=0;
   repeat
     Inc(i);
@@ -3100,6 +3118,7 @@ end;
 
 procedure TForm1.Timer1Timer(Sender: TObject);
 begin
+  //exit;
   lblTime.Caption:=FormatDateTime('dd-mm-yyyy "UTC: "hh"h"-nn"m"-ss"s"', NowUTC);
   TTimer(Sender).Tag:=TTimer(Sender).Tag+1;
   if (TTimer(Sender).Tag>5) then editStatus.Text:='';
@@ -3287,6 +3306,39 @@ begin
   end;
 end;
 
+procedure TForm1.ProcessDR11(const CD: TCOMMANDDATA);
+var
+  DR11          : TDRIVEPARAMETER_0011;
+begin
+  // This is a GUI update, so only process if we have data of the current visible drive
+  if (CD.SETID=ActiveDrive) then
+  begin
+    DR11.Raw:=BinaryStringToDecimal(CD.DATA);
+  end;
+end;
+
+procedure TForm1.ProcessDR12(const CD: TCOMMANDDATA);
+var
+  DR12          : TDRIVEPARAMETER_0012;
+begin
+  // This is a GUI update, so only process if we have data of the current visible drive
+  if (CD.SETID=ActiveDrive) then
+  begin
+    DR12.Raw:=BinaryStringToDecimal(CD.DATA);
+  end;
+end;
+
+procedure TForm1.ProcessDR13(const CD: TCOMMANDDATA);
+var
+  DR13          : TDRIVEPARAMETER_0013;
+begin
+  // This is a GUI update, so only process if we have data of the current visible drive
+  if (CD.SETID=ActiveDrive) then
+  begin
+    DR13.Raw:=BinaryStringToDecimal(CD.DATA);
+  end;
+end;
+
 procedure TForm1.ProcessDR14(const CD: TCOMMANDDATA);
 var
   DP14    : TDRIVEPARAMETER_0014;
@@ -3318,16 +3370,16 @@ end;
 procedure TForm1.ProcessDR134(const CD: TCOMMANDDATA);
 var
   SC134      : TDRIVEPARAMETER_0134;
+  HaltState  : boolean;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
   if (CD.SETID=ActiveDrive) then
   begin
+    HaltState:=false;
     SC134.Raw:=BinaryStringToDecimal(CD.DATA);
     if ((SC134.Data.DriveEnable=1) AND (SC134.Data.DriveOn=1)) then
-      SetInfoPanel(PanelHalt,(SC134.Data.DriveHalt=0))
-    else
-      SetInfoPanel(PanelHalt,False);
-    SetInfoPanel(PanelHalt,(SC134.Data.DriveOn=1));
+      HaltState:=(SC134.Data.DriveHalt=0);
+    SetInfoPanel(PanelHalt,HaltState);
   end;
 end;
 
@@ -4175,13 +4227,18 @@ begin
     with DRIVE_STATUSWORD do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))          then ProcessDR135(LocalCD);
     with DRIVE_SIGNAL_STATUSWORD do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))   then ProcessDR144(LocalCD);
     with DRIVE_SIGNAL_CONTROLWORD do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))  then ProcessDR145(LocalCD);
-    with DRIVE_DIAGNOSTIC_CLASS3 do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))   then ProcessDR182(LocalCD);
     with DRIVE_DIAGNOSTIC do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))          then ProcessDiagnostic(LocalCD);
     with DRIVE_APPTYPE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))             then ProcessAppType(LocalCD);
     with DRIVE_FIRMWARE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))            then ProcessFirmware(LocalCD);
     with DRIVE_MOTORTYPE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))           then ProcessMotorType(LocalCD);
     with DRIVE_CONTROLLERTYPE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))      then ProcessControllerType(LocalCD);
     with DRIVE_MOTORSERIAL do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))         then ProcessMotorSerial(LocalCD);
+
+    with DRIVE_DIAGNOSTIC_CLASS1 do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))   then ProcessDR11(LocalCD);
+    with DRIVE_DIAGNOSTIC_CLASS2 do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))   then ProcessDR12(LocalCD);
+    with DRIVE_DIAGNOSTIC_CLASS3 do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))   then ProcessDR13(LocalCD);
+    with DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3 do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))   then ProcessDR182(LocalCD);
+
   end;
 
   if (LocalCD.CSUBCLASS<>mscList) then
