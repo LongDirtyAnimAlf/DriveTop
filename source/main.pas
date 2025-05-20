@@ -2251,97 +2251,110 @@ var
   //SC13                 : TDRIVEPARAMETER_0013;
   SC346                : TDRIVEPARAMETER_0346;
   DR182                : TDRIVEPARAMETER_0182;
+  DriveMode            : TOPERATIONMODE;
   success              : boolean;
 begin
-  // This only works when mode in in "drive interpolated"  = omRDIE1 !!!!!
   result:=false;
   success:=false;
 
   if CheckAxis(axis) then exit;
 
-  CD:=Default(TCOMMANDDATA);
+  // Tricky, we might move axis that is not active !!
+  DriveMode:=GetDriveMode(ActiveDriveInfo.MODE);
 
-  CD.CCLASS:=ccDrive;
-  CD.CSUBCLASS:=mscParameterData;
-  CD.SETID:=axis;
-  CD.STEPID:=0;
+  if (DriveMode in [omDIE1,omRDIE1]) then
+  begin
+    CD:=Default(TCOMMANDDATA);
 
-  // Set speed
-  // Can only be set in Phase2 ... :-(
-  CD.NUMID:=259;
-  CD.DATA:=editSpeed.Text;
-  success:=ProcessCommand(CD,s,false,true);
+    CD.CCLASS:=ccDrive;
+    CD.CSUBCLASS:=mscParameterData;
+    CD.SETID:=axis;
+    CD.STEPID:=0;
 
-  // Set acceleration
-  // Can only be set in Phase2 ... :-(
-  CD.NUMID:=260;
-  CD.DATA:=editAccel.Text;
-  success:=ProcessCommand(CD,s,false,true);
+    // Set speed
+    // Can only be set in Phase2 ... :-(
+    CD.NUMID:=259;
+    CD.DATA:=editSpeed.Text;
+    success:=ProcessCommand(CD,s,false,true);
 
-  // Set feedrate
-  CD.NUMID:=108;
-  CD.DATA:='100'; // 100% = no changes
-  success:=ProcessCommand(CD,s,false,true);
+    // Set acceleration
+    // Can only be set in Phase2 ... :-(
+    CD.NUMID:=260;
+    CD.DATA:=editAccel.Text;
+    success:=ProcessCommand(CD,s,false,true);
 
-  (*
-  // Set jerk
-  //CD.NUMID:=193;
-  //CD.DATA:='';
-  //success:=ProcessCommand(CD,s,false,true);
-  *)
+    // Set feedrate
+    CD.NUMID:=108;
+    CD.DATA:='100'; // 100% = no changes
+    success:=ProcessCommand(CD,s,false,true);
 
-  // Set relative travel distance
-  CD.NUMID:=282; // only with omRDIE1
-  CD.DATA:=editDist.Text;
-  success:=ProcessCommand(CD,s,false,true);
+    (*
+    // Set jerk
+    //CD.NUMID:=193;
+    //CD.DATA:='';
+    //success:=ProcessCommand(CD,s,false,true);
+    *)
 
-  // Set absolute target position
-  CD.NUMID:=258; // only with omDIE1
-  CD.DATA:=editDist.Text;
-  success:=ProcessCommand(CD,s,false,true);
+    if (DriveMode=omRDIE1) then
+    begin
+      // Set relative travel distance
+      CD.NUMID:=282; // only with omRDIE1
+      CD.DATA:=editDist.Text;
+      success:=ProcessCommand(CD,s,false,true);
+    end;
 
-  // Get strobe flag to toggle
-  CD.NUMID:=346;
-  CD.DATA:='';
-  // Get current register value
-  success:=ProcessCommand(CD,s,false,true);
-  StatusCD:=ProcessCommDataString(s);
-  SC346.Raw:=BinaryStringToDecimal(StatusCD.DATA);
-  // Engage drive by toggling stobe bit
-  SC346.Data.AcceptPositionToggle:=1-SC346.Data.AcceptPositionToggle; // toggle strobe bit
-  SC346.Data.PositionType:=1;
-  SC346.Data.Reference:=1;
-  CD.DATA:=DecimalToBinaryString(SC346.Raw,DirectDrive);
-  success:=ProcessCommand(CD,s,false,true);
+    if (DriveMode=omDIE1) then
+    begin
+      // Set absolute target position
+      CD.NUMID:=258; // only with omDIE1
+      CD.DATA:=editDist.Text;
+      success:=ProcessCommand(CD,s,false,true);
+    end;
 
-  //Sleep(1000);
 
-  // Wait for position
-  (*
-  CD.NUMID:=13;
-  CD.DATA:='';
-  i:=0;
-  repeat
-    Inc(i);
-    success:=ProcessCommand(CD,s);
-    Memo1.Lines.Append(s);
-    SC13.Raw:=BinaryStringToDecimal(s);
-  until ((SC13.Data.InPosition=1) OR (i>20));
-  *)
+    // Get strobe flag to toggle
+    CD.NUMID:=346;
+    CD.DATA:='';
+    // Get current register value
+    success:=ProcessCommand(CD,s,false,true);
+    StatusCD:=ProcessCommDataString(s);
+    SC346.Raw:=BinaryStringToDecimal(StatusCD.DATA);
+    // Engage drive by toggling stobe bit
+    SC346.Data.AcceptPositionToggle:=1-SC346.Data.AcceptPositionToggle; // toggle strobe bit
+    SC346.Data.PositionType:=1;
+    SC346.Data.Reference:=1;
+    CD.DATA:=DecimalToBinaryString(SC346.Raw,DirectDrive);
+    success:=ProcessCommand(CD,s,false,true);
 
-  (*
+    //Sleep(1000);
 
-  // Wait for position
-  CD:=COMMAND2CD(DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3,ActiveDrive);
-  i:=0;
-  repeat
-    Inc(i);
-    success:=ProcessCommand(CD,s);
-    Memo1.Lines.Append(s);
-    DR182.Raw:=BinaryStringToDecimal(s);
-  until ((DR182.Data.InTargetPosition=1) OR (i>20));
+    // Wait for position
+    (*
+    CD.NUMID:=13;
+    CD.DATA:='';
+    i:=0;
+    repeat
+      Inc(i);
+      success:=ProcessCommand(CD,s);
+      Memo1.Lines.Append(s);
+      SC13.Raw:=BinaryStringToDecimal(s);
+    until ((SC13.Data.InPosition=1) OR (i>20));
+    *)
 
-  *)
+    (*
+
+    // Wait for position
+    CD:=COMMAND2CD(DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3,ActiveDrive);
+    i:=0;
+    repeat
+      Inc(i);
+      success:=ProcessCommand(CD,s);
+      Memo1.Lines.Append(s);
+      DR182.Raw:=BinaryStringToDecimal(s);
+    until ((DR182.Data.InTargetPosition=1) OR (i>20));
+
+    *)
+  end;
 
   result:=success;
 end;
