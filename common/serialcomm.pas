@@ -133,6 +133,7 @@ type
   strict private
     FTerminator:ansistring;
     FAsync:boolean;
+    FRTSToggle:boolean;
   private
     FActive: boolean;
     FSynSer: TBlockSerial;
@@ -150,14 +151,16 @@ type
     FOnStatus: TStatusEvent;
     ReadThread: TComPortReadThread;
 
-    FData:string;
+    FData:ansistring;
 
     FCriticalSection: TRTLCriticalSection;
     FCommandList:TStringList;
 
-    function  GetData:string;
+    function  GetData:ansistring;
     function  GetActive: boolean;
     procedure SetActive(state: boolean);
+    function  GetRTSToggle: boolean;
+    procedure SetRTSToggle(value:boolean);
     function  GetAsync: boolean;
     procedure SetAsync(value:boolean);
     function  GetOnRxData: TNotifyEvent;
@@ -181,6 +184,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
+    procedure WriteList(const cmd: string; listdata:array of string);
     procedure WriteString(const cmd: string; var dat: string);
     procedure WriteStringPrio(const cmd: string; var dat: string);
     procedure WriteStringBlocking(const cmd: string; var dat: string);
@@ -201,8 +205,9 @@ type
   published
     property Active: boolean read FActive write SetActive;
     property Async: boolean read GetAsync write SetAsync;
+    property RTSToggle: boolean read GetRTSToggle write SetRTSToggle;
     property OnRxData: TNotifyEvent read GetOnRxData write SetOnRxData;
-    property Data: string read GetData;
+    property Data: ansistring read GetData;
 
     property BaudRate: TBaudRate read FBaudRate write SetBaudRate; // default br115200;
     property DataBits: TDataBits read FDataBits write SetDataBits;
@@ -335,6 +340,19 @@ begin
   FAsync:=value;
 end;
 
+function TLazSerial.GetRTSToggle: boolean;
+begin
+  result:=FRTSToggle;
+end;
+
+procedure TLazSerial.SetRTSToggle(value:boolean);
+begin
+  if (value=FRTSToggle) then exit;
+  FRTSToggle:=value;
+  FSynSer.EnableRTSToggle(FRTSToggle);
+end;
+
+
 function TLazSerial.GetOnRxData: TNotifyEvent;
 begin
   result:=FOnRxData;
@@ -346,7 +364,7 @@ begin
   FOnRxData:=event;
 end;
 
-function TLazSerial.GetData:string;
+function TLazSerial.GetData:ansistring;
 begin
   result:=FData;
 end;
@@ -425,6 +443,87 @@ begin
   end;
 end;
 
+procedure TLazSerial.WriteList(const cmd: string; listdata:array of string);
+var
+  rcvd : string;
+  re   : boolean;
+  b    : byte;
+  i    : integer;
+begin
+  re:=Assigned(ReadThread);
+  if re then
+  begin
+    EnterCriticalSection(FCriticalSection);
+    //ReadThread.Suspended:=True;
+    StopReader;
+  end;
+  try
+    rcvd:='';
+    // i.e.: "P-0-4007,7,w,>"(CR)
+    FSynSer.SendString(cmd+#13);
+    b:=0;
+    while true do
+    begin
+      b:=FSynSer.RecvByte(100);
+      if (FSynSer.LastError<>0) then break;
+      rcvd:=rcvd+chr(b);
+      if (b=Ord('?')) then break; // all ok : r: "P-0-4007,7,w,>"(CR)"?"
+      if (b=Ord(':')) then // might be an error : "P-0-4007,7,w,>"(CR)"#xxxx"(CR)"A01:>"
+      begin
+        b:=FSynSer.RecvByte(100);
+        if (FSynSer.LastError<>0) then break;
+        rcvd:=rcvd+chr(b);
+        if (b=Ord('>')) then break;
+      end;
+    end;
+    // Receive last [dummy] CR
+    if (FSynSer.LastError<>0) then FSynSer.RecvByte(100);
+
+
+    // We have now opened the list for write access
+    // Write the data if all ok
+
+    for i:=1 to Length(listdata) do
+    begin
+      rcvd:='';
+      b:=0;
+      FSynSer.SendString(listdata[i-1]+#13);
+      while true do
+      begin
+        b:=FSynSer.RecvByte(100);
+        if (FSynSer.LastError<>0) then break;
+        rcvd:=rcvd+chr(b);
+        if (b=Ord('?')) then
+        begin
+          // Receive last [dummy] CR
+          FSynSer.RecvByte(100);
+          break;
+        end;
+        if (b=Ord('#')) then // we got an error
+        begin
+          rcvd:=rcvd+FSynSer.RecvTerminated(100,CR);
+          break;
+        end;
+      end;
+    end;
+
+    // Close the list !!
+    FSynSer.SendString('<'#13);
+    rcvd:=FSynSer.RecvTerminated(1500,Terminator); // "<" (CR) ["#xxxx"(CR)]"A01:>"
+    // Receive last [dummy] CR
+    FSynSer.RecvByte(100);
+
+  finally
+    if re then
+    begin
+      StartReader;
+      //ReadThread.Suspended:=False;
+      LeaveCriticalSection(FCriticalSection);
+    end;
+  end;
+end;
+
+
 procedure TLazSerial.WriteString(const cmd: string; var dat: string);
 begin
   if Assigned(ReadThread) then
@@ -474,16 +573,15 @@ begin
     StopReader;
   end;
   try
-    //FSynSer.Flush;
-    //FSynSer.Purge;
     FSynSer.SendString(cmd);
     FSynSer.Flush;
     rcvd:=FSynSer.RecvTerminated(1500,Terminator);
-    if ((FSynSer.LastError=0) AND (Length(rcvd)>0)) then rcvd:=rcvd+Terminator;
-    FData:=rcvd;
-    dat:=rcvd;
-    //FSynSer.Flush;
-    //FSynSer.Purge;
+    if ((FSynSer.LastError=0) AND (Length(rcvd)>0)) then
+    begin
+      // Add the terminator to the result
+      dat:=rcvd+Terminator;
+      FData:=dat;
+    end;
     //if Assigned(FOnRxData) then FOnRxData(Owner);
   finally
     if re then
@@ -554,13 +652,9 @@ procedure TComPortReadThread.Execute;
 var
   FBuffer:ansistring;
   DataString:ansistring;
-  //s:ansistring;
-  TerminatorPos:word;
   dr,te:boolean;
-  x,y:word;
+  x:word;
 begin
-  DataString:='';
-  FBuffer:='';
   try
     Owner.FSynSer.Purge;
     te:=(Length(Owner.Terminator)>0);
@@ -576,9 +670,12 @@ begin
           begin
             //s:=Owner.FCommandList[0];
             Owner.FSynSer.SendString(Owner.FCommandList[0]);
-            Owner.FCommandList.Delete(0);
-            //in most cases, we expect a read after a write ... wait for it ... ;-)
-            Owner.FSynSer.CanRead(100);
+            if (Owner.FSynSer.LastError=0) then
+            begin
+              Owner.FCommandList.Delete(0);
+              //in most/all cases, we expect a read after a write ... wait for it ... ;-)
+              Owner.FSynSer.CanRead(100);
+            end;
           end;
         end;
       finally
@@ -592,7 +689,11 @@ begin
         begin
           DataString:=Owner.FSynSer.RecvTerminated(10000,Owner.Terminator);
           dr:=((Owner.FSynSer.LastError<>ErrTimeout) AND (Length(DataString)>0));
-          if dr then Owner.FData:=DataString+Owner.Terminator;
+          if dr then
+          begin
+            // Add terminator to data
+            Owner.FData:=DataString+Owner.Terminator;
+          end;
         end
         else
         begin

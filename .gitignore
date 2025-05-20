@@ -70,3 +70,5 @@ buildbins/*
 buildlibs/
 lib/
 bin/
+
+*.par

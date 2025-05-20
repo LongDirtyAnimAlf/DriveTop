@@ -281,12 +281,13 @@ type
   TDRIVEPARAMETER_0346 = bitpacked record
       case integer of
           1 : (  Data : record
-                   AcceptPositionStrobe     : T1BITS;
-                   PositioningJogging       : T2BITS; // 01 = jogging + ; 10 = jogging - ; 11 = positioning stop
+                   AcceptPositionToggle     : T1BITS;
+                   PositioningJogging       : T2BITS; // 00 = Positioning active [toggling bit 0]; 01 = jogging + ; 10 = jogging - ; 11 = positioning stop
                    PositionType             : T1BITS; // 0 = absolute; 1 = relative
-                   Reference                : T1BITS; // 0 = reference for positioning is the "old target position" ; 1 = reference for positioning is the current actual position value
-                   TargetOverride           : T1BITS;
-                   Reserved2                : T10BITS;
+                   Reference                : T1BITS; // 0 = reference for positioning is the "last effective target position S-0-0430" ; 1 = reference for positioning is the current actual position value S-0-386
+                   TargetOverride           : T1BITS; // 0 = drive moves to current target position before moving to new target ; 1 = directly to new target
+                   SequentialBlockBehavior  : T2BITS; // 00 = halt at target ; 01 = overrunning mode 1 ; 10 = overrunning mode 2
+                   Reserved2                : T8BITS;
                  end
               );
           2 : (

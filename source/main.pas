@@ -59,6 +59,7 @@ type
     btnSetMode: TButton;
     btnSpeedLimit: TButton;
     btnStart: TButton;
+    btnExecuteBlocksDrive: TButton;
     btnTest: TButton;
     btnStartTaskA: TButton;
     btnGetPoints: TButton;
@@ -67,9 +68,11 @@ type
     Button1: TButton;
     btnStop: TButton;
     btnGetDriveData: TButton;
+    btnStoreBlockDrive: TButton;
     chkAutoLoadDriveData: TCheckBox;
     cmboSerialPorts: TComboBox;
     comboDriveModes: TComboBox;
+    EditPos: TEdit;
     editStatus: TEdit;
     editCommand: TEdit;
     editValue: TEdit;
@@ -78,6 +81,7 @@ type
     grpDriveStatus: TGroupBox;
     lbDriveModes: TListBox;
     lblTime: TLabel;
+    ListView1: TListView;
     MovementPanel1: TPanel;
     Panel1: TPanel;
     panelDriveFeedback: TPanel;
@@ -169,6 +173,7 @@ type
     procedure btnStartClick({%H-}Sender: TObject);
     procedure btnStartTaskAClick({%H-}Sender: TObject);
     procedure btnStopClick(Sender: TObject);
+    procedure btnStoreBlockDriveClick(Sender: TObject);
     procedure btnTestClick({%H-}Sender: TObject);
     procedure btnGetListsClick({%H-}Sender: TObject);
     procedure btnManualAxisClick({%H-}Sender: TObject);
@@ -238,7 +243,8 @@ type
     function  GetAxisActive:TAXIS;
     procedure ApplicationIdle({%H-}Sender: TObject; var Done: Boolean);
     function  ConnectDDE:boolean;
-    function  ConnectRS232:boolean;
+    function  ConnectSerial:boolean;
+    function  CheckComms:boolean;
     function  CheckAxis(out axis:word):boolean;
     function  MoveAxis:boolean;
     function  SpindleAxis(Reps:word = 1):boolean;
@@ -254,7 +260,7 @@ type
     procedure OnRXDDEData({%H-}Sender: TObject);
     {$endif}
 
-    function  ProcessCommDataString(s:string):TCOMMANDDATA;
+    function  ProcessCommDataString(const s:ansistring):TCOMMANDDATA;
     procedure ProcessCommResult(const CD:TCOMMANDDATA);
 
     procedure ProcessModeList(const CD: TCOMMANDDATA);
@@ -294,7 +300,7 @@ type
 
     procedure ProcessDiskDriveData(const Drive: word; StoreOnDisk:boolean);
 
-    procedure OnCommData(const s:string);
+    procedure OnCommData(const s:ansistring);
   public
     { public declarations }
     function  ProcessCommand(const CD:TCOMMANDDATA;out response:string; prio:boolean=false; blocking:boolean=false; verbose:boolean=false):boolean;
@@ -888,7 +894,7 @@ begin
 end;
 
 
-function TForm1.ConnectRS232:boolean;
+function TForm1.ConnectSerial:boolean;
 begin
   Result:=false;
   ActiveConnection:=conNone;
@@ -925,11 +931,15 @@ var
   c,s          : string;
   CD           : TCOMMANDDATA;
 begin
-  Success:=ConnectRS232;
+  Success:=ConnectSerial;
   if Success then
   begin
     if (Sender=btnConnectDriveRS232) then ActiveConnection:=conDDRS232;
-    if (Sender=btnConnectDriveRS485) then ActiveConnection:=conDDRS485;
+    if (Sender=btnConnectDriveRS485) then
+    begin
+      ActiveConnection:=conDDRS485;
+      (FComDevice AS TLazSerial).RTSToggle:=True;
+    end;
     if (Sender=btnConnectVMRS232) then ActiveConnection:=conCLCRS232;
   end;
   FDirectDrive:=((ActiveConnection=conDDRS232) OR (ActiveConnection=conDDRS485));
@@ -953,6 +963,8 @@ begin
   if DirectDrive then
   begin
     (FComDevice AS TLazSerial).Terminator:=TERDT;
+
+    (*
 
     CD:=Default(TCOMMANDDATA);
 
@@ -981,18 +993,23 @@ begin
     Success:=ProcessCommand(CD,s,false,true);
     Memo1.Lines.Append(s);
 
-    // Select drive
+    *)
+
+    // Select drive to activate serial port
     c:=Format('BCD:%.2d',[ActiveDriveInfo.DRIVEADDRESS]);
     s:='';
     Success:=ProcessDirectDriveCommand(c,s,false,true);
     Memo1.Lines.Append('Select drive response: '+s);
+
+    CD:=Default(TCOMMANDDATA);
+    CD.CSUBCLASS:=mscParameterData;
 
     // Deactivate resident memory mode to preserve EEPROM
     CD.CCLASS:=ccDrive;
     CD.SETID:=ActiveDrive;
     CD.NUMID:=269;
     CD.DATA:='1';
-    success:=ProcessCommand(CD,s);
+    success:=ProcessCommand(CD,s,false,true);
     Memo1.Lines.Append(s);
 
   end
@@ -1722,6 +1739,45 @@ begin
   FDirectDrive:=False;
 end;
 
+procedure TForm1.btnStoreBlockDriveClick(Sender: TObject);
+var
+  c,s        : string;
+  axis       : word;
+  CD         : TCOMMANDDATA;
+  success    : boolean;
+  TE         : boolean;
+begin
+  if CheckComms then exit;
+  if CheckAxis(axis) then exit;
+
+  if (ActiveDriveInfo.PHASE=2) then
+  begin
+    TE:=Timer1.Enabled;
+    if TE then Timer1.Enabled:=false;
+
+    CD:=Default(TCOMMANDDATA);
+    CD.CCLASS:=ccDriveSpecific;
+    CD.CSUBCLASS:=mscParameterData;
+    CD.SETID:=axis;
+    CD.NUMID:=4006;
+    CD.DATA:='>';
+
+    c:=GetDirectDriveCommand(CD);
+    c:=c+CD.DATA;
+
+    (FComDevice AS TLazSerial).WriteList(c,['100','200','5000']);
+
+
+    //if TE then Timer1.Enabled:=false;
+
+  end
+  else
+  begin
+    ShowMessage('Switch to Phase2 to store block values !');
+  end;
+
+end;
+
 procedure TForm1.btnTestClick(Sender: TObject);
 begin
   MoveAxis;
@@ -2009,15 +2065,17 @@ var
 function WaitForPosition:boolean;
 var
   i          : integer;
+  SC13                 : TDRIVEPARAMETER_0013;
 begin
   result:=false;
   // Read position during move
   for i:=1 to 50 do
   begin
     // Position reached ?
+    (*
     CD.NUMID:=336;
     CD.DATA:='';
-    success:=ProcessCommand(CD,s);
+    success:=ProcessCommand(CD,s,false,true);
     DW.Raw:=BinaryStringToDecimal(s);
     if (DW.Bits[0]=1) then
     begin
@@ -2025,12 +2083,31 @@ begin
       Memo1.Lines.Append('Position ready');
       break;
     end;
-    //sleep(100);
+    *)
+    CD.NUMID:=13;
+    CD.DATA:='';
+    success:=ProcessCommand(CD,s,false,true);
+    SC13.Raw:=BinaryStringToDecimal(s);
+    if (SC13.Data.InPosition=1) {OR (SC13.Data.VelocityLow=1)} then
+    begin
+      result:=true;
+      Memo1.Lines.Append('Position ready');
+      break;
+    end;
+    sleep(100);
   end;
   if (NOT result) then Memo1.Lines.Append('Position skip');
   result:=true;
 end;
 begin
+  // S-0-0152, C900 Position spindle command
+  // S-0-0153, Spindle angle position
+  // S-0-0154, Spindle position parameter
+  // S-0-0180, Spindle relative offset
+  // S-0-0222, Spindle positioning speed
+  // S-0-0057, Position window
+
+
   result:=false;
 
   if CheckAxis(axis) then exit;
@@ -2056,17 +2133,9 @@ begin
   SC154.Data.TraversingMethod:=1;    // = relative
   SC154.Data.Encoder:=0;             // = motor
   CD.DATA:=DecimalToBinaryString(SC154.Raw,DirectDrive);
-  success:=ProcessCommand(CD,s);
+  success:=ProcessCommand(CD,s,false,true);
 
-  // Spindle acceleration, method 1
-  CD.NUMID:=138;
-  CD.DATA:=editAccel.Text;
-  success:=ProcessCommand(CD,s);
-
-  // Spindle speed
-  CD.NUMID:=222;
-  CD.DATA:=editSpeed.Text;;
-  success:=ProcessCommand(CD,s);
+  (*
 
   // Homing acceleration
   CD.NUMID:=42;
@@ -2077,11 +2146,28 @@ begin
   CD.NUMID:=41;
   CD.DATA:=editSpeed.Text;;
   success:=ProcessCommand(CD,s);
+  *)
+
+  // Spindle speed
+  CD.NUMID:=222;
+  CD.DATA:=editSpeed.Text;;
+  success:=ProcessCommand(CD,s,false,true);
+
+  // Spindle acceleration bipolar
+  CD.NUMID:=138;
+  CD.DATA:=editAccel.Text;
+  success:=ProcessCommand(CD,s);
+
+  // Spindle Jerk limit bipolar
+  //CD.NUMID:=349;
+  //CD.DATA:=editAccel.Text;
+  //success:=ProcessCommand(CD,s);
+
 
   // Set offset to zero, just to be sure
   CD.NUMID:=180;
   CD.DATA:=IntToStr(integer(0));
-  success:=ProcessCommand(CD,s);
+  success:=ProcessCommand(CD,s,false,true);
 
   // Start command "position spindle"
   CD.NUMID:=152;
@@ -2091,6 +2177,8 @@ begin
   CD.DATA:=DecimalToBinaryString(SCS.Raw,2,DirectDrive);
   success:=ProcessCommand(CD,s,false,true);
 
+  sleep(100);
+
   rep:=Reps;
   while (rep>0) do
   begin
@@ -2099,11 +2187,13 @@ begin
     // Set offset
     CD.NUMID:=180;
     CD.DATA:=editDist.Text;
-    success:=ProcessCommand(CD,s);
-    sleep(100);
+    success:=ProcessCommand(CD,s,false,true);
+    //sleep(100);
+
+    WaitForPosition;
 
     // Read position during move
-    repeat sleep(500) until WaitForPosition;
+    //repeat sleep(500) until WaitForPosition;
 
     (*
 
@@ -2122,10 +2212,19 @@ begin
   // Stop command "position spindle"
   CD.NUMID:=152;
   SCS.Raw:=0;
-  CD.DATA:=DecimalToBinaryString(SCS.Raw,DirectDrive);
-  success:=ProcessCommand(CD,s);
+  CD.DATA:=DecimalToBinaryString(SCS.Raw,2,DirectDrive);
+  success:=ProcessCommand(CD,s,false,true);
 
   result:=success;
+end;
+
+function TForm1.CheckComms:boolean;
+begin
+  result:=true;
+  if Assigned(FComDevice) then
+  begin
+    result:=(NOT FComDevice.Active);
+  end;
 end;
 
 function TForm1.CheckAxis(out axis:word):boolean;
@@ -2147,8 +2246,8 @@ end;
 function TForm1.MoveAxis:boolean;
 var
   s                    : string;
-  i,axis                 : word;
-  CD                   : TCOMMANDDATA;
+  i,axis               : word;
+  CD,StatusCD          : TCOMMANDDATA;
   //SC13                 : TDRIVEPARAMETER_0013;
   SC346                : TDRIVEPARAMETER_0346;
   DR182                : TDRIVEPARAMETER_0182;
@@ -2167,37 +2266,53 @@ begin
   CD.SETID:=axis;
   CD.STEPID:=0;
 
-  // Set travel distance
-  CD.NUMID:=258; // with omDIE1
-  //CD.NUMID:=282; // with omRDIE1
-  CD.DATA:=editDist.Text;
-  success:=ProcessCommand(CD,s);
-
   // Set speed
+  // Can only be set in Phase2 ... :-(
   CD.NUMID:=259;
   CD.DATA:=editSpeed.Text;
-  success:=ProcessCommand(CD,s);
+  success:=ProcessCommand(CD,s,false,true);
 
   // Set acceleration
+  // Can only be set in Phase2 ... :-(
   CD.NUMID:=260;
   CD.DATA:=editAccel.Text;
-  success:=ProcessCommand(CD,s);
+  success:=ProcessCommand(CD,s,false,true);
 
+  // Set feedrate
+  CD.NUMID:=108;
+  CD.DATA:='100'; // 100% = no changes
+  success:=ProcessCommand(CD,s,false,true);
+
+  (*
   // Set jerk
   //CD.NUMID:=193;
   //CD.DATA:='';
-  //success:=ProcessCommand(CD,s);
+  //success:=ProcessCommand(CD,s,false,true);
+  *)
+
+  // Set relative travel distance
+  CD.NUMID:=282; // only with omRDIE1
+  CD.DATA:=editDist.Text;
+  success:=ProcessCommand(CD,s,false,true);
+
+  // Set absolute target position
+  CD.NUMID:=258; // only with omDIE1
+  CD.DATA:=editDist.Text;
+  success:=ProcessCommand(CD,s,false,true);
 
   // Get strobe flag to toggle
   CD.NUMID:=346;
   CD.DATA:='';
-  success:=ProcessCommand(CD,s);
-  SC346.Raw:=BinaryStringToDecimal(s);
+  // Get current register value
+  success:=ProcessCommand(CD,s,false,true);
+  StatusCD:=ProcessCommDataString(s);
+  SC346.Raw:=BinaryStringToDecimal(StatusCD.DATA);
   // Engage drive by toggling stobe bit
-  SC346.Data.AcceptPositionStrobe:=1-SC346.Data.AcceptPositionStrobe; // toggle strobe bit
-  CD.NUMID:=346;
+  SC346.Data.AcceptPositionToggle:=1-SC346.Data.AcceptPositionToggle; // toggle strobe bit
+  SC346.Data.PositionType:=1;
+  SC346.Data.Reference:=1;
   CD.DATA:=DecimalToBinaryString(SC346.Raw,DirectDrive);
-  success:=ProcessCommand(CD,s);
+  success:=ProcessCommand(CD,s,false,true);
 
   //Sleep(1000);
 
@@ -2214,6 +2329,8 @@ begin
   until ((SC13.Data.InPosition=1) OR (i>20));
   *)
 
+  (*
+
   // Wait for position
   CD:=COMMAND2CD(DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3,ActiveDrive);
   i:=0;
@@ -2223,6 +2340,8 @@ begin
     Memo1.Lines.Append(s);
     DR182.Raw:=BinaryStringToDecimal(s);
   until ((DR182.Data.InTargetPosition=1) OR (i>20));
+
+  *)
 
   result:=success;
 end;
@@ -3123,6 +3242,8 @@ begin
     begin
       c:=GetDirectDriveCommand(LocalCD);
       success:=ProcessDirectDriveCommand(c,s,wp,wb);
+
+
     end
     else
     begin
@@ -3890,7 +4011,7 @@ begin
 end;
 {$endif}
 
-procedure TForm1.OnCommData(const s:string);
+procedure TForm1.OnCommData(const s:ansistring);
 var
   CD:TCOMMANDDATA;
 begin
@@ -3899,7 +4020,7 @@ begin
   ProcessCommResult(CD);
 end;
 
-function TForm1.ProcessCommDataString(s:string):TCOMMANDDATA;
+function TForm1.ProcessCommDataString(const s:ansistring):TCOMMANDDATA;
 var
   index,j:integer;
   ro:boolean;
@@ -3909,15 +4030,31 @@ var
   cc:TVMCOMMANDCLASS;
   csc:TVMCOMMANDPARAMETERSUBCLASS;
   s1:string;
-  data:string;
+  datas:ansistring;
 begin
   Result:=Default(TCOMMANDDATA);
 
+  if Length(s)=0 then exit;
+
   // Parse datastring from serial port
 
-  data:=s;
+  // Tobedone
+  // Datastring contains extra LF symbols.
+  // Not sure why and what to do with them
+  // For now, just remove them
+  SetLength({%H-}datas,32000);
+  j:=1;
+  for index:=1 to Length(s) do
+  begin
+    if (s[index]=#10) then continue;
+    datas[j]:=s[index];
+    Inc(j);
+  end;
+  SetLength(datas,j-1);
 
-  if Pos('Error',data)=1 then
+  if Length(datas)=0 then exit;
+
+  if Pos('Error',datas)=1 then
   begin
     // ToDo: handle error
     Result.CCLASS:=ccError;
@@ -3927,84 +4064,73 @@ begin
 
   if DirectDrive then
   begin
-    Result:=IDN2CD(s,0);
-    //Result:=IDN2CD(s,ActiveDrive);
+    Result:=IDN2CD(datas,0);
+    //Result:=IDN2CD(datas,ActiveDrive);
     if ((Result.CCLASS=ccDrive) OR (Result.CCLASS=ccDriveSpecific)) then
     try
-      Delete(s,1,9); // delete IDN and comma
+      Delete(datas,1,9); // delete IDN and comma
       SC_IDN:=false;
-      if (Length(s)>0) then
+      if (Length(datas)>0) then
       begin
         // Extract subclass
-        j:=Ord(s[1])-48;
-        case j of
-          1: SC_IDN:=true; // This is IDN data. Must be treated special (for DirectDrive commands)
-          //1: Result.CSUBCLASS:=mscParameterData; // This is IDN data. Not sure what to do with it.
-          2: Result.CSUBCLASS:=mscName;
-          3: Result.CSUBCLASS:=mscAttributes;
-          4: Result.CSUBCLASS:=mscUnits;
-          5: Result.CSUBCLASS:=mscLowerLimit;
-          6: Result.CSUBCLASS:=mscUpperLimit;
-          7: Result.CSUBCLASS:=mscParameterData;
-        else
-          // we should never be here !!!
-          raise EArgumentException.Create ('Wrong subclass in DirectData response from Drive !');
-        end;
+        j:=Ord(datas[1])-48;
+        NUM2SCLASS(j,Result.CSUBCLASS);
+        if j=1 then SC_IDN:=true; // This is IDN data. Must be treated special (for DirectDrive commands)
         // Delete subclass and comma
-        Delete(s,1,2);
+        Delete(datas,1,2);
       end;
       ro:=false;
-      if (Length(s)>0) then
+      if (Length(datas)>0) then
       begin
         // Extract read or write indicator
-        ro:=(s[1]='r');
+        ro:=(datas[1]='r');
         // Delete indicator itself
-        Delete(s,1,1);
+        Delete(datas,1,1);
         // Delete the comma, folowing the write command
         // Delete all terminators following the read command
         // Data written will be after this comma
         // Data will be after these terminators
-        s1:=ExtractWhileConforming(s,[',',#10,#13]);
-        Delete(s,1,length(s1));
+        s1:=ExtractWhileConforming(datas,[',',#10,#13]);
+        Delete(datas,1,length(s1));
       end;
 
-      if (Length(s)>0) then
+      if (Length(datas)>0) then
       begin
         if (NOT ro) then
         begin
           // Get the data written !
           // Look for terminator
-          index:=Pos(#13,s);
-          if (index=0) then index:=Pos(#10,s);
-          if (index>0) then Result.DATA:=Copy(s,1,index-1);
+          index:=Pos(#13,datas);
+          if (index=0) then index:=Pos(#10,datas);
+          if (index>0) then Result.DATA:=Copy(datas,1,index-1);
           // Delete datastring, if any
-          Delete(s,1,index);
+          Delete(datas,1,index);
           // Delete all remaining terminators, if any
-          s1:=ExtractWhileConforming(s,[#10,#13]);
-          Delete(s,1,length(s1));
+          s1:=ExtractWhileConforming(datas,[#10,#13]);
+          Delete(datas,1,length(s1));
           if SC_IDN then Result.DATA:='';
         end;
       end;
 
-      if (Length(s)>0) then
+      if (Length(datas)>0) then
       begin
         // Check if we have an error
-        if (s[1]='#') then
+        if (datas[1]='#') then
         begin
           // Extract error
           // Look for terminator
-          index:=Pos(#13,s);
-          if (index=0) then index:=Pos(#10,s);
-          if (index>0) then Result.ERROR:=Copy(s,1,index-1);
+          index:=Pos(#13,datas);
+          if (index=0) then index:=Pos(#10,datas);
+          if (index>0) then Result.ERROR:=Copy(datas,1,index-1);
           // Delete datastring, if any
-          Delete(s,1,index);
+          Delete(datas,1,index);
           // Delete all remaining terminators, if any
-          s1:=ExtractWhileConforming(s,[#10,#13]);
-          Delete(s,1,length(s1));
+          s1:=ExtractWhileConforming(datas,[#10,#13]);
+          Delete(datas,1,length(s1));
         end;
       end;
 
-      if (Length(s)>0) then
+      if (Length(datas)>0) then
       begin
         //if (ro AND (Length(Result.ERROR)=0)) then
         //if ro then
@@ -4012,11 +4138,11 @@ begin
           // Get all read data, if any
           repeat
             // Look for terminator
-            index:=Pos(#13,s);
-            if (index=0) then index:=Pos(#10,s);
+            index:=Pos(#13,datas);
+            if (index=0) then index:=Pos(#10,datas);
             if (index=0) then
             begin
-              // We now should have something like "A01:>" in s
+              // We now should have something like "A01:>" in datas
               // So, final two characters are the terminator TERDT
               {$ifdef ALLOWCONVERRORS}
               if (Pos(TERDT,s)<>(Length(s)-Length(TERDT)+1)) then
@@ -4025,8 +4151,8 @@ begin
               end;
               {$endif}
               // Delete leading drive character
-              Delete(s,1,1);
-              s1:=ExtractWhileConforming(s,['0'..'9']);
+              Delete(datas,1,1);
+              s1:=ExtractWhileConforming(datas,['0'..'9']);
               Result.SETID:=StringToIntSafe(s1);
               index:=Length(Result.DATA);
               if (index>0) then
@@ -4045,14 +4171,14 @@ begin
               // We are ready, so end the loop
               break;
             end;
-            Result.DATA:=Result.DATA+Copy(s,1,index-1)+',';
+            Result.DATA:=Result.DATA+Copy(datas,1,index-1)+',';
             // Delete datastring, if any
-            Delete(s,1,index);
+            Delete(datas,1,index);
             // Delete all remaining terminators, if any
-            s1:=ExtractWhileConforming(s,[#10,#13]);
-            Delete(s,1,length(s1));
+            s1:=ExtractWhileConforming(datas,[#10,#13]);
+            Delete(datas,1,length(s1));
             // Only parameter data can ever be a list of data
-            //if (Result.CSUBCLASS<>mscParameterData) then s:=''; // wrong: address must yet be parsed from 'E02:>'
+            //if (Result.CSUBCLASS<>mscParameterData) then datas:=''; // wrong: address must yet be parsed from 'E02:>'
           until false;
         end;
       end;
@@ -4066,23 +4192,23 @@ begin
     // NON directdrive have a connection address if RS232 is used for comms
 
 
-    if ((s[1]='>') AND ((Ord(s[2])-48)=CLCADDRESS))   then
+    if ((datas[1]='>') AND ((Ord(datas[2])-48)=CLCADDRESS))   then
     begin
-      index:=Pos(CSS,s);
+      index:=Pos(CSS,datas);
       if (index>0) then // process and check checksum
       begin
-        rcs:=StringToIntSafe(Copy(s,index,3));
-        s:=Copy(s,1,index-1);
-        cs:=GenerateVisualMotionChecksum(s);
-        Delete(s,Length(s),1);
+        rcs:=StringToIntSafe(Copy(datas,index,3));
+        datas:=Copy(datas,1,index-1);
+        cs:=GenerateVisualMotionChecksum(datas);
+        Delete(datas,Length(datas),1);
       end;
       if ((index=0) OR (rcs=cs)) then // no checksum or correct checksum : process data
       begin
         // Delete pre-amble and space
-        Delete(s,1,3);
+        Delete(datas,1,3);
         for cc in TVMCOMMANDCLASS do
         begin
-          if VMCOMMANDCLASS[cc]=s[1] then
+          if VMCOMMANDCLASS[cc]=datas[1] then
           begin
             Result.CCLASS:=cc;
             break;
@@ -4093,7 +4219,7 @@ begin
           for csc in TVMCOMMANDPARAMETERSUBCLASS do
           begin
             if csc=mscNone then continue;
-            if VMCOMMANDPARAMETERSUBCLASS[csc]=s[2] then
+            if VMCOMMANDPARAMETERSUBCLASS[csc]=datas[2] then
             begin
               Result.CSUBCLASS:=csc;
               break;
@@ -4105,21 +4231,21 @@ begin
         else
         begin
           Result.CCLASS:=ccNone;
-          Result.CCLASSCHAR:=s[1];
-          Result.CSUBCLASSCHAR:=s[2];
+          Result.CCLASSCHAR:=datas[1];
+          Result.CSUBCLASSCHAR:=datas[2];
         end;
         // Delete class-id and space
-        Delete(s,1,3);
+        Delete(datas,1,3);
         //Extract drive-id
-        s1:=ExtractWhileConforming(s,['0'..'9']);
+        s1:=ExtractWhileConforming(datas,['0'..'9']);
         Result.SETID:=StringToIntSafe(s1);
         //Delete drive-id and .
-        Delete(s,1,Length(s1)+1);
+        Delete(datas,1,Length(s1)+1);
 
         // Extract parameter
-        s1:=ExtractWhileConforming(s,['0'..'9']);
+        s1:=ExtractWhileConforming(datas,['0'..'9']);
         PW.Raw:=StringToIntSafe(s1);
-        Delete(s,1,length(s1));
+        Delete(datas,1,length(s1));
         if (Result.CCLASS=ccDrive) then
         begin
           // Check special ID's
@@ -4127,31 +4253,31 @@ begin
           if PW.Data.ParamType=1 then Result.CCLASS:=ccDriveSpecific;
         end;
         Result.NUMID:=PW.Data.ParamNum;
-        if (Length(s)>0) then
+        if (Length(datas)>0) then
         begin
-          if (s[1]='.') then
+          if (datas[1]='.') then
           begin
-            Delete(s,1,1);
-            s1:=ExtractWhileConforming(s,['0'..'9']);
+            Delete(datas,1,1);
+            s1:=ExtractWhileConforming(datas,['0'..'9']);
             Result.STEPID:=StringToIntSafe(s1);
-            Delete(s,1,length(s1));
+            Delete(datas,1,length(s1));
             if (Result.STEPID=0) then Result.STEPID:=STEPLISTSTART;
           end;
         end;
-        if ((Length(s)>0) AND (s[1]=' ')) then Delete(s,1,1); // delete space in front of datastring, if any
-        if (Length(s)>0) then
+        if ((Length(datas)>0) AND (datas[1]=' ')) then Delete(datas,1,1); // delete space in front of datastring, if any
+        if (Length(datas)>0) then
         begin
-          if s[1]='!' then
+          if datas[1]='!' then
           begin
             // We have an error !!
             // Get number and description
-            Delete(s,1,1);
-            s1:=ExtractWhileConforming(s,['0'..'9']);
+            Delete(datas,1,1);
+            s1:=ExtractWhileConforming(datas,['0'..'9']);
             Result.ERROR:=s1;
-            Delete(s,1,length(s1));
-            if ((Length(s)>0) AND (s[1]=' ')) then Delete(s,1,1); // delete space in front of errorstring, if any
+            Delete(datas,1,length(s1));
+            if ((Length(datas)>0) AND (datas[1]=' ')) then Delete(datas,1,1); // delete space in front of errorstring, if any
           end;
-          Result.DATA:=Trim(s);
+          Result.DATA:=Trim(datas);
         end;
       end;
     end;

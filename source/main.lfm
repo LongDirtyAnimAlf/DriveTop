@@ -1,7 +1,7 @@
 object Form1: TForm1
-  Left = 269
+  Left = 164
   Height = 668
-  Top = 169
+  Top = 162
   Width = 1142
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'DriveTop'
@@ -1090,8 +1090,74 @@ object Form1: TForm1
         Top = 459
         Width = 518
         Anchors = [akTop, akLeft, akRight, akBottom]
-        Caption = 'MovementPanel2'
+        ClientHeight = 165
+        ClientWidth = 518
         TabOrder = 1
+        object ListView1: TListView
+          AnchorSideLeft.Control = Panel1
+          AnchorSideTop.Control = Panel1
+          Left = 1
+          Height = 117
+          Top = 1
+          Width = 310
+          AutoSort = False
+          Checkboxes = True
+          Columns = <          
+            item
+              Caption = 'Position'
+              Width = 100
+            end          
+            item
+              Caption = 'Speed'
+              Width = 100
+            end          
+            item
+              Caption = 'Accel'
+              Width = 100
+            end>
+          ColumnClick = False
+          Items.LazData = {
+            6000000002000000FFFFFFFFFFFFFFFFFFFFFFFF020000000300000032303002
+            0000003230020000003530FFFFFFFFFFFFFFFFFFFFFFFF020000000300000035
+            30300300000031303003000000323030FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+          }
+          ScrollBars = ssVertical
+          TabOrder = 0
+          ViewStyle = vsReport
+        end
+        object EditPos: TEdit
+          Left = 4
+          Height = 23
+          Top = 130
+          Width = 93
+          TabOrder = 1
+        end
+        object btnStoreBlockDrive: TButton
+          AnchorSideTop.Control = Panel1
+          AnchorSideRight.Control = Panel1
+          AnchorSideRight.Side = asrBottom
+          Left = 327
+          Height = 34
+          Top = 1
+          Width = 190
+          Anchors = [akTop, akRight]
+          Caption = 'Store Blocks in Drive'
+          TabOrder = 2
+          OnClick = btnStoreBlockDriveClick
+        end
+        object btnExecuteBlocksDrive: TButton
+          AnchorSideTop.Control = btnStoreBlockDrive
+          AnchorSideTop.Side = asrBottom
+          AnchorSideRight.Control = Panel1
+          AnchorSideRight.Side = asrBottom
+          Left = 327
+          Height = 34
+          Top = 35
+          Width = 190
+          Anchors = [akTop, akRight]
+          Caption = 'Execute Blocks in Drive'
+          TabOrder = 3
+        end
       end
     end
     object tabRawCommands: TTabSheet

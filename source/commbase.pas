@@ -13,6 +13,8 @@ type
     function  GetData:string;
     function  GetAsync: boolean;
     procedure SetAsync(value:boolean);
+    //function  GetRTSToggle: boolean;
+    //procedure SetRTSToggle(value:boolean);
     function  GetActive: boolean;
     procedure SetActive(state: boolean);
     function  GetOnRxData: TNotifyEvent;
@@ -23,6 +25,7 @@ type
     property  Data: string read GetData;
     property  Active: boolean read GetActive write SetActive;
     property  Async: boolean read GetAsync write SetAsync;
+    //property  RTSToggle: boolean read GetRTSToggle write SetRTSToggle;
     property  OnRxData: TNotifyEvent read GetOnRxData write SetOnRxData;
   end;
 

@@ -235,6 +235,7 @@ type
   function  RegisterDataCount(var MAP:TMySortedMap):integer;
 
   function  IDN2CD(const IDN:string; const DriveNumber:byte):TCOMMANDDATA;
+  function  NUM2SCLASS(const S:byte; var SC:TVMCOMMANDPARAMETERSUBCLASS):boolean;
   function  COMMAND2CD(const C:TCOMMAND; const DriveNumber:byte):TCOMMANDDATA;
   function  GetIDN(const CD:TCOMMANDDATA):string; overload;
   function  GetIDN(const RR:TRegisterRecord):string; overload;
@@ -367,25 +368,53 @@ begin
 end;
 
 function IDN2CD(const IDN:string; const DriveNumber:byte):TCOMMANDDATA;
-var
-  i:integer;
+//var
+//  i:integer;
 begin
   Result:=Default(TCOMMANDDATA);
-  if (Length(IDN)>7) then
+  if (Length(IDN)>=8) then
   begin
+    (*
     i:=0;
     while IDN[i+1] in ['S','P','T','C','A','-','0'..'9'] do
     begin
      Inc(i);
      if i=Length(IDN) then break;
     end;
+    *)
     if IDN[1]='S' then Result.CCLASS:=ccDrive;
     if IDN[1]='P' then Result.CCLASS:=ccDriveSpecific;
     if IDN[1]='T' then Result.CCLASS:=ccTask;
     if IDN[1]='C' then Result.CCLASS:=ccControl;
     if IDN[1]='A' then Result.CCLASS:=ccAxis;
-    if i>4 then Result.NUMID:=StrToInt(Copy(IDN,5,i-4));
+    //if i>4 then Result.NUMID:=StrToInt(Copy(IDN,5,i-4));
+    Result.NUMID:=StrToInt(Copy(IDN,5,4));
     Result.SETID:=DriveNumber;
+  end
+  else
+  begin
+    // we should never be here !!!
+    raise EArgumentException.Create ('Wrong IDN length !');
+  end;
+end;
+
+//function NUM2SCLASS(c:char; var SC:TCOMMANDDATA):boolean;
+function NUM2SCLASS(const S:byte; var SC:TVMCOMMANDPARAMETERSUBCLASS):boolean;
+begin
+  result:=true;
+  case S of
+    1: SC:=mscNone; // This is IDN data. Not sure what to do with it.
+    2: SC:=mscName;
+    3: SC:=mscAttributes;
+    4: SC:=mscUnits;
+    5: SC:=mscLowerLimit;
+    6: SC:=mscUpperLimit;
+    7: SC:=mscParameterData;
+  else
+    result:=false;
+    SC:=mscNone;
+    // we should never be here !!!
+    raise EArgumentException.Create ('Wrong subclass in DirectData response from Drive !');
   end;
 end;
 
