@@ -1,11 +1,11 @@
 object Form1: TForm1
   Left = 320
-  Height = 668
+  Height = 742
   Top = 160
   Width = 1142
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'DriveTop'
-  ClientHeight = 668
+  ClientHeight = 742
   ClientWidth = 1142
   Menu = MainMenu1
   OnCreate = FormCreate
@@ -30,12 +30,14 @@ object Form1: TForm1
   end
   object Memo1: TMemo
     AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = TabControl1
+    AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = TabControl1
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = editStatus
     Left = 8
-    Height = 141
-    Top = 496
+    Height = 199
+    Top = 512
     Width = 408
     Anchors = [akTop, akLeft, akBottom]
     BorderSpacing.Left = 8
@@ -105,19 +107,19 @@ object Form1: TForm1
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 608
-    Height = 652
+    Height = 726
     Top = 8
     Width = 526
-    ActivePage = tabRawCommands
+    ActivePage = tabMove
     Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Top = 8
     BorderSpacing.Right = 8
     BorderSpacing.Bottom = 8
-    TabIndex = 2
+    TabIndex = 1
     TabOrder = 6
     object TabSheet1: TTabSheet
       Caption = 'Drive data'
-      ClientHeight = 624
+      ClientHeight = 698
       ClientWidth = 518
       object lvParameters: TListView
         AnchorSideLeft.Control = TabSheet1
@@ -126,7 +128,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = vleParamDetails
         Left = 8
-        Height = 440
+        Height = 514
         Top = 8
         Width = 502
         Anchors = [akTop, akLeft, akRight, akBottom]
@@ -162,7 +164,7 @@ object Form1: TForm1
         AnchorSideBottom.Control = synDataUpdate
         Left = 8
         Height = 19
-        Top = 463
+        Top = 537
         Width = 101
         Anchors = [akLeft, akBottom]
         BorderSpacing.Left = 8
@@ -180,7 +182,7 @@ object Form1: TForm1
         AnchorSideBottom.Control = synDataUpdate
         Left = 246
         Height = 25
-        Top = 459
+        Top = 533
         Width = 122
         Anchors = [akRight, akBottom]
         AutoSize = True
@@ -199,7 +201,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 8
         Height = 124
-        Top = 492
+        Top = 566
         Width = 360
         BorderSpacing.Around = 8
         Anchors = [akLeft, akBottom]
@@ -696,7 +698,7 @@ object Form1: TForm1
         Left = 376
         Height = 160
         Hint = 'Edit value field to update data.'
-        Top = 456
+        Top = 530
         Width = 134
         Anchors = [akLeft, akRight, akBottom]
         AutoEdit = False
@@ -728,13 +730,13 @@ object Form1: TForm1
         )
         ColWidths = (
           64
-          69
+          52
         )
       end
     end
     object tabMove: TTabSheet
       Caption = 'Movement'
-      ClientHeight = 624
+      ClientHeight = 698
       ClientWidth = 518
       object MovementPanel1: TPanel
         AnchorSideLeft.Control = tabMove
@@ -1086,11 +1088,11 @@ object Form1: TForm1
         AnchorSideBottom.Control = tabMove
         AnchorSideBottom.Side = asrBottom
         Left = 0
-        Height = 165
+        Height = 239
         Top = 459
         Width = 518
         Anchors = [akTop, akLeft, akRight, akBottom]
-        ClientHeight = 165
+        ClientHeight = 239
         ClientWidth = 518
         TabOrder = 1
         object ListView1: TListView
@@ -1145,7 +1147,7 @@ object Form1: TForm1
           TabOrder = 2
           OnClick = btnStoreBlockDriveClick
         end
-        object btnExecuteBlocksDrive: TButton
+        object btnExecuteBlocks0Drive: TButton
           AnchorSideTop.Control = btnStoreBlockDrive
           AnchorSideTop.Side = asrBottom
           AnchorSideRight.Control = Panel1
@@ -1157,22 +1159,36 @@ object Form1: TForm1
           Anchors = [akTop, akRight]
           Caption = 'Execute Blocks in Drive'
           TabOrder = 3
-          OnClick = btnExecuteBlocksDriveClick
+          OnClick = btnExecuteBlocks0DriveClick
         end
         object Button2: TButton
-          Left = 338
+          Left = 56
           Height = 35
-          Top = 82
+          Top = 184
           Width = 165
           Caption = 'Button2'
           TabOrder = 4
           OnClick = Button2Click
         end
+        object btnExecuteBlocks1Drive: TButton
+          AnchorSideTop.Control = btnExecuteBlocks0Drive
+          AnchorSideTop.Side = asrBottom
+          AnchorSideRight.Control = Panel1
+          AnchorSideRight.Side = asrBottom
+          Left = 327
+          Height = 34
+          Top = 69
+          Width = 190
+          Anchors = [akTop, akRight]
+          Caption = 'Execute Blocks in Drive'
+          TabOrder = 5
+          OnClick = btnExecuteBlocks0DriveClick
+        end
       end
     end
     object tabRawCommands: TTabSheet
       Caption = 'Raw Commands'
-      ClientHeight = 624
+      ClientHeight = 698
       ClientWidth = 518
       object pageRawCommands: TPageControl
         AnchorSideLeft.Control = tabRawCommands
@@ -1181,7 +1197,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = rgSubClass
         Left = 4
-        Height = 501
+        Height = 575
         Top = 4
         Width = 506
         ActivePage = tabVMDrive
@@ -1196,11 +1212,11 @@ object Form1: TForm1
         OnChange = pageRawCommandsChange
         object tabVMControl: TTabSheet
           Caption = 'VM-Control'
-          ClientHeight = 473
+          ClientHeight = 547
           ClientWidth = 498
           object lbVMSYSTEMCOMMANDS: TListBox
             Left = 0
-            Height = 473
+            Height = 547
             Top = 0
             Width = 498
             Align = alClient
@@ -1212,11 +1228,11 @@ object Form1: TForm1
         end
         object tabVMAxis: TTabSheet
           Caption = 'VM-Axis'
-          ClientHeight = 473
+          ClientHeight = 547
           ClientWidth = 498
           object lbVMAXISCOMMANDS: TListBox
             Left = 0
-            Height = 473
+            Height = 547
             Top = 0
             Width = 498
             Align = alClient
@@ -1228,11 +1244,11 @@ object Form1: TForm1
         end
         object tabVMTask: TTabSheet
           Caption = 'VM-Task'
-          ClientHeight = 473
+          ClientHeight = 547
           ClientWidth = 498
           object lbVMTASKCOMMANDS: TListBox
             Left = 0
-            Height = 473
+            Height = 547
             Top = 0
             Width = 498
             Align = alClient
@@ -1249,11 +1265,11 @@ object Form1: TForm1
           ChildSizing.EnlargeVertical = crsHomogenousChildResize
           ChildSizing.Layout = cclLeftToRightThenTopToBottom
           ChildSizing.ControlsPerLine = 1
-          ClientHeight = 473
+          ClientHeight = 547
           ClientWidth = 498
           object lbSERCOSPARAMS: TListBox
             Left = 0
-            Height = 227
+            Height = 264
             Top = 0
             Width = 498
             ExtendedSelect = False
@@ -1263,8 +1279,8 @@ object Form1: TForm1
           end
           object lbSERCOSCOMMANDS: TListBox
             Left = 0
-            Height = 226
-            Top = 247
+            Height = 263
+            Top = 284
             Width = 498
             ExtendedSelect = False
             ItemHeight = 0
@@ -1274,11 +1290,11 @@ object Form1: TForm1
         end
         object tabVMRegister: TTabSheet
           Caption = 'VM-Register'
-          ClientHeight = 473
+          ClientHeight = 547
           ClientWidth = 498
           object lbVMREGISTERS: TListBox
             Left = 0
-            Height = 473
+            Height = 547
             Top = 0
             Width = 498
             Align = alClient
@@ -1295,7 +1311,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 4
         Height = 103
-        Top = 513
+        Top = 587
         Width = 296
         Anchors = [akLeft, akBottom]
         AutoFill = True
@@ -1321,7 +1337,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         Left = 395
         Height = 23
-        Top = 513
+        Top = 587
         Width = 115
         Anchors = [akTop, akLeft, akRight]
         TabOrder = 2
@@ -1334,7 +1350,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         Left = 395
         Height = 23
-        Top = 540
+        Top = 614
         Width = 115
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Top = 4
@@ -1347,7 +1363,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 395
         Height = 25
-        Top = 591
+        Top = 665
         Width = 115
         Anchors = [akRight, akBottom]
         AutoSize = True
@@ -1360,7 +1376,7 @@ object Form1: TForm1
     end
     object tabProgramme: TTabSheet
       Caption = 'Programme'
-      ClientHeight = 624
+      ClientHeight = 698
       ClientWidth = 518
       object ValueListEditor1: TValueListEditor
         AnchorSideLeft.Control = tabProgramme
@@ -1368,7 +1384,7 @@ object Form1: TForm1
         AnchorSideBottom.Control = tabProgramme
         AnchorSideBottom.Side = asrBottom
         Left = 8
-        Height = 608
+        Height = 682
         Top = 8
         Width = 264
         Anchors = [akTop, akLeft, akBottom]
@@ -1429,7 +1445,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 282
         Height = 160
-        Top = 149
+        Top = 176
         Width = 232
         Anchors = []
         BorderSpacing.Around = 8
@@ -1502,7 +1518,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 282
         Height = 144
-        Top = 439
+        Top = 500
         Width = 232
         Anchors = []
         BorderSpacing.Around = 8
@@ -1575,7 +1591,7 @@ object Form1: TForm1
   object TabControl1: TTabControl
     AnchorSideLeft.Control = Owner
     Left = 8
-    Height = 384
+    Height = 408
     Top = 104
     Width = 592
     OnChange = TabControl1Change
@@ -2251,7 +2267,7 @@ object Form1: TForm1
       AnchorSideBottom.Side = asrBottom
       Left = 346
       Height = 52
-      Top = 322
+      Top = 346
       Width = 236
       Anchors = [akRight, akBottom]
       BorderSpacing.Around = 8
@@ -2263,7 +2279,7 @@ object Form1: TForm1
     AnchorSideTop.Control = Owner
     Left = 552
     Height = 15
-    Top = 19
+    Top = 22
     Width = 149
     Anchors = []
     AutoSize = False
@@ -2302,7 +2318,7 @@ object Form1: TForm1
     AnchorSideBottom.Side = asrBottom
     Left = 8
     Height = 23
-    Top = 641
+    Top = 715
     Width = 408
     Anchors = [akLeft, akRight, akBottom]
     BorderSpacing.Left = 8
@@ -2332,8 +2348,8 @@ object Form1: TForm1
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 421
-    Height = 168
-    Top = 496
+    Height = 226
+    Top = 512
     Width = 179
     Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Left = 5
@@ -2365,7 +2381,7 @@ object Form1: TForm1
     end
   end
   object Timer1: TTimer
-    Interval = 20000
+    Interval = 2000
     OnTimer = Timer1Timer
     Left = 856
     Top = 112

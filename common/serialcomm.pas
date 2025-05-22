@@ -445,10 +445,11 @@ end;
 
 procedure TLazSerial.WriteList(const IDN: string; listdata:array of string);
 var
-  rcvd : string;
-  re   : boolean;
-  b    : byte;
-  i    : dword;
+  rcvd          : string;
+  re            : boolean;
+  b             : byte;
+  i,j           : dword;
+  datas         : ansistring;
 begin
   re:=Assigned(ReadThread);
   if re then
@@ -462,26 +463,38 @@ begin
     // i.e.: "P-0-4007,7,w,>"(CR)
     FSynSer.SendString(IDN+',7,w,>'+CR);
     b:=0;
+
+    SetLength({%H-}datas,MAXWORD);
+    j:=0;
+
     while true do
     begin
       b:=FSynSer.RecvByte(100);
       if (FSynSer.LastError<>0) then break;
-      if (b=10) then continue; // skip LF character
-      rcvd:=rcvd+chr(b);
-      if (b=Ord('?')) then break; // all ok : r: "P-0-4007,7,w,>"(CR)"?"
-      if (b=Ord(':')) then // might be an error : "P-0-4007,7,w,>"(CR)"#xxxx"(CR)"A01:>"
+      Inc(j);
+      datas[j]:=chr(b);
+      if (datas[j]=#10) then
+      begin
+        if ((j>1) AND (datas[j-1]=#13)) then
+        begin
+          Dec(j,2); // remove superfluous CRLF
+          continue;
+        end;
+      end;
+      if (datas[j]='?') then break; // all ok : r: "P-0-4007,7,w,>"(CR)"?"
+      if (datas[j]=':') then // might be an error : "P-0-4007,7,w,>"(CR)"#xxxx"(CR)"A01:>"
       begin
         b:=FSynSer.RecvByte(100);
         if (FSynSer.LastError<>0) then break;
-        if (b=10) then continue; // skip LF character
-        rcvd:=rcvd+chr(b);
-        if (b=Ord('>')) then break;
-        b:=0;
+        Inc(j);
+        datas[j]:=chr(b);
+        if (datas[j]='>') then break;
       end;
     end;
+    SetLength(datas,j);
+
     // Receive last [dummy] CR
     if (FSynSer.LastError<>0) then FSynSer.RecvByte(100);
-
 
     if (b=Ord('?')) then
     begin
@@ -493,31 +506,40 @@ begin
         rcvd:='';
         b:=0;
         FSynSer.SendString(listdata[i-1]+CR);
+
+        SetLength({%H-}datas,MAXWORD);
+        j:=0;
+
         while true do
         begin
           b:=FSynSer.RecvByte(100);
           if (FSynSer.LastError<>0) then break;
-          if (b=10) then continue; // skip LF character
-          rcvd:=rcvd+chr(b);
-          if (b=Ord('?')) then
+          Inc(j);
+          datas[j]:=chr(b);
+          if (datas[j]=#10) then
           begin
-            // Receive last [dummy] CR
-            FSynSer.RecvByte(100);
-            break;
+            if ((j>1) AND (datas[j-1]=#13)) then
+            begin
+              Dec(j,2); // remove superfluous CRLF
+              continue;
+            end;
           end;
-          if (b=Ord('#')) then // we got an error
+          if (datas[j]='?') then break; // all ok : r: "P-0-4007,7,w,>"(CR)"?"
+          if (datas[j]=':') then // might be an error : "P-0-4007,7,w,>"(CR)"#xxxx"(CR)"A01:>"
           begin
-            rcvd:=rcvd+FSynSer.RecvTerminated(100,CR);
-            break;
+            b:=FSynSer.RecvByte(100);
+            if (FSynSer.LastError<>0) then break;
+            Inc(j);
+            datas[j]:=chr(b);
+            if (datas[j]='>') then break;
           end;
         end;
+        SetLength(datas,j);
       end;
 
       // Close the list !!
       FSynSer.SendString('<'+CR);
       rcvd:=FSynSer.RecvTerminated(1500,Terminator); // "<" (CR) ["#xxxx"(CR)]"A01:>"
-      // Receive last [dummy] CR
-      FSynSer.RecvByte(100);
     end;
 
   finally

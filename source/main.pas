@@ -46,6 +46,7 @@ type
     btnConnectDDE: TButton;
     btnConnectDriveRS232: TButton;
     btnDriveInfo: TButton;
+    btnExecuteBlocks1Drive: TButton;
     btnGetEvents: TButton;
     btnGetLists: TButton;
     btnManualAxis: TButton;
@@ -59,7 +60,7 @@ type
     btnSetMode: TButton;
     btnSpeedLimit: TButton;
     btnStart: TButton;
-    btnExecuteBlocksDrive: TButton;
+    btnExecuteBlocks0Drive: TButton;
     btnTest: TButton;
     btnStartTaskA: TButton;
     btnGetPoints: TButton;
@@ -164,7 +165,7 @@ type
     procedure btnAxisCommandClick(Sender: TObject);
     procedure btnAxisStatusClick({%H-}Sender: TObject);
     procedure btnConnectSerialClick(Sender: TObject);
-    procedure btnExecuteBlocksDriveClick(Sender: TObject);
+    procedure btnExecuteBlocks0DriveClick(Sender: TObject);
     procedure btnGetTableClick(Sender: TObject);
     procedure btnMoveClick({%H-}Sender: TObject);
     procedure btnRefreshDriveDataClick({%H-}Sender: TObject);
@@ -1032,14 +1033,19 @@ begin
     CD:=Default(TCOMMANDDATA);
     CD.CSUBCLASS:=mscParameterData;
 
-    // Deactivate resident memory mode to preserve EEPROM
     CD.CCLASS:=ccDrive;
     CD.SETID:=ActiveDrive;
+
+    // Deactivate resident memory mode to preserve EEPROM
     CD.NUMID:=269;
     CD.DATA:='1';
     success:=ProcessCommand(CD,s,false,true);
-    Memo1.Lines.Append(s);
 
+    // Reset target position to 0 upon start
+    // Tricky
+    CD.NUMID:=258;
+    CD.DATA:='0';
+    success:=ProcessCommand(CD,s,false,true);
   end
   else
   begin
@@ -1048,7 +1054,7 @@ begin
 
 end;
 
-procedure TForm1.btnExecuteBlocksDriveClick(Sender: TObject);
+procedure TForm1.btnExecuteBlocks0DriveClick(Sender: TObject);
 var
   s                    : string;
   i,axis               : word;
@@ -1076,7 +1082,10 @@ begin
 
     // Select process block to execute
     CD.NUMID:=4026;
-    CD.DATA:='0';
+
+    if Sender=btnExecuteBlocks0Drive then CD.DATA:='0';
+    if Sender=btnExecuteBlocks1Drive then CD.DATA:='1';
+
     success:=ProcessCommand(CD,s,false,true);
 
     CD.CCLASS:=ccDrive;
@@ -1098,11 +1107,11 @@ begin
 
     // Engage drive by toggling strobe bit
     SC346.Data.AcceptPositionToggle:=1-SC346.Data.AcceptPositionToggle; // toggle strobe bit
-    //SC346.Data.PositionType:=1;
-    //SC346.Data.Reference:=1;
+    SC346.Data.PositionType:=1;
+    SC346.Data.Reference:=1;
+    SC346.Data.TargetOverride:=1;
     CD.DATA:=DecimalToBinaryString(SC346.Raw,DirectDrive);
     success:=ProcessCommand(CD,s,false,true);
-
 
     // Wait for position
     CD:=COMMAND2CD(DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3,ActiveDrive);
@@ -1565,9 +1574,6 @@ begin
   else
     Memo1.Lines.Append('Write. '+c+' {'+s+'}');
   editValue.Text:='';
-
-
-  ProcessCommDataString(s);
 end;
 
 procedure TForm1.btnSetModeClick(Sender: TObject);
@@ -1852,13 +1858,13 @@ var
   DriveMode  : TOPERATIONMODE;
   SC4019     : TDRIVEPARAMETER_4019;
 begin
-  //if CheckComms then exit;
+  if CheckComms then exit;
   //if CheckAxis(axis) then exit;
 
   // Tricky, we might move axis that is not active !!
-  //DriveMode:=GetDriveMode(ActiveDriveInfo.MODE);
+  DriveMode:=GetDriveMode(ActiveDriveInfo.MODE);
 
-  //if (DriveMode in [omPCBME1, omPCBME2, omPCBME12]) then
+  if (DriveMode in [omPCBME1, omPCBME2, omPCBME12]) then
   begin
     TE:=Timer1.Enabled;
     if TE then Timer1.Enabled:=false;
@@ -1869,39 +1875,36 @@ begin
     // Set positions
     CD.NUMID:=4006;
     IDN:=GetIDN(CD);
-    (FComDevice AS TLazSerial).WriteList(IDN,['100','200','5000','-5300']);
+    (FComDevice AS TLazSerial).WriteList(IDN,['100','-100','100','-100']);
 
     // Set speeds
     CD.NUMID:=4007;
     IDN:=GetIDN(CD);
-    (FComDevice AS TLazSerial).WriteList(IDN,['100','200','5000','5000']);
+    (FComDevice AS TLazSerial).WriteList(IDN,['2000','2000','2000','2000']);
 
     // Set accels
-    (*
     CD.NUMID:=4008;
     IDN:=GetIDN(CD);
-    (FComDevice AS TLazSerial).WriteList(IDN,['100','200','5000']);
-    *)
+    (FComDevice AS TLazSerial).WriteList(IDN,['100','100','100','100']);
 
     // Set Modes
     CD.NUMID:=4019;
     IDN:=GetIDN(CD);
     SC4019.Raw:=0;
-    SC4019.Data.PositionMode:=2; // relative
+    SC4019.Data.PositionMode:=1; // relative
     SC4019.Data.BlockTransitionHalt:=1; // normal block
     s:=DecimalToHexString(SC4019.Raw,DirectDrive);
     SC4019.Data.BlockTransitionHalt:=0; // end block
     s1:=DecimalToHexString(SC4019.Raw,DirectDrive);
     (FComDevice AS TLazSerial).WriteList(IDN,[s,s,s,s1]);
 
-    //if TE then Timer1.Enabled:=false;
+    if TE then Timer1.Enabled:=true;
 
-  ///end
-  //else
-  //begin
-  //  ShowMessage('Switch to Phase2 to store block values !');
+  end
+  else
+  begin
+    ShowMessage('Switch to Phase2 to store block values !');
   end;
-
 end;
 
 procedure TForm1.btnTestClick(Sender: TObject);
@@ -2482,6 +2485,7 @@ begin
     SC346.Data.AcceptPositionToggle:=1-SC346.Data.AcceptPositionToggle; // toggle strobe bit
     SC346.Data.PositionType:=1;
     SC346.Data.Reference:=1;
+    SC346.Data.TargetOverride:=1;
     CD.DATA:=DecimalToBinaryString(SC346.Raw,DirectDrive);
     success:=ProcessCommand(CD,s,false,true);
 

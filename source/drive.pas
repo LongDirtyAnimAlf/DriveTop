@@ -339,15 +339,16 @@ type
   TDRIVEPARAMETER_4019 = bitpacked record  // Position feedback value status
       case integer of
           1 : (  Data : record
-                   PositionMode                      : T2BITS; // 1 = absolute; 2 = relative
-                   DirectionMode                     : T2BITS; // just run, without any position, infinite; 1 = positive direction; 2 = negative direction
-                   //FollowBlockMode          : T4BITS;
+                   Reserved1                         : T1BITS;
+                   PositionMode                      : T1BITS; // 0 = absolute; 1 = relative
+                   InfinitePositive                  : T1BITS;
+                   InfiniteNegative                  : T1BITS;
                    BlockTransitionAtOldSpeedMode1    : T1BITS;
                    BlockTransitionAtNewSpeedMode2    : T1BITS;
                    BlockTransitionHalt               : T1BITS;
                    BlockTransitionSwitch             : T1BITS;
                    StorePath                         : T1BITS;
-                   Reserved1                         : T7BITS;
+                   Reserved2                         : T7BITS;
                   end
               );
           2 : (
