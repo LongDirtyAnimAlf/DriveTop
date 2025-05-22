@@ -433,7 +433,7 @@
    (Valid : FALSE; Lagless : FALSE; BitMask :  %1010000000010010; Name : 'Velocity synchronization, real master axis'),
    (Valid : FALSE; Lagless : FALSE; BitMask :  %1000100000010011; Name : 'Cam, encoder 1, real master axis'),
    (Valid : FALSE; Lagless : FALSE; BitMask :  %1100000000000011; Name : 'Step-motor mode'),
-   (Valid : FALSE; Lagless : FALSE; BitMask :  %1100000000010011; Name : 'Jog mode')
+   (Valid : FALSE; Lagless : FALSE; BitMask :  %1100000000011011; Name : 'Jog mode')
    );
 
 DRIVE_ERRORS : array[0..40] of TERROR =

@@ -302,7 +302,7 @@ type
   TDRIVEPARAMETER_0393 = bitpacked record
       case integer of
           1 : (  Data : record
-                   Mode                     : T2BITS; // 0 = shortest way; 1 = positive direction; 2 = negative direction
+                   DirectionMode            : T2BITS; // 0 = shortest way; 1 = positive direction; 2 = negative direction
                    TargetPosAfter           : T1BITS; // 0 = position to S-0-0258; 1 = position to actual position
                    PositionType             : T1BITS; // 0 = absolute; 1 = relative
                    SetpointAcceptance       : T1BITS;
@@ -326,6 +326,29 @@ type
                    StatusFeedback2          : T1BITS;
                    Reserved1                : T13BITS;
                  end
+              );
+          2 : (
+               Bits            : bitpacked array[0..15] of T1BITS;
+              );
+          3 : (
+               Raw             : Word;
+              );
+
+  end;
+
+  TDRIVEPARAMETER_4019 = bitpacked record  // Position feedback value status
+      case integer of
+          1 : (  Data : record
+                   PositionMode                      : T2BITS; // 1 = absolute; 2 = relative
+                   DirectionMode                     : T2BITS; // just run, without any position, infinite; 1 = positive direction; 2 = negative direction
+                   //FollowBlockMode          : T4BITS;
+                   BlockTransitionAtOldSpeedMode1    : T1BITS;
+                   BlockTransitionAtNewSpeedMode2    : T1BITS;
+                   BlockTransitionHalt               : T1BITS;
+                   BlockTransitionSwitch             : T1BITS;
+                   StorePath                         : T1BITS;
+                   Reserved1                         : T7BITS;
+                  end
               );
           2 : (
                Bits            : bitpacked array[0..15] of T1BITS;
@@ -382,10 +405,13 @@ const
   DRIVE_DIAGNOSTIC             : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 95);
   DRIVE_INTERFACE              : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 14);
 
-  DRIVE_POSITION               : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 51);
-  DRIVE_TARGET                 : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 47);
-  DRIVE_SPEED                  : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 40);
-  DRIVE_TORQUE                 : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 84);
+  DRIVE_COMMAND                : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 47);
+  DRIVE_TARGET                 : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 258);
+  DRIVE_DISTANCE               : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 282);
+
+  //DRIVE_SPEED                  : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 40);
+  //DRIVE_TORQUE                 : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 84);
+  //DRIVE_FEEDBACK               : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 51);
 
   DRIVE_MODELIST               : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscList;          NUMID: 292);
   DRIVE_PARAMLIST              : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscList;          NUMID: 17);
@@ -431,7 +457,7 @@ var
   DriveOperationModes         : TOMD;
   DriveOperationModesLagLess  : TOMD;
   BASICDRIVEDATA              : array[0..5] of TCOMMAND;
-  REALTIMEDRIVEDATA           : array[0..8] of TCOMMAND;
+  REALTIMEDRIVEDATA           : array[0..7] of TCOMMAND;
 
 implementation
 
@@ -783,21 +809,24 @@ begin
   BASICDRIVEDATA[4]:=DRIVE_MOTORSERIAL;
   BASICDRIVEDATA[5]:=DRIVE_PRIMARYMODE;
 
-  REALTIMEDRIVEDATA[0]:=DRIVE_POSITION;
-  REALTIMEDRIVEDATA[1]:=DRIVE_TARGET;
-  REALTIMEDRIVEDATA[2]:=DRIVE_SPEED;
-  REALTIMEDRIVEDATA[3]:=DRIVE_TORQUE;
-  REALTIMEDRIVEDATA[4]:=DRIVE_CONTROLWORD;
-  REALTIMEDRIVEDATA[5]:=DRIVE_STATUSWORD;
-  REALTIMEDRIVEDATA[6]:=DRIVE_DIAGNOSTIC;
-  REALTIMEDRIVEDATA[7]:=DRIVE_INTERFACE;
-  REALTIMEDRIVEDATA[8]:=DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3;
-  //REALTIMEDRIVEDATA[9]:=DRIVE_DIAGNOSTIC_CLASS1;
-  //REALTIMEDRIVEDATA[10]:=DRIVE_DIAGNOSTIC_CLASS2;
-  //REALTIMEDRIVEDATA[11]:=DRIVE_DIAGNOSTIC_CLASS3;
+  REALTIMEDRIVEDATA[0]:=DRIVE_TARGET;
+  REALTIMEDRIVEDATA[1]:=DRIVE_COMMAND;
+  REALTIMEDRIVEDATA[2]:=DRIVE_DISTANCE;
+  REALTIMEDRIVEDATA[3]:=DRIVE_CONTROLWORD;
+  REALTIMEDRIVEDATA[4]:=DRIVE_STATUSWORD;
+  REALTIMEDRIVEDATA[5]:=DRIVE_DIAGNOSTIC;
+  REALTIMEDRIVEDATA[6]:=DRIVE_INTERFACE;
+  REALTIMEDRIVEDATA[7]:=DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3;
 
-  //REALTIMEDRIVEDATA[12]:=DRIVE_SIGNAL_STATUSWORD;
-  //REALTIMEDRIVEDATA[13]:=DRIVE_SIGNAL_CONTROLWORD;
+  //REALTIMEDRIVEDATA[x]:=DRIVE_SPEED;
+  //REALTIMEDRIVEDATA[x]:=DRIVE_TORQUE;
+
+  //REALTIMEDRIVEDATA[x]:=DRIVE_DIAGNOSTIC_CLASS1;
+  //REALTIMEDRIVEDATA[x]:=DRIVE_DIAGNOSTIC_CLASS2;
+  //REALTIMEDRIVEDATA[x]:=DRIVE_DIAGNOSTIC_CLASS3;
+
+  //REALTIMEDRIVEDATA[x]:=DRIVE_SIGNAL_STATUSWORD;
+  //REALTIMEDRIVEDATA[x]:=DRIVE_SIGNAL_CONTROLWORD;
 end;
 
 procedure DriveEnd;

@@ -1,7 +1,7 @@
 object Form1: TForm1
-  Left = 164
+  Left = 320
   Height = 668
-  Top = 162
+  Top = 160
   Width = 1142
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'DriveTop'
@@ -108,12 +108,12 @@ object Form1: TForm1
     Height = 652
     Top = 8
     Width = 526
-    ActivePage = tabMove
+    ActivePage = tabRawCommands
     Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Top = 8
     BorderSpacing.Right = 8
     BorderSpacing.Bottom = 8
-    TabIndex = 1
+    TabIndex = 2
     TabOrder = 6
     object TabSheet1: TTabSheet
       Caption = 'Drive data'
@@ -728,7 +728,7 @@ object Form1: TForm1
         )
         ColWidths = (
           64
-          52
+          69
         )
       end
     end
@@ -1157,6 +1157,16 @@ object Form1: TForm1
           Anchors = [akTop, akRight]
           Caption = 'Execute Blocks in Drive'
           TabOrder = 3
+          OnClick = btnExecuteBlocksDriveClick
+        end
+        object Button2: TButton
+          Left = 338
+          Height = 35
+          Top = 82
+          Width = 165
+          Caption = 'Button2'
+          TabOrder = 4
+          OnClick = Button2Click
         end
       end
     end
@@ -1726,7 +1736,6 @@ object Form1: TForm1
       BorderSpacing.Right = 8
       ItemHeight = 15
       ParentShowHint = False
-      ShowHint = True
       TabOrder = 3
       Text = 'Empty'
     end
@@ -1738,7 +1747,7 @@ object Form1: TForm1
       AnchorSideRight.Side = asrBottom
       Left = 10
       Height = 116
-      Top = 272
+      Top = 280
       Width = 242
       Anchors = [akTop, akLeft, akRight]
       AutoSize = True
@@ -1861,12 +1870,12 @@ object Form1: TForm1
     end
     object grpDriveDashBoard: TGroupBox
       Left = 8
-      Height = 240
+      Height = 248
       Top = 32
       Width = 244
       AutoSize = True
       Caption = 'Drive Dashboard'
-      ClientHeight = 220
+      ClientHeight = 228
       ClientWidth = 240
       Constraints.MaxWidth = 244
       Constraints.MinWidth = 244
@@ -1979,7 +1988,6 @@ object Form1: TForm1
         AnchorSideTop.Control = panelDriveStatus
         AnchorSideTop.Side = asrBottom
         AnchorSideRight.Control = shapeAlive
-        AnchorSideBottom.Control = panelDriveFeedback
         Left = 4
         Height = 60
         Top = 36
@@ -1988,23 +1996,6 @@ object Form1: TForm1
         BorderSpacing.Around = 4
         Constraints.MinHeight = 60
         TabOrder = 1
-      end
-      object panelDriveFeedback: TPanel
-        AnchorSideLeft.Control = grpDriveDashBoard
-        AnchorSideTop.Control = panelDriveTarget
-        AnchorSideTop.Side = asrBottom
-        AnchorSideRight.Control = grpDriveDashBoard
-        AnchorSideRight.Side = asrBottom
-        AnchorSideBottom.Control = grpDriveDashBoard
-        AnchorSideBottom.Side = asrBottom
-        Left = 4
-        Height = 52
-        Top = 164
-        Width = 232
-        Anchors = [akTop, akLeft, akRight]
-        BorderSpacing.Around = 4
-        TabOrder = 2
-        OnResize = panelDriveFeedbackResize
       end
       object shapeAlive: TShape
         AnchorSideLeft.Control = panelDrivePosition
@@ -2027,10 +2018,23 @@ object Form1: TForm1
         AnchorSideTop.Control = panelDrivePosition
         AnchorSideTop.Side = asrBottom
         AnchorSideRight.Control = shapeAlive
-        AnchorSideBottom.Control = panelDriveFeedback
         Left = 4
         Height = 60
         Top = 100
+        Width = 211
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Around = 4
+        Constraints.MinHeight = 60
+        TabOrder = 2
+      end
+      object panelDriveDistance: TPanel
+        AnchorSideLeft.Control = grpDriveDashBoard
+        AnchorSideTop.Control = panelDriveTarget
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = shapeAlive
+        Left = 4
+        Height = 60
+        Top = 164
         Width = 211
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Around = 4
@@ -2237,6 +2241,23 @@ object Form1: TForm1
       ShowHint = True
       TabOrder = 8
     end
+    object panelDriveFeedback: TPanel
+      AnchorSideLeft.Control = grpDriveDashBoard
+      AnchorSideTop.Control = panelDriveTarget
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = TabControl1
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = TabControl1
+      AnchorSideBottom.Side = asrBottom
+      Left = 346
+      Height = 52
+      Top = 322
+      Width = 236
+      Anchors = [akRight, akBottom]
+      BorderSpacing.Around = 8
+      TabOrder = 9
+      OnResize = panelDriveFeedbackResize
+    end
   end
   object lblTime: TLabel
     AnchorSideTop.Control = Owner
@@ -2344,7 +2365,7 @@ object Form1: TForm1
     end
   end
   object Timer1: TTimer
-    Interval = 2000
+    Interval = 20000
     OnTimer = Timer1Timer
     Left = 856
     Top = 112

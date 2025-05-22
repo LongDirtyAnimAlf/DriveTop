@@ -184,7 +184,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
-    procedure WriteList(const cmd: string; listdata:array of string);
+    procedure WriteList(const IDN: string; listdata:array of string);
     procedure WriteString(const cmd: string; var dat: string);
     procedure WriteStringPrio(const cmd: string; var dat: string);
     procedure WriteStringBlocking(const cmd: string; var dat: string);
@@ -443,12 +443,12 @@ begin
   end;
 end;
 
-procedure TLazSerial.WriteList(const cmd: string; listdata:array of string);
+procedure TLazSerial.WriteList(const IDN: string; listdata:array of string);
 var
   rcvd : string;
   re   : boolean;
   b    : byte;
-  i    : integer;
+  i    : dword;
 begin
   re:=Assigned(ReadThread);
   if re then
@@ -460,58 +460,65 @@ begin
   try
     rcvd:='';
     // i.e.: "P-0-4007,7,w,>"(CR)
-    FSynSer.SendString(cmd+#13);
+    FSynSer.SendString(IDN+',7,w,>'+CR);
     b:=0;
     while true do
     begin
       b:=FSynSer.RecvByte(100);
       if (FSynSer.LastError<>0) then break;
+      if (b=10) then continue; // skip LF character
       rcvd:=rcvd+chr(b);
       if (b=Ord('?')) then break; // all ok : r: "P-0-4007,7,w,>"(CR)"?"
       if (b=Ord(':')) then // might be an error : "P-0-4007,7,w,>"(CR)"#xxxx"(CR)"A01:>"
       begin
         b:=FSynSer.RecvByte(100);
         if (FSynSer.LastError<>0) then break;
+        if (b=10) then continue; // skip LF character
         rcvd:=rcvd+chr(b);
         if (b=Ord('>')) then break;
+        b:=0;
       end;
     end;
     // Receive last [dummy] CR
     if (FSynSer.LastError<>0) then FSynSer.RecvByte(100);
 
 
-    // We have now opened the list for write access
-    // Write the data if all ok
-
-    for i:=1 to Length(listdata) do
+    if (b=Ord('?')) then
     begin
-      rcvd:='';
-      b:=0;
-      FSynSer.SendString(listdata[i-1]+#13);
-      while true do
+      // All ok
+      // We have now opened the list for write access
+      // Write the data if all ok
+      for i:=1 to Length(listdata) do
       begin
-        b:=FSynSer.RecvByte(100);
-        if (FSynSer.LastError<>0) then break;
-        rcvd:=rcvd+chr(b);
-        if (b=Ord('?')) then
+        rcvd:='';
+        b:=0;
+        FSynSer.SendString(listdata[i-1]+CR);
+        while true do
         begin
-          // Receive last [dummy] CR
-          FSynSer.RecvByte(100);
-          break;
-        end;
-        if (b=Ord('#')) then // we got an error
-        begin
-          rcvd:=rcvd+FSynSer.RecvTerminated(100,CR);
-          break;
+          b:=FSynSer.RecvByte(100);
+          if (FSynSer.LastError<>0) then break;
+          if (b=10) then continue; // skip LF character
+          rcvd:=rcvd+chr(b);
+          if (b=Ord('?')) then
+          begin
+            // Receive last [dummy] CR
+            FSynSer.RecvByte(100);
+            break;
+          end;
+          if (b=Ord('#')) then // we got an error
+          begin
+            rcvd:=rcvd+FSynSer.RecvTerminated(100,CR);
+            break;
+          end;
         end;
       end;
-    end;
 
-    // Close the list !!
-    FSynSer.SendString('<'#13);
-    rcvd:=FSynSer.RecvTerminated(1500,Terminator); // "<" (CR) ["#xxxx"(CR)]"A01:>"
-    // Receive last [dummy] CR
-    FSynSer.RecvByte(100);
+      // Close the list !!
+      FSynSer.SendString('<'+CR);
+      rcvd:=FSynSer.RecvTerminated(1500,Terminator); // "<" (CR) ["#xxxx"(CR)]"A01:>"
+      // Receive last [dummy] CR
+      FSynSer.RecvByte(100);
+    end;
 
   finally
     if re then
@@ -562,8 +569,10 @@ end;
 
 procedure TLazSerial.WriteStringBlocking(const cmd: string; var dat: string);
 var
-  rcvd : string;
-  re   : boolean;
+  rcvd  : ansistring;
+  re    : boolean;
+  datas : ansistring;
+  i,j   : integer;
 begin
   re:=Assigned(ReadThread);
   if re then
@@ -578,8 +587,20 @@ begin
     rcvd:=FSynSer.RecvTerminated(1500,Terminator);
     if ((FSynSer.LastError=0) AND (Length(rcvd)>0)) then
     begin
+      // remove [unneeded and unwanted and unexpected] LF from result
+      SetLength({%H-}datas,MAXWORD);
+      j:=1;
+      for i:=1 to Length(rcvd) do
+      begin
+        if (rcvd[i]=#10) then continue;
+        if ((i<Length(rcvd)) AND (rcvd[i]=#13) AND (rcvd[i+1]=#10)) then continue;
+        datas[j]:=rcvd[i];
+        Inc(j);
+        if (j>MAXWORD) then break; // prevent memory errors
+      end;
+      SetLength(datas,j-1);
       // Add the terminator to the result
-      dat:=rcvd+Terminator;
+      dat:=datas+Terminator;
       FData:=dat;
     end;
     //if Assigned(FOnRxData) then FOnRxData(Owner);
@@ -650,10 +671,11 @@ end;
 
 procedure TComPortReadThread.Execute;
 var
-  FBuffer:ansistring;
-  DataString:ansistring;
-  dr,te:boolean;
-  x:word;
+  datas      : ansistring;
+  rcvd       : ansistring;
+  dr,te      : boolean;
+  i,x        : integer;
+  j          : dword;
 begin
   try
     Owner.FSynSer.Purge;
@@ -687,24 +709,51 @@ begin
       begin
         if te then
         begin
-          DataString:=Owner.FSynSer.RecvTerminated(10000,Owner.Terminator);
-          dr:=((Owner.FSynSer.LastError<>ErrTimeout) AND (Length(DataString)>0));
+          rcvd:=Owner.FSynSer.RecvTerminated(10000,Owner.Terminator);
+          dr:=((Owner.FSynSer.LastError<>ErrTimeout) AND (Length(rcvd)>0));
           if dr then
           begin
+            // remove [unneeded and unwanted and unexpected] LF from result
+            SetLength({%H-}datas,MAXWORD);
+            j:=1;
+            for i:=1 to Length(rcvd) do
+            begin
+              if (rcvd[i]=#10) then continue;
+              if ((i<Length(rcvd)) AND (rcvd[i]=#13) AND (rcvd[i+1]=#10)) then continue;
+              datas[j]:=rcvd[i];
+              Inc(j);
+              if (j>MAXWORD) then break; // prevent memory errors
+            end;
+            SetLength(datas,j-1);
             // Add terminator to data
-            Owner.FData:=DataString+Owner.Terminator;
+            Owner.FData:=datas+Owner.Terminator;
           end;
         end
         else
         begin
-          DataString:='';
+          rcvd:='';
           repeat
-            FBuffer:=Owner.FSynSer.RecvPacket(10);
-            x:=Length(FBuffer);
-            if (x>0) then DataString:=DataString+FBuffer;
+            datas:=Owner.FSynSer.RecvPacket(10);
+            x:=Length(datas);
+            if (x>0) then rcvd:=rcvd+datas;
           until ((x=0) OR (Terminated));
-          dr:=(Length(DataString)>0);
-          if dr then Owner.FData:=DataString;
+          dr:=(Length(rcvd)>0);
+          if dr then
+          begin
+            // remove [unneeded and unwanted and unexpected] LF from result
+            SetLength({%H-}datas,MAXWORD);
+            j:=1;
+            for i:=1 to Length(rcvd) do
+            begin
+              if (rcvd[i]=#10) then continue;
+              if ((i<Length(rcvd)) AND (rcvd[i]=#13) AND (rcvd[i+1]=#10)) then continue;
+              datas[j]:=rcvd[i];
+              Inc(j);
+              if (j>MAXWORD) then break; // prevent memory errors
+            end;
+            SetLength(datas,j-1);
+            Owner.FData:=datas;
+          end;
         end;
       end;
 
