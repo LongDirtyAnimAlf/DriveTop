@@ -467,6 +467,8 @@ begin
     SetLength({%H-}datas,MAXWORD);
     j:=0;
 
+    // We do not know what to expect from the drive
+    // So retrieve response by single bytes
     while true do
     begin
       b:=FSynSer.RecvByte(100);
@@ -510,6 +512,8 @@ begin
         SetLength({%H-}datas,MAXWORD);
         j:=0;
 
+        // We do not know what to expect from the drive
+        // So retrieve response by single bytes
         while true do
         begin
           b:=FSynSer.RecvByte(100);
@@ -609,7 +613,7 @@ begin
     rcvd:=FSynSer.RecvTerminated(1500,Terminator);
     if ((FSynSer.LastError=0) AND (Length(rcvd)>0)) then
     begin
-      // remove [unneeded and unwanted and unexpected] LF from result
+      // remove [unneeded and unwanted and unexpected] CRLF from result
       SetLength({%H-}datas,MAXWORD);
       j:=1;
       for i:=1 to Length(rcvd) do
@@ -735,7 +739,7 @@ begin
           dr:=((Owner.FSynSer.LastError<>ErrTimeout) AND (Length(rcvd)>0));
           if dr then
           begin
-            // remove [unneeded and unwanted and unexpected] LF from result
+            // remove [unneeded and unwanted and unexpected] CRLF from result
             SetLength({%H-}datas,MAXWORD);
             j:=1;
             for i:=1 to Length(rcvd) do
@@ -762,7 +766,7 @@ begin
           dr:=(Length(rcvd)>0);
           if dr then
           begin
-            // remove [unneeded and unwanted and unexpected] LF from result
+            // remove [unneeded and unwanted and unexpected] CRLF from result
             SetLength({%H-}datas,MAXWORD);
             j:=1;
             for i:=1 to Length(rcvd) do

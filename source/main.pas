@@ -1040,12 +1040,6 @@ begin
     CD.NUMID:=269;
     CD.DATA:='1';
     success:=ProcessCommand(CD,s,false,true);
-
-    // Reset target position to 0 upon start
-    // Tricky
-    CD.NUMID:=258;
-    CD.DATA:='0';
-    success:=ProcessCommand(CD,s,false,true);
   end
   else
   begin
@@ -1892,7 +1886,7 @@ begin
     IDN:=GetIDN(CD);
     SC4019.Raw:=0;
     SC4019.Data.PositionMode:=1; // relative
-    SC4019.Data.BlockTransitionHalt:=1; // normal block
+    SC4019.Data.BlockTransitionHalt:=1; // normal continuation block with halt
     s:=DecimalToHexString(SC4019.Raw,DirectDrive);
     SC4019.Data.BlockTransitionHalt:=0; // end block
     s1:=DecimalToHexString(SC4019.Raw,DirectDrive);
