@@ -50,7 +50,6 @@ type
     btnGetEvents: TButton;
     btnGetLists: TButton;
     btnManualAxis: TButton;
-    btnMove: TButton;
     btnPhase2: TButton;
     btnPhase3: TButton;
     btnPhase4: TButton;
@@ -59,9 +58,8 @@ type
     btnSendReceive: TButton;
     btnSetMode: TButton;
     btnSpeedLimit: TButton;
-    btnStart: TButton;
     btnExecuteBlocks0Drive: TButton;
-    btnTest: TButton;
+    btnMove: TButton;
     btnStartTaskA: TButton;
     btnGetPoints: TButton;
     btnRefreshDriveData: TButton;
@@ -167,18 +165,16 @@ type
     procedure btnConnectSerialClick(Sender: TObject);
     procedure btnExecuteBlocks0DriveClick(Sender: TObject);
     procedure btnGetTableClick(Sender: TObject);
-    procedure btnMoveClick({%H-}Sender: TObject);
     procedure btnRefreshDriveDataClick({%H-}Sender: TObject);
     procedure btnResetAxisClick({%H-}Sender: TObject);
     procedure btnConnectDDEClick({%H-}Sender: TObject);
     procedure btnSendReceiveClick({%H-}Sender: TObject);
     procedure btnSetModeClick({%H-}Sender: TObject);
     procedure btnSpeedLimitClick({%H-}Sender: TObject);
-    procedure btnStartClick({%H-}Sender: TObject);
     procedure btnStartTaskAClick({%H-}Sender: TObject);
     procedure btnStopClick(Sender: TObject);
     procedure btnStoreBlockDriveClick(Sender: TObject);
-    procedure btnTestClick({%H-}Sender: TObject);
+    procedure btnMoveClick({%H-}Sender: TObject);
     procedure btnGetListsClick({%H-}Sender: TObject);
     procedure btnManualAxisClick({%H-}Sender: TObject);
     procedure btnDriveInfoClick({%H-}Sender: TObject);
@@ -253,8 +249,6 @@ type
     function  ConnectSerial:boolean;
     function  CheckComms:boolean;
     function  CheckAxis(out axis:word):boolean;
-    function  MoveAxis:boolean;
-    function  SpindleAxis(Reps:word = 1):boolean;
     property  DataFormatSettings:TFormatSettings read FDataFormatSettings;
     property  AxisActive:TAXIS read GetAxisActive;
     property  DirectDrive : boolean read FDirectDrive;
@@ -835,12 +829,6 @@ begin
   CD.SETID:=axis;
   CD.STEPID:=0;
 
-  // Stop command "position spindle"
-  CD.NUMID:=152;
-  SCS.Raw:=0;
-  CD.DATA:=DecimalToBinaryString(SCS.Raw,DirectDrive);
-  success:=ProcessCommand(CD,s);
-
   // Preset value for encoder 1
   CD.NUMID:=52;
   CD.DATA:='0';
@@ -1070,7 +1058,7 @@ begin
   // Tricky, we might move axis that is not active !!
   DriveMode:=GetDriveMode(ActiveDriveInfo.MODE);
 
-  if (DriveMode in [omPCBME1, omPCBME2, omPCBME12]) then
+  if (DriveMode in PositionControlBlockModes) then
   begin
     CD.CCLASS:=ccDriveSpecific;
 
@@ -1254,11 +1242,6 @@ begin
 
 end;
 
-procedure TForm1.btnMoveClick(Sender: TObject);
-begin
-  SpindleAxis;
-end;
-
 procedure TForm1.btnRefreshDriveDataClick(Sender: TObject);
 begin
   // This will never work on multiple drives.
@@ -1340,13 +1323,6 @@ begin
   if success then
   begin
     Memo1.Lines.Append(m);
-    CD:=COMMAND2CD(DRIVE_INTERFACE,ActiveDrive);
-    DP14.Raw:=0;
-    if (Sender=btnPhase2) then DP14.Data.CommPhase:=2;
-    if (Sender=btnPhase3) then DP14.Data.CommPhase:=3;
-    if (Sender=btnPhase4) then DP14.Data.CommPhase:=4;
-    CD.DATA:=DecimalToBinaryString(DP14.Raw,DirectDrive);
-    success:=ProcessCommand(CD,m,false,true);
   end;
 end;
 
@@ -1781,14 +1757,6 @@ begin
 
 end;
 
-procedure TForm1.btnStartClick(Sender: TObject);
-var
-  Count:integer;
-begin
-  Count:=StringToIntSafe(editReps.Text);
-  SpindleAxis(Count);
-end;
-
 procedure TForm1.btnStartTaskAClick(Sender: TObject);
 var
   s       : string;
@@ -1901,9 +1869,116 @@ begin
   end;
 end;
 
-procedure TForm1.btnTestClick(Sender: TObject);
+procedure TForm1.btnMoveClick(Sender: TObject);
+var
+  s                    : string;
+  i,axis               : word;
+  CD,StatusCD          : TCOMMANDDATA;
+  //SC13                 : TDRIVEPARAMETER_0013;
+  SC346                : TDRIVEPARAMETER_0346;
+  DR182                : TDRIVEPARAMETER_0182;
+  DriveMode            : TOPERATIONMODE;
+  success              : boolean;
 begin
-  MoveAxis;
+  if CheckAxis(axis) then exit;
+
+  // Tricky, we might move axis that is not active !!
+  DriveMode:=GetDriveMode(ActiveDriveInfo.MODE);
+
+  if (DriveMode in DriveInternalInterpolationModes) then
+  begin
+    CD:=Default(TCOMMANDDATA);
+
+    CD.CCLASS:=ccDrive;
+    CD.CSUBCLASS:=mscParameterData;
+    CD.SETID:=axis;
+    CD.STEPID:=0;
+
+    // Set speed
+    // Can only be set in Phase2 ... :-(
+    CD.NUMID:=259;
+    CD.DATA:=editSpeed.Text;
+    success:=ProcessCommand(CD,s,false,true);
+
+    // Set acceleration
+    // Can only be set in Phase2 ... :-(
+    CD.NUMID:=260;
+    CD.DATA:=editAccel.Text;
+    success:=ProcessCommand(CD,s,false,true);
+
+    // Set feedrate
+    CD.NUMID:=108;
+    CD.DATA:='100'; // 100% = no changes
+    success:=ProcessCommand(CD,s,false,true);
+
+    (*
+    // Set jerk
+    //CD.NUMID:=193;
+    //CD.DATA:='';
+    //success:=ProcessCommand(CD,s,false,true);
+    *)
+
+    if (DriveMode=omRDIE1) then
+    begin
+      // Set relative travel distance
+      CD.NUMID:=282; // only with omRDIE1
+      CD.DATA:=editDist.Text;
+      success:=ProcessCommand(CD,s,false,true);
+    end;
+
+    if (DriveMode=omDIE1) then
+    begin
+      // Set absolute target position
+      CD.NUMID:=258; // only with omDIE1
+      CD.DATA:=editDist.Text;
+      success:=ProcessCommand(CD,s,false,true);
+    end;
+
+
+    // Get strobe flag to toggle
+    CD.NUMID:=346;
+    CD.DATA:='';
+    // Get current register value
+    success:=ProcessCommand(CD,s,false,true);
+    StatusCD:=ProcessCommDataString(s);
+    SC346.Raw:=BinaryStringToDecimal(StatusCD.DATA);
+    // Engage drive by toggling stobe bit
+    SC346.Data.AcceptPositionToggle:=1-SC346.Data.AcceptPositionToggle; // toggle strobe bit
+    SC346.Data.PositionType:=1;
+    SC346.Data.Reference:=1;
+    SC346.Data.TargetOverride:=1;
+    CD.DATA:=DecimalToBinaryString(SC346.Raw,DirectDrive);
+    success:=ProcessCommand(CD,s,false,true);
+
+    //Sleep(1000);
+
+    // Wait for position
+    (*
+    CD.NUMID:=13;
+    CD.DATA:='';
+    i:=0;
+    repeat
+      Inc(i);
+      success:=ProcessCommand(CD,s);
+      Memo1.Lines.Append(s);
+      SC13.Raw:=BinaryStringToDecimal(s);
+    until ((SC13.Data.InPosition=1) OR (i>20));
+    *)
+
+    (*
+
+    // Wait for position
+    CD:=COMMAND2CD(DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3,ActiveDrive);
+    i:=0;
+    repeat
+      Inc(i);
+      success:=ProcessCommand(CD,s);
+      Memo1.Lines.Append(s);
+      DR182.Raw:=BinaryStringToDecimal(s);
+    until ((DR182.Data.InTargetPosition=1) OR (i>20));
+
+    *)
+  end;
 end;
 
 procedure TForm1.btnGetListsClick(Sender: TObject);
@@ -2209,171 +2284,6 @@ begin
 
 end;
 
-function TForm1.SpindleAxis(Reps:word):boolean;
-var
-  s          : string;
-  axis,rep   : word;
-  success    : boolean;
-  DW         : DATAWORD;
-  CD         : TCOMMANDDATA;
-  SCS        : SERCOSCOMMAND_STATUS;
-  SC154      : TDRIVEPARAMETER_0154;
-function WaitForPosition:boolean;
-var
-  i          : integer;
-  SC13                 : TDRIVEPARAMETER_0013;
-begin
-  result:=false;
-  // Read position during move
-  for i:=1 to 50 do
-  begin
-    // Position reached ?
-    (*
-    CD.NUMID:=336;
-    CD.DATA:='';
-    success:=ProcessCommand(CD,s,false,true);
-    DW.Raw:=BinaryStringToDecimal(s);
-    if (DW.Bits[0]=1) then
-    begin
-      result:=true;
-      Memo1.Lines.Append('Position ready');
-      break;
-    end;
-    *)
-    CD.NUMID:=13;
-    CD.DATA:='';
-    success:=ProcessCommand(CD,s,false,true);
-    SC13.Raw:=BinaryStringToDecimal(s);
-    if (SC13.Data.InPosition=1) {OR (SC13.Data.VelocityLow=1)} then
-    begin
-      result:=true;
-      Memo1.Lines.Append('Position ready');
-      break;
-    end;
-    sleep(100);
-  end;
-  if (NOT result) then Memo1.Lines.Append('Position skip');
-  result:=true;
-end;
-begin
-  // S-0-0152, C900 Position spindle command
-  // S-0-0153, Spindle angle position
-  // S-0-0154, Spindle position parameter
-  // S-0-0180, Spindle relative offset
-  // S-0-0222, Spindle positioning speed
-  // S-0-0057, Position window
-
-
-  result:=false;
-
-  if CheckAxis(axis) then exit;
-
-  CD:=Default(TCOMMANDDATA);
-
-  CD.CCLASS:=ccDrive;
-  CD.CSUBCLASS:=mscParameterData;
-  CD.SETID:=axis;
-
-  // Stop command "position spindle", just to be sure
-  CD.NUMID:=152;
-  SCS.Raw:=0;
-  CD.DATA:=DecimalToBinaryString(SCS.Raw,2,DirectDrive);
-  success:=ProcessCommand(CD,s,false,true);
-
-  // Set relative via relative offset
-  // If relative, use 0180 for offset
-  // If absolute, use 0153 for absolute position
-  CD.NUMID:=154;
-  SC154.Raw:=0;
-  SC154.Data.Direction:=2;           // = shortest
-  SC154.Data.TraversingMethod:=1;    // = relative
-  SC154.Data.Encoder:=0;             // = motor
-  CD.DATA:=DecimalToBinaryString(SC154.Raw,DirectDrive);
-  success:=ProcessCommand(CD,s,false,true);
-
-  (*
-
-  // Homing acceleration
-  CD.NUMID:=42;
-  CD.DATA:=editAccel.Text;
-  success:=ProcessCommand(CD,s);
-
-  // Homing speed
-  CD.NUMID:=41;
-  CD.DATA:=editSpeed.Text;;
-  success:=ProcessCommand(CD,s);
-  *)
-
-  // Spindle speed
-  CD.NUMID:=222;
-  CD.DATA:=editSpeed.Text;;
-  success:=ProcessCommand(CD,s,false,true);
-
-  // Spindle acceleration bipolar
-  CD.NUMID:=138;
-  CD.DATA:=editAccel.Text;
-  success:=ProcessCommand(CD,s);
-
-  // Spindle Jerk limit bipolar
-  //CD.NUMID:=349;
-  //CD.DATA:=editAccel.Text;
-  //success:=ProcessCommand(CD,s);
-
-
-  // Set offset to zero, just to be sure
-  CD.NUMID:=180;
-  CD.DATA:=IntToStr(integer(0));
-  success:=ProcessCommand(CD,s,false,true);
-
-  // Start command "position spindle"
-  CD.NUMID:=152;
-  SCS.Raw:=0;
-  SCS.Data.CommandSetInDrive:=1;
-  SCS.Data.ExecutionOfCommandInDriveEnabled:=1;
-  CD.DATA:=DecimalToBinaryString(SCS.Raw,2,DirectDrive);
-  success:=ProcessCommand(CD,s,false,true);
-
-  sleep(100);
-
-  rep:=Reps;
-  while (rep>0) do
-  begin
-    Dec(rep);
-
-    // Set offset
-    CD.NUMID:=180;
-    CD.DATA:=editDist.Text;
-    success:=ProcessCommand(CD,s,false,true);
-    //sleep(100);
-
-    WaitForPosition;
-
-    // Read position during move
-    //repeat sleep(500) until WaitForPosition;
-
-    (*
-
-    // Set offset
-    CD.NUMID:=180;
-    CD.DATA:='-'+editDist.Text;;
-    success:=ProcessCommand(CD,s);
-    sleep(100);
-
-    // Read position during move
-    repeat sleep(50) until WaitForPosition;
-
-    *)
-  end;
-
-  // Stop command "position spindle"
-  CD.NUMID:=152;
-  SCS.Raw:=0;
-  CD.DATA:=DecimalToBinaryString(SCS.Raw,2,DirectDrive);
-  success:=ProcessCommand(CD,s,false,true);
-
-  result:=success;
-end;
-
 function TForm1.CheckComms:boolean;
 begin
   result:=true;
@@ -2397,123 +2307,6 @@ begin
       Memo1.Lines.Append('Error: Select axis first !');
     end;
   end;
-end;
-
-function TForm1.MoveAxis:boolean;
-var
-  s                    : string;
-  i,axis               : word;
-  CD,StatusCD          : TCOMMANDDATA;
-  //SC13                 : TDRIVEPARAMETER_0013;
-  SC346                : TDRIVEPARAMETER_0346;
-  DR182                : TDRIVEPARAMETER_0182;
-  DriveMode            : TOPERATIONMODE;
-  success              : boolean;
-begin
-  result:=false;
-  success:=false;
-
-  if CheckAxis(axis) then exit;
-
-  // Tricky, we might move axis that is not active !!
-  DriveMode:=GetDriveMode(ActiveDriveInfo.MODE);
-
-  if (DriveMode in [omDIE1,omRDIE1]) then
-  begin
-    CD:=Default(TCOMMANDDATA);
-
-    CD.CCLASS:=ccDrive;
-    CD.CSUBCLASS:=mscParameterData;
-    CD.SETID:=axis;
-    CD.STEPID:=0;
-
-    // Set speed
-    // Can only be set in Phase2 ... :-(
-    CD.NUMID:=259;
-    CD.DATA:=editSpeed.Text;
-    success:=ProcessCommand(CD,s,false,true);
-
-    // Set acceleration
-    // Can only be set in Phase2 ... :-(
-    CD.NUMID:=260;
-    CD.DATA:=editAccel.Text;
-    success:=ProcessCommand(CD,s,false,true);
-
-    // Set feedrate
-    CD.NUMID:=108;
-    CD.DATA:='100'; // 100% = no changes
-    success:=ProcessCommand(CD,s,false,true);
-
-    (*
-    // Set jerk
-    //CD.NUMID:=193;
-    //CD.DATA:='';
-    //success:=ProcessCommand(CD,s,false,true);
-    *)
-
-    if (DriveMode=omRDIE1) then
-    begin
-      // Set relative travel distance
-      CD.NUMID:=282; // only with omRDIE1
-      CD.DATA:=editDist.Text;
-      success:=ProcessCommand(CD,s,false,true);
-    end;
-
-    if (DriveMode=omDIE1) then
-    begin
-      // Set absolute target position
-      CD.NUMID:=258; // only with omDIE1
-      CD.DATA:=editDist.Text;
-      success:=ProcessCommand(CD,s,false,true);
-    end;
-
-
-    // Get strobe flag to toggle
-    CD.NUMID:=346;
-    CD.DATA:='';
-    // Get current register value
-    success:=ProcessCommand(CD,s,false,true);
-    StatusCD:=ProcessCommDataString(s);
-    SC346.Raw:=BinaryStringToDecimal(StatusCD.DATA);
-    // Engage drive by toggling stobe bit
-    SC346.Data.AcceptPositionToggle:=1-SC346.Data.AcceptPositionToggle; // toggle strobe bit
-    SC346.Data.PositionType:=1;
-    SC346.Data.Reference:=1;
-    SC346.Data.TargetOverride:=1;
-    CD.DATA:=DecimalToBinaryString(SC346.Raw,DirectDrive);
-    success:=ProcessCommand(CD,s,false,true);
-
-    //Sleep(1000);
-
-    // Wait for position
-    (*
-    CD.NUMID:=13;
-    CD.DATA:='';
-    i:=0;
-    repeat
-      Inc(i);
-      success:=ProcessCommand(CD,s);
-      Memo1.Lines.Append(s);
-      SC13.Raw:=BinaryStringToDecimal(s);
-    until ((SC13.Data.InPosition=1) OR (i>20));
-    *)
-
-    (*
-
-    // Wait for position
-    CD:=COMMAND2CD(DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3,ActiveDrive);
-    i:=0;
-    repeat
-      Inc(i);
-      success:=ProcessCommand(CD,s);
-      Memo1.Lines.Append(s);
-      DR182.Raw:=BinaryStringToDecimal(s);
-    until ((DR182.Data.InTargetPosition=1) OR (i>20));
-
-    *)
-  end;
-
-  result:=success;
 end;
 
 function TForm1.ProcessDirectDriveCommand(const Command:string; var Value:string; const prio,blocking:boolean):boolean;
@@ -3065,30 +2858,11 @@ begin
   labelAccel.Enabled:=(NOT JogOnly);
   editAccel.Enabled:=(NOT JogOnly);
 
-  btnTest.Enabled:=(NOT JogOnly);
+  btnMove.Enabled:=(NOT JogOnly);
   btnResetAxis.Enabled:=(NOT JogOnly);
   btnAxisStatus.Enabled:=(NOT JogOnly);
 
   editReps.Enabled:=(NOT JogOnly);
-  btnStart.Enabled:=(NOT JogOnly);
-end;
-
-procedure TForm1.ArrowMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-begin
-  ArrowMouse(Sender, Button, Shift, X, Y);
-  while (MouseUpEvent.WaitFor(10)=wrTimeout) do
-  begin
-    Application.ProcessMessages;
-  end;
-  ArrowMouse(Sender, Button, [], X, Y);
-  MouseUpEvent.ResetEvent;
-end;
-
-procedure TForm1.ArrowMouseUp(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-begin
-  MouseUpEvent.SetEvent;
 end;
 
 procedure TForm1.TabControl1Change(Sender: TObject);
@@ -3181,97 +2955,6 @@ begin
   ProcessModeList(CD);
 
   if TE then Timer1.Enabled:=true;
-end;
-
-procedure TForm1.ArrowMouse(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-var
-  aDir:TAXISDIRECTION;
-begin
-  if (AxisActive=axisNone) then
-  begin
-    if (Button=TMouseButton.mbLeft) then
-    begin
-      aDir:=TAXISDIRECTION.dirNone;
-      if (Sender=shapeArrowUp) then aDir:=TAXISDIRECTION.dirUp;
-      if (Sender=shapeArrowDown) then aDir:=TAXISDIRECTION.dirDown;
-      if (Sender=shapeArrowLeft) then aDir:=TAXISDIRECTION.dirLeft;
-      if (Sender=shapeArrowRight) then aDir:=TAXISDIRECTION.dirRight;
-      JogAxis(aDir,(ssLeft in Shift));
-    end;
-  end;
-end;
-
-function TForm1.JogAxis(aDir:TAXISDIRECTION;Engage:boolean):boolean;
-var
-  s              : string;
-  axis           : integer;
-  success        : boolean;
-  AxisControl    : TSERCOSREGISTER_AXISCONTROL;
-  TaskJogControl : TSERCOSREGISTER_TASKJOGCONTROL;
-  CD             : TCOMMANDDATA;
-begin
-  result:=false;
-
-  if (aDir=TAXISDIRECTION.dirNone) then exit;
-
-  CD:=Default(TCOMMANDDATA);
-
-  if aDir in [TAXISDIRECTION.dirUp,TAXISDIRECTION.dirDown] then
-  begin
-    axis:=0;
-  end;
-  if aDir in [TAXISDIRECTION.dirLeft,TAXISDIRECTION.dirRight] then
-  begin
-    axis:=1;
-  end;
-
-  TaskJogControl.Raw:=0;
-  AxisControl.Raw:=0;
-  if Engage then
-  begin
-    with TaskJogControl.Data do
-    begin
-      JogType:=%01; //Joint Jog
-      ContinuousnStep:=1;
-      if aDir = TAXISDIRECTION.dirUp then // TaskJogControl.Raw:=261;
-      begin
-        CoordinateJogReverse := 1;
-        JogXCoordinate       := 1;
-      end;
-      if aDir = TAXISDIRECTION.dirDown then // TaskJogControl.Raw:=259;
-      begin
-        CoordinateJogForward := 1;
-        JogXCoordinate       := 1;
-      end;
-      if aDir = TAXISDIRECTION.dirLeft then // TaskJogControl.Raw:=517;
-      begin
-        CoordinateJogReverse := 1;
-        JogYCoordinate       := 1;
-      end;
-      if aDir = TAXISDIRECTION.dirRight then // TaskJogControl.Raw:=515;
-      begin
-        CoordinateJogForward := 1;
-        JogYCoordinate       := 1;
-      end;
-    end;
-    if aDir in [TAXISDIRECTION.dirUp,TAXISDIRECTION.dirLeft] then AxisControl.Data.JogForward:=1;
-    if aDir in [TAXISDIRECTION.dirDown,TAXISDIRECTION.dirRight] then AxisControl.Data.JogReverse:=1;
-  end;
-
-  CD.CCLASSCHAR:=VMCOMMANDCLASS[ccRegister];
-  CD.CSUBCLASSCHAR:=VMREGISTERSUBCLASS[rscDecimalState];
-  CD.DATA:=InttoStr(TaskJogControl.Raw);
-  CD.NUMID:=7; // Task A jog control
-  success:=ProcessCommand(CD,s);
-
-  CD.CCLASSCHAR:=VMCOMMANDCLASS[ccRegister];
-  CD.CSUBCLASSCHAR:=VMREGISTERSUBCLASS[rscDecimalState];
-  CD.DATA:=InttoStr(AxisControl.Raw);
-  CD.NUMID:=(11+axis); // Axis control
-  success:=ProcessCommand(CD,s);
-
-  result:=success;
 end;
 
 procedure TForm1.MenuConnectionClick(Sender: TObject);
@@ -4667,6 +4350,145 @@ begin
 
   end;
 
+end;
+
+procedure TForm1.ArrowMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  ArrowMouse(Sender, Button, Shift, X, Y);
+  while (MouseUpEvent.WaitFor(10)=wrTimeout) do
+  begin
+    Application.ProcessMessages;
+  end;
+  ArrowMouse(Sender, Button, [], X, Y);
+  MouseUpEvent.ResetEvent;
+end;
+
+procedure TForm1.ArrowMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  MouseUpEvent.SetEvent;
+end;
+
+
+procedure TForm1.ArrowMouse(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  aDir:TAXISDIRECTION;
+begin
+  if (AxisActive=axisNone) then
+  begin
+    if (Button=TMouseButton.mbLeft) then
+    begin
+      aDir:=TAXISDIRECTION.dirNone;
+      if (Sender=shapeArrowUp) then aDir:=TAXISDIRECTION.dirUp;
+      if (Sender=shapeArrowDown) then aDir:=TAXISDIRECTION.dirDown;
+      if (Sender=shapeArrowLeft) then aDir:=TAXISDIRECTION.dirLeft;
+      if (Sender=shapeArrowRight) then aDir:=TAXISDIRECTION.dirRight;
+      JogAxis(aDir,(ssLeft in Shift));
+    end;
+  end;
+end;
+
+function TForm1.JogAxis(aDir:TAXISDIRECTION;Engage:boolean):boolean;
+var
+  s              : string;
+  axis           : integer;
+  success        : boolean;
+  AxisControl    : TSERCOSREGISTER_AXISCONTROL;
+  TaskJogControl : TSERCOSREGISTER_TASKJOGCONTROL;
+  CD             : TCOMMANDDATA;
+  DriveMode      : TOPERATIONMODE;
+  DR4056         : TDRIVEPARAMETER_4056;
+begin
+  result:=false;
+  success:=false;
+
+  if CheckComms then exit;
+
+  if (aDir=TAXISDIRECTION.dirNone) then exit;
+
+  if aDir in [TAXISDIRECTION.dirUp,TAXISDIRECTION.dirDown] then
+  begin
+    axis:=0;
+  end;
+  if aDir in [TAXISDIRECTION.dirLeft,TAXISDIRECTION.dirRight] then
+  begin
+    axis:=1;
+  end;
+
+  CD:=Default(TCOMMANDDATA);
+
+  if DirectDrive then
+  begin
+    // Tricky, we might move axis that is not active !!
+    DriveMode:=GetDriveMode(ActiveDriveInfo.MODE);
+    if (DriveMode in [omJM]) then
+    begin
+      CD.NUMID:=4056;
+      CD.CCLASS:=ccDriveSpecific;
+      CD.CSUBCLASS:=mscParameterData;
+      CD.SETID:=axis;
+      CD.STEPID:=0;
+      DR4056.Raw:=0;
+      if Engage then
+      begin
+        if aDir in [TAXISDIRECTION.dirUp,TAXISDIRECTION.dirRight] then DR4056.Data.JogPositive:=1;
+        if aDir in [TAXISDIRECTION.dirDown,TAXISDIRECTION.dirLeft] then DR4056.Data.JogNegative:=1;
+      end;
+      CD.DATA:=DecimalToBinaryString(DR4056.Raw,DirectDrive);
+      success:=ProcessCommand(CD,s);
+    end;
+  end
+  else
+  begin
+    TaskJogControl.Raw:=0;
+    AxisControl.Raw:=0;
+    if Engage then
+    begin
+      with TaskJogControl.Data do
+      begin
+        JogType:=%01; //Joint Jog
+        ContinuousnStep:=1;
+        if aDir = TAXISDIRECTION.dirUp then // TaskJogControl.Raw:=261;
+        begin
+          CoordinateJogReverse := 1;
+          JogXCoordinate       := 1;
+        end;
+        if aDir = TAXISDIRECTION.dirDown then // TaskJogControl.Raw:=259;
+        begin
+          CoordinateJogForward := 1;
+          JogXCoordinate       := 1;
+        end;
+        if aDir = TAXISDIRECTION.dirLeft then // TaskJogControl.Raw:=517;
+        begin
+          CoordinateJogReverse := 1;
+          JogYCoordinate       := 1;
+        end;
+        if aDir = TAXISDIRECTION.dirRight then // TaskJogControl.Raw:=515;
+        begin
+          CoordinateJogForward := 1;
+          JogYCoordinate       := 1;
+        end;
+      end;
+      if aDir in [TAXISDIRECTION.dirUp,TAXISDIRECTION.dirLeft] then AxisControl.Data.JogForward:=1;
+      if aDir in [TAXISDIRECTION.dirDown,TAXISDIRECTION.dirRight] then AxisControl.Data.JogReverse:=1;
+    end;
+
+    CD.CCLASSCHAR:=VMCOMMANDCLASS[ccRegister];
+    CD.CSUBCLASSCHAR:=VMREGISTERSUBCLASS[rscDecimalState];
+    CD.DATA:=InttoStr(TaskJogControl.Raw);
+    CD.NUMID:=7; // Task A jog control
+    success:=ProcessCommand(CD,s);
+
+    CD.CCLASSCHAR:=VMCOMMANDCLASS[ccRegister];
+    CD.CSUBCLASSCHAR:=VMREGISTERSUBCLASS[rscDecimalState];
+    CD.DATA:=InttoStr(AxisControl.Raw);
+    CD.NUMID:=(11+axis); // Axis control
+    success:=ProcessCommand(CD,s);
+  end;
+
+  result:=success;
 end;
 
 end.

@@ -14,6 +14,12 @@ uses
 
 type
   TOPERATIONMODE                    = (omNone,omTC,omVC,omPCE1,omPCE2,omPCE12,omPC,omDIE1,omDIE2,omDIE12,omRDIE1,omRDIE2,omRDIE12,omPCBME1,omPCBME2,omPCBME12,omVSV,omASVE1,omASVE2,omCAMVE1,omCAMVE2,omASE1,omVS,omCAME1,omSM,omJM);
+
+const
+  DriveInternalInterpolationModes   = [omDIE1,omDIE2,omDIE12,omRDIE1,omRDIE2,omRDIE12];
+  PositionControlBlockModes         = [omPCBME1,omPCBME2,omPCBME12];
+
+type
   TOMDATA = record
     Valid    : boolean;
     Lagless  : boolean;
@@ -218,24 +224,6 @@ type
 
   end;
 
-  TDRIVEPARAMETER_0154 = bitpacked record
-      case integer of
-          1 : (  Data : record
-                   Direction          : T2BITS; // 0 = clockwise ; 1 = counter-clockwise ; 2 = shortest
-                   TraversingMethod   : T1BITS; // 0 = spindle angular position ; 1 = spindle path
-                   Encoder            : T1BITS; // 0 = moto ; 1 = external
-                   Reserved5          : T12BITS;
-                 end
-              );
-          2 : (
-               Bits            : bitpacked array[0..15] of T1BITS;
-              );
-          3 : (
-               Raw             : Word;
-              );
-
-  end;
-
   //S-0-0182, Manufacturer Class 3 Diagnostics
   TDRIVEPARAMETER_0182 = bitpacked record
       case integer of
@@ -359,6 +347,24 @@ type
               );
 
   end;
+
+  TDRIVEPARAMETER_4056 = bitpacked record  // Position feedback value status
+      case integer of
+          1 : (  Data : record
+                   JogPositive                       : T1BITS;
+                   JogNegative                       : T1BITS;
+                   Reserved2                         : T14BITS;
+                  end
+              );
+          2 : (
+               Bits            : bitpacked array[0..15] of T1BITS;
+              );
+          3 : (
+               Raw             : Word;
+              );
+
+  end;
+
 
   TDRIVEMODE = bitpacked record  // Position feedback value status
       case integer of

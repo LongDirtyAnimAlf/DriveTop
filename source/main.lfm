@@ -890,24 +890,6 @@ object Form1: TForm1
           TabOrder = 0
           Text = '100'
         end
-        object btnStart: TButton
-          AnchorSideLeft.Control = editReps
-          AnchorSideLeft.Side = asrBottom
-          AnchorSideTop.Control = editReps
-          AnchorSideRight.Control = grpSettings
-          AnchorSideRight.Side = asrBottom
-          AnchorSideBottom.Control = editReps
-          AnchorSideBottom.Side = asrBottom
-          Left = 407
-          Height = 38
-          Top = 397
-          Width = 111
-          Anchors = [akTop, akLeft, akRight, akBottom]
-          BorderSpacing.Left = 8
-          Caption = 'Start repetitions'
-          TabOrder = 1
-          OnClick = btnStartClick
-        end
         object grpSettings: TGroupBox
           AnchorSideTop.Control = MovementPanel1
           AnchorSideRight.Control = MovementPanel1
@@ -921,7 +903,7 @@ object Form1: TForm1
           Caption = 'Movement settings'
           ClientHeight = 357
           ClientWidth = 179
-          TabOrder = 2
+          TabOrder = 1
           object selectDirection: TRadioGroup
             AnchorSideLeft.Control = grpSettings
             AnchorSideTop.Control = grpSettings
@@ -1042,7 +1024,7 @@ object Form1: TForm1
             Text = '100'
             OnKeyPress = editDistKeyPress
           end
-          object btnTest: TButton
+          object btnMove: TButton
             AnchorSideLeft.Control = grpSettings
             AnchorSideTop.Control = editAccel
             AnchorSideTop.Side = asrBottom
@@ -1057,26 +1039,8 @@ object Form1: TForm1
             Anchors = [akTop, akLeft, akBottom]
             BorderSpacing.Top = 8
             BorderSpacing.Around = 8
-            Caption = 'Testrun'
-            TabOrder = 4
-            OnClick = btnTestClick
-          end
-          object btnMove: TButton
-            AnchorSideTop.Control = editAccel
-            AnchorSideTop.Side = asrBottom
-            AnchorSideRight.Control = grpSettings
-            AnchorSideRight.Side = asrBottom
-            AnchorSideBottom.Control = grpSettings
-            AnchorSideBottom.Side = asrBottom
-            Left = 96
-            Height = 46
-            Top = 303
-            Width = 75
-            Anchors = [akTop, akRight, akBottom]
-            BorderSpacing.Top = 8
-            BorderSpacing.Around = 8
             Caption = 'Move'
-            TabOrder = 5
+            TabOrder = 4
             OnClick = btnMoveClick
           end
         end
