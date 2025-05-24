@@ -1,2 +1,3 @@
 {$define USEHASHLIST}
 {$define ALLOWCONVERRORS}
+{.$define VISUALMOTION}

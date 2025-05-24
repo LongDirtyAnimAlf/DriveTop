@@ -42,7 +42,7 @@ type
     CSUBCLASS      : TVMCOMMANDPARAMETERSUBCLASS;
     CSUBCLASSCHAR  : TCAPSCHAR;
     MEMORY         : boolean;
-    SETID          : word;
+    SETID          : word; // = Drive number ; Program handle ; Task ID
     NUMID          : word;
     STEPID         : word;
     DATA           : string;
@@ -70,6 +70,7 @@ type
     MOTORTYPE      : string;
     MOTORSERIAL    : string;
   end;
+  PDRIVE = ^TDRIVE;
 
   IDNWORD = bitpacked record
       case integer of

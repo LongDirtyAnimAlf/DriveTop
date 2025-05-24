@@ -76,7 +76,7 @@ object Form1: TForm1
     BorderSpacing.Top = 8
     ItemHeight = 15
     TabOrder = 2
-    OnChange = cmboSerialPortsChange
+    OnSelect = cmboSerialPortsSelect
   end
   object editDLLFileName: TEdit
     AnchorSideLeft.Control = btnConnectDDE
@@ -110,12 +110,12 @@ object Form1: TForm1
     Height = 726
     Top = 8
     Width = 526
-    ActivePage = tabMove
+    ActivePage = TabSheet1
     Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Top = 8
     BorderSpacing.Right = 8
     BorderSpacing.Bottom = 8
-    TabIndex = 1
+    TabIndex = 0
     TabOrder = 6
     object TabSheet1: TTabSheet
       Caption = 'Drive data'
@@ -730,7 +730,7 @@ object Form1: TForm1
         )
         ColWidths = (
           64
-          52
+          69
         )
       end
     end
@@ -1164,16 +1164,46 @@ object Form1: TForm1
         Height = 575
         Top = 4
         Width = 506
-        ActivePage = tabVMDrive
+        ActivePage = tabDrive
         Align = alTop
         Anchors = [akTop, akLeft, akRight, akBottom]
         BorderSpacing.Left = 4
         BorderSpacing.Top = 4
         BorderSpacing.Right = 8
         BorderSpacing.Bottom = 8
-        TabIndex = 3
+        TabIndex = 0
         TabOrder = 0
         OnChange = pageRawCommandsChange
+        object tabDrive: TTabSheet
+          Caption = 'Drive'
+          ChildSizing.VerticalSpacing = 20
+          ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+          ChildSizing.EnlargeVertical = crsHomogenousChildResize
+          ChildSizing.Layout = cclLeftToRightThenTopToBottom
+          ChildSizing.ControlsPerLine = 1
+          ClientHeight = 547
+          ClientWidth = 498
+          object lbSERCOSPARAMS: TListBox
+            Left = 0
+            Height = 264
+            Top = 0
+            Width = 498
+            ExtendedSelect = False
+            ItemHeight = 0
+            TabOrder = 0
+            OnDblClick = lbCOMMANDSDblClick
+          end
+          object lbSERCOSCOMMANDS: TListBox
+            Left = 0
+            Height = 263
+            Top = 284
+            Width = 498
+            ExtendedSelect = False
+            ItemHeight = 0
+            TabOrder = 1
+            OnDblClick = lbCOMMANDSDblClick
+          end
+        end
         object tabVMControl: TTabSheet
           Caption = 'VM-Control'
           ClientHeight = 547
@@ -1219,36 +1249,6 @@ object Form1: TForm1
             ExtendedSelect = False
             ItemHeight = 0
             TabOrder = 0
-            OnDblClick = lbCOMMANDSDblClick
-          end
-        end
-        object tabVMDrive: TTabSheet
-          Caption = 'VM-Drive'
-          ChildSizing.VerticalSpacing = 20
-          ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
-          ChildSizing.EnlargeVertical = crsHomogenousChildResize
-          ChildSizing.Layout = cclLeftToRightThenTopToBottom
-          ChildSizing.ControlsPerLine = 1
-          ClientHeight = 547
-          ClientWidth = 498
-          object lbSERCOSPARAMS: TListBox
-            Left = 0
-            Height = 264
-            Top = 0
-            Width = 498
-            ExtendedSelect = False
-            ItemHeight = 0
-            TabOrder = 0
-            OnDblClick = lbCOMMANDSDblClick
-          end
-          object lbSERCOSCOMMANDS: TListBox
-            Left = 0
-            Height = 263
-            Top = 284
-            Width = 498
-            ExtendedSelect = False
-            ItemHeight = 0
-            TabOrder = 1
             OnDblClick = lbCOMMANDSDblClick
           end
         end
@@ -1387,7 +1387,7 @@ object Form1: TForm1
         )
         ColWidths = (
           64
-          179
+          196
         )
       end
       object btnStartTaskA: TButton
@@ -1563,7 +1563,6 @@ object Form1: TForm1
     Tabs.Strings = (
       'Drive 1'
       'Drive 2'
-      'Drive 3'
     )
     BorderSpacing.Left = 8
     TabOrder = 7
@@ -2240,13 +2239,15 @@ object Form1: TForm1
     end
   end
   object lblTime: TLabel
-    AnchorSideTop.Control = Owner
-    Left = 552
+    AnchorSideLeft.Control = btnStop
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = btnStop
+    Left = 422
     Height = 15
-    Top = 22
+    Top = 10
     Width = 149
-    Anchors = []
     AutoSize = False
+    BorderSpacing.Left = 6
     BorderSpacing.Top = 6
     Caption = 'unknown'
   end

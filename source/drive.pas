@@ -17,6 +17,7 @@ type
 
 const
   DriveInternalInterpolationModes   = [omDIE1,omDIE2,omDIE12,omRDIE1,omRDIE2,omRDIE12];
+  PositionControl                   = [omPCE1,omPCE2,omPCE12];
   PositionControlBlockModes         = [omPCBME1,omPCBME2,omPCBME12];
 
 type
@@ -455,8 +456,9 @@ const
 
   function  DriveParameterIsDriveMode(const IDN:TIDN):boolean;
 
-  function  GetDriveInfo(const Drive:word):TDRIVE;
-  procedure SetDriveInfo(const Drive:word; value:TDRIVE);
+  //function  GetDriveInfo(const Drive:word):TDRIVE;
+  function  GetPDriveInfo(const Drive:word):PDRIVE;
+  //procedure SetDriveInfo(const Drive:word; value:TDRIVE);
 
   function GetDriveErrorDescription(derr:word):string;
 
@@ -475,7 +477,7 @@ var
   IDNDriveList                : array[0..MAXDRIVES] of TMySortedMap;
   DriveList                   : array[1..MAXDRIVES] of TDRIVE;
 
-function  GetDriveInfo(const Drive:word):TDRIVE;
+function GetDriveInfo(const Drive:word):TDRIVE;
 begin
   result:=DriveList[Drive];
   if (Length(result.NAME)=0) then result.NAME:=sUN;
@@ -488,6 +490,11 @@ end;
 procedure SetDriveInfo(const Drive:word; value:TDRIVE);
 begin
   DriveList[Drive]:=value;
+end;
+
+function GetPDriveInfo(const Drive:word):PDRIVE;
+begin
+  result:=@DriveList[Drive];
 end;
 
 function GetDirectDriveCommand(const CD:TCOMMANDDATA):string;
