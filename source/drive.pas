@@ -498,20 +498,8 @@ begin
 end;
 
 function GetDirectDriveCommand(const CD:TCOMMANDDATA):string;
-const
-  //--------------------------------------------------------------------------------------------
-  // Data Block Elements
-  //--------------------------------------------------------------------------------------------
-  CSMD_SERC_ELEM0            = 0;   // Close Service Channel
-  CSMD_SERC_ELEM1            = 1;   // IDN
-  CSMD_SERC_ELEM2            = 2;   // Name
-  CSMD_SERC_ELEM3            = 3;   // Attribute
-  CSMD_SERC_ELEM4            = 4;   // Unit
-  CSMD_SERC_ELEM5            = 5;   // Min. Value
-  CSMD_SERC_ELEM6            = 6;   // Max. Value
-  CSMD_SERC_ELEM7            = 7;   // Data
 var
-  IDN      : string;
+  IDN      : ansistring;
   be       : byte;
 begin
   result:=sERR;
@@ -519,18 +507,7 @@ begin
   if (NOT (CD.CCLASS in [ccDrive,ccDriveSpecific])) then exit;
 
   IDN:=GetIDN(CD);
-
-  case CD.CSUBCLASS of
-    mscNone          : be:=CSMD_SERC_ELEM1;
-    mscAttributes    : be:=CSMD_SERC_ELEM3;
-    mscUpperLimit    : be:=CSMD_SERC_ELEM6;
-    mscLowerLimit    : be:=CSMD_SERC_ELEM5;
-    mscParameterData,
-    mscBlock,
-    mscList          : be:=CSMD_SERC_ELEM7;
-    mscName          : be:=CSMD_SERC_ELEM2;
-    mscUnits         : be:=CSMD_SERC_ELEM4;
-  end;
+  be:=GetElementNumber(CD.CSUBCLASS);
 
   if (Length(CD.DATA)=0) then
     result:=Format('%s,%d,r',[IDN,be])

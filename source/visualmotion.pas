@@ -220,7 +220,7 @@ var
 
 function  GetCLCCommandString(const CD:TCOMMANDDATA):string;
 var
-  PW:IDNWORD;
+  PW:TIDNWORD;
 begin
   PW.Raw:=0;
   PW.Data.ParamNum:=CD.NUMID;

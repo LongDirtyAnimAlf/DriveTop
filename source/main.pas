@@ -3913,7 +3913,7 @@ var
   ro:boolean;
   SC_IDN:boolean;
   cs,rcs:byte;
-  PW:IDNWORD;
+  PW:TIDNWORD;
   cc:TVMCOMMANDCLASS;
   csc:TVMCOMMANDPARAMETERSUBCLASS;
   s1:string;

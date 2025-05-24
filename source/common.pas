@@ -72,7 +72,7 @@ type
   end;
   PDRIVE = ^TDRIVE;
 
-  IDNWORD = bitpacked record
+  TIDNWORD = bitpacked record
       case integer of
           1 : (  Data : record
                /// Bit 0-11: The parameter number [0..4095], e.g. P-0-*1177*, includes 1177 as ParamNumber.
@@ -89,13 +89,16 @@ type
                Bits            : bitpacked array[0..15] of T1BITS;
               );
           3 : (
+               Bytes           : packed array[0..1] of byte;
+              );
+          4 : (
                Raw             : Word;
               );
   end;
 
   TRegisterRecord = record
     CClass         : TVMCOMMANDCLASS;
-    IDN            : IDNWORD;
+    IDN            : TIDNWORD;
     Attribute      : dword;
     Min            : string;
     Max            : string;
@@ -235,12 +238,14 @@ type
   procedure CreateRegisterData(var MAP:TMySortedMap);
   function  RegisterDataCount(var MAP:TMySortedMap):integer;
 
-  function  IDN2CD(const IDN:string; const DriveNumber:byte):TCOMMANDDATA;
+  function  IDN2CD(const IDN:ansistring; const DriveNumber:byte):TCOMMANDDATA;
   function  NUM2SCLASS(const S:byte; var SC:TVMCOMMANDPARAMETERSUBCLASS):boolean;
   function  COMMAND2CD(const C:TCOMMAND; const DriveNumber:byte):TCOMMANDDATA;
   function  GetIDN(const CD:TCOMMANDDATA):string; overload;
   function  GetIDN(const RR:TRegisterRecord):string; overload;
   function  GetIDN(const C:TCOMMAND):string; overload;
+
+  function GetElementNumber(const SC:TVMCOMMANDPARAMETERSUBCLASS):byte;
 
   function StringToIntSafe(const sv:string):Longint;
 
@@ -368,11 +373,15 @@ begin
   result:=DecimalToHexStringBase(dw,8,dd);
 end;
 
-function IDN2CD(const IDN:string; const DriveNumber:byte):TCOMMANDDATA;
-//var
+function IDN2CD(const IDN:ansistring; const DriveNumber:byte):TCOMMANDDATA;
+var
+  t     : Char;
+  s     : ansistring;
+  Error : word;
 //  i:integer;
 begin
   Result:=Default(TCOMMANDDATA);
+  Result.SETID:=DriveNumber;
   if (Length(IDN)>=8) then
   begin
     (*
@@ -383,19 +392,27 @@ begin
      if i=Length(IDN) then break;
     end;
     *)
-    if IDN[1]='S' then Result.CCLASS:=ccDrive;
-    if IDN[1]='P' then Result.CCLASS:=ccDriveSpecific;
-    if IDN[1]='T' then Result.CCLASS:=ccTask;
-    if IDN[1]='C' then Result.CCLASS:=ccControl;
-    if IDN[1]='A' then Result.CCLASS:=ccAxis;
+    t:=UpCase(IDN[1]);
+    case t of
+      'S' : Result.CCLASS:=ccDrive;
+      'P' : Result.CCLASS:=ccDriveSpecific;
+      'T' : Result.CCLASS:=ccTask;
+      'C' : Result.CCLASS:=ccControl;
+      'A' : Result.CCLASS:=ccAxis;
+    else
+      raise EArgumentException.CreateFmt ('Wrong IDN type : %c !',[t]);
+    end;
     //if i>4 then Result.NUMID:=StrToInt(Copy(IDN,5,i-4));
-    Result.NUMID:=StrToInt(Copy(IDN,5,4));
-    Result.SETID:=DriveNumber;
+    Error:=1;
+    s := Copy(IDN, Pos('-', IDN, 4) + 1, 4);
+    if Length(s)= 4 then Val(Copy(IDN,5,4), Result.NUMID, Error);
+    if (Error<>0) then
+      raise EArgumentException.CreateFmt ('Wrong IDN number : %s !',[s]);
   end
   else
   begin
     // we should never be here !!!
-    raise EArgumentException.Create ('Wrong IDN length !');
+    raise EArgumentException.CreateFmt ('Wrong IDN length: %s !',[IDN]);
   end;
 end;
 
@@ -1058,6 +1075,34 @@ begin
     if ATT.Data.DataLength=CSMD_SERC_WORD_LEN then result:=2;
     if ATT.Data.DataLength=CSMD_SERC_LONG_LEN then result:=4;
     if ATT.Data.DataLength=CSMD_SERC_DOUBLE_LEN then result:=8;
+  end;
+end;
+
+function GetElementNumber(const SC:TVMCOMMANDPARAMETERSUBCLASS):byte;
+const
+  //--------------------------------------------------------------------------------------------
+  // Data Block Elements
+  //--------------------------------------------------------------------------------------------
+  CSMD_SERC_ELEM0            = 0;   // Close Service Channel
+  CSMD_SERC_ELEM1            = 1;   // IDN
+  CSMD_SERC_ELEM2            = 2;   // Name
+  CSMD_SERC_ELEM3            = 3;   // Attribute
+  CSMD_SERC_ELEM4            = 4;   // Unit
+  CSMD_SERC_ELEM5            = 5;   // Min. Value
+  CSMD_SERC_ELEM6            = 6;   // Max. Value
+  CSMD_SERC_ELEM7            = 7;   // Data
+begin
+  result:=0;
+  case SC of
+    mscNone          : result:=CSMD_SERC_ELEM1;
+    mscAttributes    : result:=CSMD_SERC_ELEM3;
+    mscUpperLimit    : result:=CSMD_SERC_ELEM6;
+    mscLowerLimit    : result:=CSMD_SERC_ELEM5;
+    mscParameterData,
+    mscBlock,
+    mscList          : result:=CSMD_SERC_ELEM7;
+    mscName          : result:=CSMD_SERC_ELEM2;
+    mscUnits         : result:=CSMD_SERC_ELEM4;
   end;
 end;
 

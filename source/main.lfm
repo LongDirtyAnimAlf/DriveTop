@@ -1387,7 +1387,7 @@ object Form1: TForm1
         )
         ColWidths = (
           64
-          196
+          179
         )
       end
       object btnStartTaskA: TButton
