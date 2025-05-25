@@ -160,7 +160,7 @@ type
       case integer of
           1 : (  Data : record
                    ControlInfoServiceChannel : T6BITS;
-                   RealtimeStatus            : T2BITS;
+                   RealtimeControl           : T2BITS;
                    CommandMode               : T2BITS;
                    IPOSYNC                   : T1BITS;
                    Reserved1                 : T2BITS;
@@ -181,8 +181,9 @@ type
   TDRIVEPARAMETER_0135 = bitpacked record
       case integer of
           1 : (  Data : record
-                   ControlInfoServiceChannel : T2BITS;
-                   Reserved1                 : T3BITS;
+                   ControlInformation        : T3BITS;
+                   CommandProcessingStatus   : T1BITS;
+                   Reserved2                 : T1BITS;
                    ChangeCommands            : T1BITS;
                    RealtimeStatus            : T2BITS;
                    ActualMode                : T3BITS;
@@ -293,9 +294,10 @@ type
           1 : (  Data : record
                    DirectionMode            : T2BITS; // 0 = shortest way; 1 = positive direction; 2 = negative direction
                    TargetPosAfter           : T1BITS; // 0 = position to S-0-0258; 1 = position to actual position
-                   PositionType             : T1BITS; // 0 = absolute; 1 = relative
-                   SetpointAcceptance       : T1BITS;
-                   Reserved2                : T11BITS;
+                   Reserved1                : T13BITS;
+                   //PositionType             : T1BITS; // 0 = absolute; 1 = relative
+                   //SetpointAcceptance       : T1BITS;
+                   //Reserved2                : T11BITS;
                  end
               );
           2 : (
@@ -414,12 +416,14 @@ const
   DRIVE_INTERFACE              : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 14);
 
   DRIVE_COMMAND                : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 47);
+  DRIVE_FEEDBACK               : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 51);
   DRIVE_TARGET                 : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 258);
   DRIVE_DISTANCE               : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 282);
 
-  //DRIVE_SPEED                  : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 40);
+
+  DRIVE_SET_SPEED              : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 36);
+  DRIVE_ACTUAL_SPEED            : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 40);
   //DRIVE_TORQUE                 : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 84);
-  //DRIVE_FEEDBACK               : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 51);
 
   DRIVE_MODELIST               : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscList;          NUMID: 292);
   DRIVE_PARAMLIST              : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscList;          NUMID: 17);

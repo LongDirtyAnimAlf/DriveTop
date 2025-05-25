@@ -78,14 +78,13 @@ type
     editValue: TEdit;
     grpDriveDashBoard: TGroupBox;
     grpDriveInfo: TGroupBox;
-    grpDriveStatus: TGroupBox;
     lbDriveModes: TListBox;
     lblTime: TLabel;
     ListView1: TListView;
     MovementPanel1: TPanel;
     Panel1: TPanel;
-    panelDriveExtra: TPanel;
     panelDriveFeedback: TPanel;
+    panelDriveVelocity: TPanel;
     panelDrivePosition: TPanel;
     panelDrivePhase: TPanel;
     panelDriveDiags: TPanel;
@@ -103,10 +102,11 @@ type
     PanelPower: TPanel;
     panelStandstill: TPanel;
     panelTargetPosition: TPanel;
+    StaticText1: TStaticText;
     TextPosition: TStaticText;
     TextTarget: TStaticText;
-    StaticDistance: TStaticText;
-    TextExtra: TStaticText;
+    TextDistance: TStaticText;
+    TextFeedback: TStaticText;
     stDriveName: TStaticText;
     stDriveAddress: TStaticText;
     stControllerType: TStaticText;
@@ -199,7 +199,7 @@ type
     procedure pageRawCommandsChange(Sender: TObject);
     procedure FormCreate({%H-}Sender: TObject);
     procedure FormDestroy({%H-}Sender: TObject);
-    procedure panelDriveFeedbackResize(Sender: TObject);
+    procedure panelDriveVelocityResize(Sender: TObject);
     procedure selectDirectionClick(Sender: TObject);
     procedure selectDirectionSelectionChanged(Sender: TObject);
     procedure ArrowMouseDown(Sender: TObject; Button: TMouseButton;
@@ -227,10 +227,10 @@ type
     PositionDisplay        : TdsSevenSegmentMultiDisplay;
     TargetDisplay          : TdsSevenSegmentMultiDisplay;
     DistanceDisplay        : TdsSevenSegmentMultiDisplay;
-    ExtraDisplay           : TdsSevenSegmentMultiDisplay;
+    FeedbackDisplay        : TdsSevenSegmentMultiDisplay;
 
-    VelocityDisplay        : TdsSevenSegmentMultiDisplay;
-    ForceDisplay           : TdsSevenSegmentMultiDisplay;
+    ActualVelocityDisplay  : TdsSevenSegmentMultiDisplay;
+    SetVelocityDisplay     : TdsSevenSegmentMultiDisplay;
 
     MouseUpEvent           : TSimpleEvent;
 
@@ -298,12 +298,7 @@ type
     procedure ProcessFirmware(const CD:TCOMMANDDATA);
     procedure ProcessDiagnostic(const CD:TCOMMANDDATA);
     procedure ProcessMode(const CD: TCOMMANDDATA);
-    procedure ProcessPosition(const CD: TCOMMANDDATA);
-    procedure ProcessTarget(const CD: TCOMMANDDATA);
-    procedure ProcessDistance(const CD: TCOMMANDDATA);
-    procedure ProcessForce(const CD: TCOMMANDDATA);
-    procedure ProcessVelocity(const CD: TCOMMANDDATA);
-
+    procedure ProcessRealtimeData(const CD: TCOMMANDDATA);
     procedure ProcessDiskDriveData(const Drive: word; StoreOnDisk:boolean);
 
     procedure OnCommData(const s:ansistring);
@@ -423,7 +418,7 @@ begin
   with PositionDisplay do
   begin
     Parent:=panelDrivePosition;
-    OnColor:=clAqua;
+    OnColor:=clRed;
     OffColor:=ChangeBrightness(OnColor,0.1);
     DisplayCount:=7;
     BorderWidth:=4;
@@ -431,7 +426,7 @@ begin
     //AnchorSide[akLeft].Control:=nil;
     //AnchorSide[akTop].Control:=nil;
     Align:=alClient;
-    Hint:='Drive position';
+    Hint:='Drive position command value';
     ShowHint:=True;
   end;
 
@@ -439,7 +434,7 @@ begin
   with TargetDisplay do
   begin
     Parent:=panelDriveTarget;
-    OnColor:=clBlue;
+    OnColor:=clRed;
     OffColor:=ChangeBrightness(OnColor,0.1);
     DisplayCount:=7;
     BorderWidth:=4;
@@ -447,7 +442,7 @@ begin
     //AnchorSide[akLeft].Control:=nil;
     //AnchorSide[akTop].Control:=nil;
     Align:=alClient;
-    Hint:='Drive position';
+    Hint:='Drive target';
     ShowHint:=True;
   end;
 
@@ -463,15 +458,15 @@ begin
     //AnchorSide[akLeft].Control:=nil;
     //AnchorSide[akTop].Control:=nil;
     Align:=alClient;
-    Hint:='Drive position';
+    Hint:='Drive distance';
     ShowHint:=True;
   end;
 
-  ExtraDisplay:=TdsSevenSegmentMultiDisplay.Create(panelDriveExtra);
-  with ExtraDisplay do
+  FeedbackDisplay:=TdsSevenSegmentMultiDisplay.Create(panelDriveFeedback);
+  with FeedbackDisplay do
   begin
-    Parent:=panelDriveExtra;
-    OnColor:=clFuchsia;
+    Parent:=panelDriveFeedback;
+    OnColor:=clRed;
     OffColor:=ChangeBrightness(OnColor,0.1);
     DisplayCount:=7;
     BorderWidth:=4;
@@ -479,17 +474,18 @@ begin
     //AnchorSide[akLeft].Control:=nil;
     //AnchorSide[akTop].Control:=nil;
     Align:=alClient;
-    Hint:='Drive position';
+    Hint:='Drive extra';
     ShowHint:=True;
   end;
 
 
-  VelocityDisplay:=TdsSevenSegmentMultiDisplay.Create(panelDriveFeedback);
-  with VelocityDisplay do
+  ActualVelocityDisplay:=TdsSevenSegmentMultiDisplay.Create(panelDriveVelocity);
+  with ActualVelocityDisplay do
   begin
-    Parent:=panelDriveFeedback;
-    OnColor:=clRed;
+    Parent:=panelDriveVelocity;
+    OnColor:=clLime;
     OffColor:=ChangeBrightness(OnColor,0.1);
+    DisplayCount:=5;
     BorderWidth:=2;
     //Anchors:=[akLeft,akRight];
     //AnchorSide[akLeft].Control:=nil;
@@ -498,12 +494,13 @@ begin
     Hint:='Drive speed';
     ShowHint:=True;
   end;
-  ForceDisplay:=TdsSevenSegmentMultiDisplay.Create(panelDriveFeedback);
-  with ForceDisplay do
+  SetVelocityDisplay:=TdsSevenSegmentMultiDisplay.Create(panelDriveVelocity);
+  with SetVelocityDisplay do
   begin
-    Parent:=panelDriveFeedback;
-    OnColor:=clYellow;
+    Parent:=panelDriveVelocity;
+    OnColor:=clLime;
     OffColor:=ChangeBrightness(OnColor,0.1);
+    DisplayCount:=5;
     BorderWidth:=2;
     //Anchors:=[akLeft,akRight];
     //AnchorSide[akLeft].Control:=nil;
@@ -817,7 +814,6 @@ var
   axis    : word;
   CD      : TCOMMANDDATA;
   SCS     : SERCOSCOMMAND_STATUS;
-  SC0393  : TDRIVEPARAMETER_0393;
   SC0403  : TDRIVEPARAMETER_0403;
   success : boolean;
 begin
@@ -882,18 +878,6 @@ begin
   CD.CSUBCLASS:=mscParameterData;
   CD.NUMID:=12;
   success:=CommandExecuteAndWait(CD);
-
-  // Position to actual position when activated
-  CD.CCLASS:=ccDrive;
-  CD.CSUBCLASS:=mscParameterData;
-  CD.NUMID:=393;
-  SC0393.Raw:=0;
-  SC0393.Data.DirectionMode:=0;
-  //SC0393.Data.PositionType:=1;
-  //SC0393.Data.TargetPosAfter:=1;
-  CD.DATA:=DecimalToBinaryString(SC0393.Raw,DirectDrive);
-  //CD.DATA:=IntToStr(DW.Raw);
-  success:=ProcessCommand(CD,s);
 
   // Check success of P-0-0012, C300 Command
   CD.CCLASS:=ccDrive;
@@ -983,7 +967,8 @@ procedure TForm1.btnConnectSerialClick(Sender: TObject);
 var
   Success      : boolean;
   c,s          : ansistring;
-  CD           : TCOMMANDDATA;
+  CD,StatusCD  : TCOMMANDDATA;
+  SC0393       : TDRIVEPARAMETER_0393;
 begin
   Success:=ConnectSerial;
   if Success then
@@ -1062,16 +1047,48 @@ begin
       Success:=ProcessDirectDriveCommand(c,s,false,true);
       Memo1.Lines.Append('Select drive response: '+s);
 
+      // Perform some default actions on the active drive
+
       CD:=Default(TCOMMANDDATA);
       CD.CSUBCLASS:=mscParameterData;
-
       CD.CCLASS:=ccDrive;
       CD.SETID:=ActiveDrive;
+
+      (*
+      Parameter S-0-0393, Command value mode, TargetPosAfter = 0
+      After activation, the drive positions to the value in the parameter S-0-
+      0258 Target position. So, after an interruption of the operation mode (e.g.
+      on error), the drive can go to the same target position as it should have
+      done before the error. That means, the remaining path is performed.
+
+      Parameter S-0-0393, Command value mode, TargetPosAfter = 1
+      After acivating the operation mode, the drive refers the distance to move
+      always to the actual position. To do this, the parameter S-0-0258, Target
+      position is set to the actual position. That means, after an accidental
+      interruption, the drive stays at the actual position at first.
+      In the operation mode Relative drive internal interpolation, the distance to
+      move refers to the actual position after toggling the parameter S-0-0346
+      *)
+
+      // Command value mode
+      CD.NUMID:=393;
+      CD.DATA:='';
+      success:=ProcessCommand(CD,s,false,true);
+      StatusCD:=ProcessCommDataString(s);
+      SC0393.Raw:=BinaryStringToDecimal(StatusCD.DATA);
+      if (SC0393.Data.TargetPosAfter=0) then
+      begin
+        // We need TargetPosAfter = 1
+        SC0393.Data.TargetPosAfter:=1;
+        CD.DATA:=DecimalToBinaryString(SC0393.Raw,DirectDrive);
+        success:=ProcessCommand(CD,s,false,true);
+      end;
 
       // Deactivate resident memory mode to preserve EEPROM
       CD.NUMID:=269;
       CD.DATA:='1';
       success:=ProcessCommand(CD,s,false,true);
+
     end
     else
     begin
@@ -2855,19 +2872,19 @@ begin
   IDNIniList.Free;
 end;
 
-procedure TForm1.panelDriveFeedbackResize(Sender: TObject);
+procedure TForm1.panelDriveVelocityResize(Sender: TObject);
 begin
-  if (Assigned(VelocityDisplay) AND Assigned(ForceDisplay)) then
+  if (Assigned(ActualVelocityDisplay) AND Assigned(SetVelocityDisplay)) then
   begin
-    VelocityDisplay.Top:=1;
-    VelocityDisplay.Left:=0;
-    VelocityDisplay.Width:=(TControl(Sender).Width DIV 2)-6;
-    VelocityDisplay.Height:=(TControl(Sender).Height {DIV 2})-2;
+    ActualVelocityDisplay.Top:=1;
+    ActualVelocityDisplay.Left:=0;
+    ActualVelocityDisplay.Width:=(TControl(Sender).Width DIV 2)-6;
+    ActualVelocityDisplay.Height:=(TControl(Sender).Height {DIV 2})-2-16;
 
-    ForceDisplay.Top:=VelocityDisplay.Top;
-    ForceDisplay.Left:=VelocityDisplay.Width+VelocityDisplay.Left+12;
-    ForceDisplay.Width:=VelocityDisplay.Width;
-    ForceDisplay.Height:=VelocityDisplay.Height;
+    SetVelocityDisplay.Top:=ActualVelocityDisplay.Top;
+    SetVelocityDisplay.Left:=ActualVelocityDisplay.Width+ActualVelocityDisplay.Left+12;
+    SetVelocityDisplay.Width:=ActualVelocityDisplay.Width;
+    SetVelocityDisplay.Height:=ActualVelocityDisplay.Height;
   end;
 end;
 
@@ -2954,8 +2971,8 @@ begin
   TargetDisplay.Value:=0;
   DistanceDisplay.Value:=0;
 
-  VelocityDisplay.Value:=0;
-  ForceDisplay.Value:=0;
+  ActualVelocityDisplay.Value:=0;
+  SetVelocityDisplay.Value:=0;
 
   CD.DATA:=sUN;
   ProcessMode(CD);
@@ -3569,52 +3586,19 @@ begin
   end;
 end;
 
-procedure TForm1.ProcessVelocity(const CD: TCOMMANDDATA);
+procedure TForm1.ProcessRealtimeData(const CD: TCOMMANDDATA);
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
   if (CD.SETID=ActiveDrive) then
   begin
-    VelocityDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
+    with DRIVE_SET_SPEED do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then ActualVelocityDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
+    with DRIVE_ACTUAL_SPEED do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then SetVelocityDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
+    with DRIVE_COMMAND do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then PositionDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
+    with DRIVE_FEEDBACK do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then FeedbackDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
+    with DRIVE_TARGET do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then TargetDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
+    with DRIVE_DISTANCE do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then DistanceDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
   end;
 end;
-
-procedure TForm1.ProcessPosition(const CD: TCOMMANDDATA);
-begin
-  // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDrive) then
-  begin
-    PositionDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
-  end;
-end;
-
-procedure TForm1.ProcessTarget(const CD: TCOMMANDDATA);
-begin
-  // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDrive) then
-  begin
-    TargetDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
-  end;
-end;
-
-procedure TForm1.ProcessDistance(const CD: TCOMMANDDATA);
-begin
-  // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDrive) then
-  begin
-    DistanceDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
-  end;
-end;
-
-
-procedure TForm1.ProcessForce(const CD: TCOMMANDDATA);
-begin
-  // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDrive) then
-  begin
-    ForceDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
-  end;
-end;
-
 
 procedure TForm1.ProcessIDNList(const CD: TCOMMANDDATA);
 var
@@ -4278,9 +4262,6 @@ begin
     end;
 
     with DRIVE_PRIMARYMODE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))         then ProcessMode(LocalCD);
-    with DRIVE_COMMAND do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))             then ProcessPosition(LocalCD);
-    with DRIVE_TARGET do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))              then ProcessTarget(LocalCD);
-    with DRIVE_DISTANCE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))            then ProcessDistance(LocalCD);
     with DRIVE_INTERFACE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))           then ProcessDR14(LocalCD);
     with DRIVE_CONTROLWORD do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))         then ProcessDR134(LocalCD);
     with DRIVE_STATUSWORD do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))          then ProcessDR135(LocalCD);
@@ -4293,12 +4274,17 @@ begin
     with DRIVE_CONTROLLERTYPE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))      then ProcessControllerType(LocalCD);
     with DRIVE_MOTORSERIAL do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))         then ProcessMotorSerial(LocalCD);
 
-    //with DRIVE_SPEED do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))               then ProcessVelocity(LocalCD);
-    //with DRIVE_TORQUE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))              then ProcessForce(LocalCD);
+    with DRIVE_COMMAND do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))             then ProcessRealtimeData(LocalCD);
+    with DRIVE_TARGET do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))              then ProcessRealtimeData(LocalCD);
+    with DRIVE_DISTANCE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))            then ProcessRealtimeData(LocalCD);
+    with DRIVE_FEEDBACK do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))            then ProcessRealtimeData(LocalCD);
+    with DRIVE_ACTUAL_SPEED do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))        then ProcessRealtimeData(LocalCD);
+    with DRIVE_SET_SPEED do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))           then ProcessRealtimeData(LocalCD);
 
     with DRIVE_DIAGNOSTIC_CLASS1 do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))   then ProcessDR11(LocalCD);
     with DRIVE_DIAGNOSTIC_CLASS2 do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))   then ProcessDR12(LocalCD);
     with DRIVE_DIAGNOSTIC_CLASS3 do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))   then ProcessDR13(LocalCD);
+
     with DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3 do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))   then ProcessDR182(LocalCD);
 
   end;

@@ -1,11 +1,11 @@
 object Form1: TForm1
-  Left = 661
-  Height = 814
-  Top = 115
+  Left = 165
+  Height = 631
+  Top = 17
   Width = 1366
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'DriveTop'
-  ClientHeight = 814
+  ClientHeight = 631
   ClientWidth = 1366
   Menu = MainMenu1
   OnCreate = FormCreate
@@ -36,7 +36,7 @@ object Form1: TForm1
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = editStatus
     Left = 8
-    Height = 271
+    Height = 88
     Top = 512
     Width = 408
     Anchors = [akTop, akLeft, akBottom]
@@ -107,19 +107,19 @@ object Form1: TForm1
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 912
-    Height = 798
+    Height = 615
     Top = 8
     Width = 446
-    ActivePage = TabSheet1
+    ActivePage = tabMove
     Anchors = [akTop, akRight, akBottom]
     BorderSpacing.Top = 8
     BorderSpacing.Right = 8
     BorderSpacing.Bottom = 8
-    TabIndex = 0
+    TabIndex = 1
     TabOrder = 6
     object TabSheet1: TTabSheet
       Caption = 'Drive data'
-      ClientHeight = 770
+      ClientHeight = 587
       ClientWidth = 438
       object lvParameters: TListView
         AnchorSideLeft.Control = TabSheet1
@@ -128,7 +128,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = vleParamDetails
         Left = 8
-        Height = 586
+        Height = 403
         Top = 8
         Width = 422
         Anchors = [akTop, akLeft, akRight, akBottom]
@@ -164,7 +164,7 @@ object Form1: TForm1
         AnchorSideBottom.Control = synDataUpdate
         Left = 8
         Height = 19
-        Top = 609
+        Top = 426
         Width = 101
         Anchors = [akLeft, akBottom]
         BorderSpacing.Left = 8
@@ -182,7 +182,7 @@ object Form1: TForm1
         AnchorSideBottom.Control = synDataUpdate
         Left = 246
         Height = 25
-        Top = 605
+        Top = 422
         Width = 122
         Anchors = [akRight, akBottom]
         AutoSize = True
@@ -201,7 +201,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 8
         Height = 124
-        Top = 638
+        Top = 455
         Width = 360
         BorderSpacing.Around = 8
         Anchors = [akLeft, akBottom]
@@ -698,7 +698,7 @@ object Form1: TForm1
         Left = 376
         Height = 160
         Hint = 'Edit value field to update data.'
-        Top = 602
+        Top = 419
         Width = 54
         Anchors = [akLeft, akRight, akBottom]
         AutoEdit = False
@@ -736,7 +736,7 @@ object Form1: TForm1
     end
     object tabMove: TTabSheet
       Caption = 'Movement'
-      ClientHeight = 770
+      ClientHeight = 587
       ClientWidth = 438
       object MovementPanel1: TPanel
         AnchorSideLeft.Control = tabMove
@@ -760,7 +760,7 @@ object Form1: TForm1
           Left = 12
           Height = 430
           Top = 12
-          Width = 299
+          Width = 235
           BorderSpacing.Left = 12
           BorderSpacing.Top = 12
           BorderSpacing.Bottom = 12
@@ -776,14 +776,14 @@ object Form1: TForm1
           Left = 32
           Height = 330
           Top = 32
-          Width = 259
+          Width = 195
           Anchors = [akTop, akLeft, akRight, akBottom]
           BorderSpacing.Bottom = 60
           BorderSpacing.Around = 20
           Pen.Width = 10
         end
         object shapeStar: TShape
-          Left = 140
+          Left = 110
           Height = 52
           Top = 154
           Width = 44
@@ -796,7 +796,7 @@ object Form1: TForm1
           AnchorSideLeft.Side = asrCenter
           AnchorSideTop.Side = asrBottom
           AnchorSideBottom.Control = shapeStar
-          Left = 149
+          Left = 119
           Height = 26
           Hint = 'Move up'
           Top = 120
@@ -814,7 +814,7 @@ object Form1: TForm1
           AnchorSideLeft.Side = asrCenter
           AnchorSideTop.Control = shapeStar
           AnchorSideTop.Side = asrBottom
-          Left = 149
+          Left = 119
           Height = 26
           Hint = 'Move down'
           Top = 214
@@ -831,7 +831,7 @@ object Form1: TForm1
           AnchorSideLeft.Side = asrBottom
           AnchorSideTop.Control = shapeStar
           AnchorSideTop.Side = asrCenter
-          Left = 196
+          Left = 166
           Height = 26
           Hint = 'Move right'
           Top = 167
@@ -847,7 +847,7 @@ object Form1: TForm1
           AnchorSideTop.Control = shapeStar
           AnchorSideTop.Side = asrCenter
           AnchorSideRight.Control = shapeStar
-          Left = 102
+          Left = 72
           Height = 26
           Hint = 'Move left'
           Top = 167
@@ -1052,11 +1052,11 @@ object Form1: TForm1
         AnchorSideBottom.Control = tabMove
         AnchorSideBottom.Side = asrBottom
         Left = 0
-        Height = 311
+        Height = 128
         Top = 459
         Width = 438
         Anchors = [akTop, akLeft, akRight, akBottom]
-        ClientHeight = 311
+        ClientHeight = 128
         ClientWidth = 438
         TabOrder = 1
         object ListView1: TListView
@@ -1065,7 +1065,7 @@ object Form1: TForm1
           Left = 1
           Height = 117
           Top = 1
-          Width = 310
+          Width = 271
           AutoSort = False
           Checkboxes = True
           Columns = <          
@@ -1102,10 +1102,10 @@ object Form1: TForm1
           AnchorSideTop.Control = Panel1
           AnchorSideRight.Control = Panel1
           AnchorSideRight.Side = asrBottom
-          Left = 247
+          Left = 279
           Height = 34
           Top = 1
-          Width = 190
+          Width = 158
           Anchors = [akTop, akRight]
           Caption = 'Store Blocks in Drive'
           TabOrder = 2
@@ -1116,10 +1116,10 @@ object Form1: TForm1
           AnchorSideTop.Side = asrBottom
           AnchorSideRight.Control = Panel1
           AnchorSideRight.Side = asrBottom
-          Left = 247
+          Left = 279
           Height = 34
           Top = 35
-          Width = 190
+          Width = 158
           Anchors = [akTop, akRight]
           Caption = 'Execute Blocks in Drive'
           TabOrder = 3
@@ -1139,10 +1139,10 @@ object Form1: TForm1
           AnchorSideTop.Side = asrBottom
           AnchorSideRight.Control = Panel1
           AnchorSideRight.Side = asrBottom
-          Left = 247
+          Left = 279
           Height = 34
           Top = 69
-          Width = 190
+          Width = 158
           Anchors = [akTop, akRight]
           Caption = 'Execute Blocks in Drive'
           TabOrder = 5
@@ -1152,7 +1152,7 @@ object Form1: TForm1
     end
     object tabRawCommands: TTabSheet
       Caption = 'Raw Commands'
-      ClientHeight = 770
+      ClientHeight = 587
       ClientWidth = 438
       object pageRawCommands: TPageControl
         AnchorSideLeft.Control = tabRawCommands
@@ -1161,7 +1161,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = rgSubClass
         Left = 4
-        Height = 647
+        Height = 464
         Top = 4
         Width = 426
         ActivePage = tabDrive
@@ -1181,11 +1181,11 @@ object Form1: TForm1
           ChildSizing.EnlargeVertical = crsHomogenousChildResize
           ChildSizing.Layout = cclLeftToRightThenTopToBottom
           ChildSizing.ControlsPerLine = 1
-          ClientHeight = 619
+          ClientHeight = 436
           ClientWidth = 418
           object lbSERCOSPARAMS: TListBox
             Left = 0
-            Height = 300
+            Height = 208
             Top = 0
             Width = 418
             ExtendedSelect = False
@@ -1195,8 +1195,8 @@ object Form1: TForm1
           end
           object lbSERCOSCOMMANDS: TListBox
             Left = 0
-            Height = 299
-            Top = 320
+            Height = 208
+            Top = 228
             Width = 418
             ExtendedSelect = False
             ItemHeight = 0
@@ -1206,11 +1206,11 @@ object Form1: TForm1
         end
         object tabVMControl: TTabSheet
           Caption = 'VM-Control'
-          ClientHeight = 619
+          ClientHeight = 436
           ClientWidth = 418
           object lbVMSYSTEMCOMMANDS: TListBox
             Left = 0
-            Height = 619
+            Height = 436
             Top = 0
             Width = 418
             Align = alClient
@@ -1222,11 +1222,11 @@ object Form1: TForm1
         end
         object tabVMAxis: TTabSheet
           Caption = 'VM-Axis'
-          ClientHeight = 619
+          ClientHeight = 436
           ClientWidth = 418
           object lbVMAXISCOMMANDS: TListBox
             Left = 0
-            Height = 619
+            Height = 436
             Top = 0
             Width = 418
             Align = alClient
@@ -1238,11 +1238,11 @@ object Form1: TForm1
         end
         object tabVMTask: TTabSheet
           Caption = 'VM-Task'
-          ClientHeight = 619
+          ClientHeight = 436
           ClientWidth = 418
           object lbVMTASKCOMMANDS: TListBox
             Left = 0
-            Height = 619
+            Height = 436
             Top = 0
             Width = 418
             Align = alClient
@@ -1254,11 +1254,11 @@ object Form1: TForm1
         end
         object tabVMRegister: TTabSheet
           Caption = 'VM-Register'
-          ClientHeight = 619
+          ClientHeight = 436
           ClientWidth = 418
           object lbVMREGISTERS: TListBox
             Left = 0
-            Height = 619
+            Height = 436
             Top = 0
             Width = 418
             Align = alClient
@@ -1275,7 +1275,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 4
         Height = 103
-        Top = 659
+        Top = 476
         Width = 296
         Anchors = [akLeft, akBottom]
         AutoFill = True
@@ -1301,7 +1301,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         Left = 315
         Height = 23
-        Top = 659
+        Top = 476
         Width = 115
         Anchors = [akTop, akLeft, akRight]
         TabOrder = 2
@@ -1314,7 +1314,7 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         Left = 315
         Height = 23
-        Top = 686
+        Top = 503
         Width = 115
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Top = 4
@@ -1327,7 +1327,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 315
         Height = 25
-        Top = 737
+        Top = 554
         Width = 115
         Anchors = [akRight, akBottom]
         AutoSize = True
@@ -1340,7 +1340,7 @@ object Form1: TForm1
     end
     object tabProgramme: TTabSheet
       Caption = 'Programme'
-      ClientHeight = 770
+      ClientHeight = 587
       ClientWidth = 438
       object ValueListEditor1: TValueListEditor
         AnchorSideLeft.Control = tabProgramme
@@ -1348,7 +1348,7 @@ object Form1: TForm1
         AnchorSideBottom.Control = tabProgramme
         AnchorSideBottom.Side = asrBottom
         Left = 8
-        Height = 754
+        Height = 571
         Top = 8
         Width = 264
         Anchors = [akTop, akLeft, akBottom]
@@ -1387,7 +1387,7 @@ object Form1: TForm1
         )
         ColWidths = (
           64
-          179
+          196
         )
       end
       object btnStartTaskA: TButton
@@ -1409,7 +1409,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 221
         Height = 160
-        Top = 202
+        Top = 135
         Width = 232
         Anchors = []
         BorderSpacing.Around = 8
@@ -1482,7 +1482,7 @@ object Form1: TForm1
         AnchorSideBottom.Side = asrBottom
         Left = 221
         Height = 144
-        Top = 559
+        Top = 409
         Width = 232
         Anchors = []
         BorderSpacing.Around = 8
@@ -1568,8 +1568,6 @@ object Form1: TForm1
     BorderSpacing.Left = 8
     TabOrder = 7
     object grpAxisCommands: TGroupBox
-      AnchorSideLeft.Control = grpDriveStatus
-      AnchorSideTop.Control = btnSetMode
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = TabControl1
       AnchorSideRight.Side = asrBottom
@@ -1661,60 +1659,6 @@ object Form1: TForm1
         OnClick = btnGetDriveDataClick
       end
     end
-    object btnSetMode: TButton
-      AnchorSideLeft.Control = grpDriveStatus
-      AnchorSideTop.Control = grpDriveStatus
-      AnchorSideTop.Side = asrBottom
-      Left = 552
-      Height = 26
-      Top = 120
-      Width = 110
-      BorderSpacing.Top = 8
-      Caption = 'Set Drive Mode'
-      TabOrder = 2
-      OnClick = btnSetModeClick
-    end
-    object comboDriveModes: TComboBox
-      AnchorSideLeft.Control = btnSetMode
-      AnchorSideLeft.Side = asrBottom
-      AnchorSideTop.Control = btnSetMode
-      AnchorSideRight.Control = TabControl1
-      AnchorSideRight.Side = asrBottom
-      Left = 666
-      Height = 23
-      Top = 120
-      Width = 220
-      Anchors = [akTop, akLeft, akRight]
-      BorderSpacing.Left = 4
-      BorderSpacing.Right = 8
-      ItemHeight = 15
-      ParentShowHint = False
-      TabOrder = 3
-      Text = 'Empty'
-    end
-    object grpDriveStatus: TGroupBox
-      AnchorSideLeft.Control = grpDriveDashBoard
-      AnchorSideLeft.Side = asrBottom
-      AnchorSideTop.Control = grpDriveDashBoard
-      AnchorSideRight.Control = stDriveAddress
-      Left = 552
-      Height = 80
-      Top = 32
-      Width = 286
-      Anchors = [akTop, akRight]
-      BorderSpacing.Left = 8
-      BorderSpacing.Right = 8
-      Caption = 'Drive Status'
-      ChildSizing.LeftRightSpacing = 2
-      ChildSizing.TopBottomSpacing = 2
-      ChildSizing.HorizontalSpacing = 4
-      ChildSizing.VerticalSpacing = 4
-      ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
-      ChildSizing.EnlargeVertical = crsHomogenousChildResize
-      ChildSizing.Layout = cclLeftToRightThenTopToBottom
-      ChildSizing.ControlsPerLine = 3
-      TabOrder = 6
-    end
     object UpDownDriveAddress: TUpDown
       AnchorSideLeft.Control = stDriveAddress
       AnchorSideTop.Control = stDriveAddress
@@ -1734,7 +1678,7 @@ object Form1: TForm1
       ParentShowHint = False
       Position = 1
       ShowHint = True
-      TabOrder = 7
+      TabOrder = 4
       Thousands = False
     end
     object stDriveAddress: TStaticText
@@ -1764,421 +1708,34 @@ object Form1: TForm1
       ParentColor = False
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 8
+      TabOrder = 5
     end
-    object panelDriveFeedback: TPanel
+    object panelDriveVelocity: TPanel
       AnchorSideLeft.Control = grpDriveDashBoard
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = TabControl1
       AnchorSideRight.Side = asrBottom
       AnchorSideBottom.Control = TabControl1
       AnchorSideBottom.Side = asrBottom
-      Left = 650
-      Height = 52
-      Top = 346
-      Width = 236
-      Anchors = [akRight, akBottom]
-      BorderSpacing.Around = 8
-      TabOrder = 9
-      OnResize = panelDriveFeedbackResize
-    end
-    object grpDriveDashBoard: TGroupBox
-      Left = 8
-      Height = 366
+      Left = 456
+      Height = 76
       Top = 32
-      Width = 432
-      Caption = 'Drive Dashboard'
-      ClientHeight = 346
-      ClientWidth = 428
-      Constraints.MinWidth = 244
-      TabOrder = 5
-      object panelDriveStatus: TPanel
-        AnchorSideLeft.Control = grpDriveDashBoard
-        AnchorSideTop.Control = grpDriveDashBoard
-        AnchorSideRight.Control = grpDriveDashBoard
-        AnchorSideRight.Side = asrBottom
-        Left = 4
-        Height = 40
-        Top = 4
-        Width = 420
-        Anchors = [akTop, akLeft, akRight]
-        BorderSpacing.Around = 4
-        ChildSizing.LeftRightSpacing = 2
-        ChildSizing.TopBottomSpacing = 2
-        ChildSizing.HorizontalSpacing = 6
-        ChildSizing.VerticalSpacing = 4
-        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
-        ChildSizing.EnlargeVertical = crsHomogenousChildResize
-        ChildSizing.Layout = cclLeftToRightThenTopToBottom
-        ChildSizing.ControlsPerLine = 4
-        ClientHeight = 40
-        ClientWidth = 420
+      Width = 304
+      Anchors = []
+      BorderSpacing.Around = 8
+      ClientHeight = 76
+      ClientWidth = 304
+      TabOrder = 6
+      OnResize = panelDriveVelocityResize
+      object StaticText1: TStaticText
+        Left = 1
+        Height = 16
+        Top = 59
+        Width = 302
+        Align = alBottom
+        Alignment = taCenter
+        Caption = 'Actual                Velocity                Set    '
         TabOrder = 0
-        object PanelControl: TPanel
-          Left = 2
-          Height = 36
-          Hint = 'Control voltage applied'
-          Top = 2
-          Width = 100
-          BevelOuter = bvLowered
-          BevelWidth = 2
-          Caption = 'Control'
-          Color = 16384
-          Constraints.MinHeight = 36
-          Font.Color = clGray
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
-          ParentBackground = False
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 0
-        end
-        object PanelPower: TPanel
-          Left = 108
-          Height = 36
-          Hint = 'Drive power applied'
-          Top = 2
-          Width = 100
-          BevelOuter = bvLowered
-          BevelWidth = 2
-          Caption = 'Power'
-          Color = 16384
-          Constraints.MinHeight = 36
-          Font.Color = clGray
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
-          ParentBackground = False
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 1
-        end
-        object PanelHalt: TPanel
-          Left = 214
-          Height = 36
-          Hint = 'Feed hold/pause. Click panel to set HOLD state'
-          Top = 2
-          Width = 100
-          BevelOuter = bvLowered
-          BevelWidth = 2
-          Caption = 'Halt'
-          Color = 64
-          Constraints.MinHeight = 36
-          Font.Color = clGray
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
-          ParentBackground = False
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 2
-        end
-        object PanelEnable: TPanel
-          Left = 320
-          Height = 36
-          Hint = 'Busy/Running'
-          Top = 2
-          Width = 98
-          BevelOuter = bvLowered
-          BevelWidth = 2
-          Caption = 'Enable'
-          Color = 16384
-          Constraints.MinHeight = 36
-          Font.Color = clGray
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
-          ParentBackground = False
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 3
-        end
-      end
-      object panelDriveDistance: TPanel
-        AnchorSideLeft.Control = grpDriveDashBoard
-        AnchorSideTop.Side = asrBottom
-        Left = 8
-        Height = 80
-        Top = 256
-        Width = 200
-        Anchors = []
-        BorderSpacing.Around = 4
-        ClientHeight = 80
-        ClientWidth = 200
-        Constraints.MinHeight = 60
-        TabOrder = 1
-        object StaticDistance: TStaticText
-          Left = 1
-          Height = 16
-          Top = 63
-          Width = 198
-          Align = alBottom
-          Alignment = taCenter
-          Caption = 'Distance'
-          TabOrder = 0
-        end
-      end
-      object panelDrivePhase: TPanel
-        AnchorSideLeft.Control = panelDriveStatus
-        AnchorSideTop.Control = panelDriveStatus
-        AnchorSideTop.Side = asrBottom
-        AnchorSideRight.Control = panelDriveStatus
-        AnchorSideRight.Side = asrBottom
-        Left = 4
-        Height = 64
-        Top = 48
-        Width = 420
-        Anchors = [akTop, akLeft, akRight]
-        BorderSpacing.Top = 4
-        ChildSizing.LeftRightSpacing = 2
-        ChildSizing.TopBottomSpacing = 2
-        ChildSizing.HorizontalSpacing = 24
-        ChildSizing.VerticalSpacing = 4
-        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
-        ChildSizing.EnlargeVertical = crsHomogenousChildResize
-        ChildSizing.Layout = cclLeftToRightThenTopToBottom
-        ChildSizing.ControlsPerLine = 3
-        ClientHeight = 64
-        ClientWidth = 420
-        TabOrder = 2
-        object PanelPhase2: TPanel
-          Left = 2
-          Height = 30
-          Top = 2
-          Width = 123
-          BevelOuter = bvLowered
-          BevelWidth = 2
-          Caption = 'Phase2'
-          Color = 4194304
-          Constraints.MinHeight = 28
-          Font.Color = clGray
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
-          ParentBackground = False
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 0
-        end
-        object PanelPhase3: TPanel
-          Left = 149
-          Height = 30
-          Top = 2
-          Width = 123
-          BevelOuter = bvLowered
-          BevelWidth = 2
-          Caption = 'Phase3'
-          Color = 4194304
-          Constraints.MinHeight = 28
-          Font.Color = clGray
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
-          ParentBackground = False
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 1
-        end
-        object PanelPhase4: TPanel
-          Left = 296
-          Height = 30
-          Top = 2
-          Width = 122
-          BevelOuter = bvLowered
-          BevelWidth = 2
-          Caption = 'Phase4'
-          Color = 4194304
-          Constraints.MinHeight = 28
-          Font.Color = clGray
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
-          ParentBackground = False
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 2
-        end
-        object btnPhase2: TButton
-          Left = 2
-          Height = 26
-          Top = 36
-          Width = 123
-          Caption = 'Phase 2'
-          TabOrder = 3
-          OnClick = btnAxisCommandClick
-        end
-        object btnPhase3: TButton
-          Left = 149
-          Height = 26
-          Top = 36
-          Width = 123
-          Caption = 'Phase 3'
-          TabOrder = 4
-          OnClick = btnAxisCommandClick
-        end
-        object btnPhase4: TButton
-          Left = 296
-          Height = 26
-          Top = 36
-          Width = 122
-          Caption = 'Phase 4'
-          TabOrder = 5
-          OnClick = btnAxisCommandClick
-        end
-      end
-      object panelDriveDiags: TPanel
-        AnchorSideLeft.Control = panelDriveStatus
-        AnchorSideTop.Control = panelDrivePhase
-        AnchorSideTop.Side = asrBottom
-        AnchorSideRight.Control = panelDriveStatus
-        AnchorSideRight.Side = asrBottom
-        Left = 4
-        Height = 32
-        Top = 116
-        Width = 420
-        Anchors = [akTop, akLeft, akRight]
-        BorderSpacing.Top = 4
-        ChildSizing.LeftRightSpacing = 2
-        ChildSizing.TopBottomSpacing = 2
-        ChildSizing.HorizontalSpacing = 6
-        ChildSizing.VerticalSpacing = 4
-        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
-        ChildSizing.EnlargeVertical = crsHomogenousChildResize
-        ChildSizing.Layout = cclLeftToRightThenTopToBottom
-        ChildSizing.ControlsPerLine = 4
-        ClientHeight = 32
-        ClientWidth = 420
-        TabOrder = 3
-        object panelInReference: TPanel
-          Left = 2
-          Height = 28
-          Top = 2
-          Width = 100
-          BevelOuter = bvLowered
-          BevelWidth = 2
-          Caption = 'In Reference'
-          Color = 16384
-          Constraints.MinHeight = 28
-          Font.Color = clGray
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
-          ParentBackground = False
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 3
-        end
-        object panelInPosition: TPanel
-          Left = 108
-          Height = 28
-          Top = 2
-          Width = 100
-          BevelOuter = bvLowered
-          BevelWidth = 2
-          Caption = 'In Position'
-          Color = 16384
-          Constraints.MinHeight = 28
-          Font.Color = clGray
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
-          ParentBackground = False
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 0
-        end
-        object panelStandstill: TPanel
-          AnchorSideRight.Side = asrCenter
-          Left = 214
-          Height = 28
-          Top = 2
-          Width = 100
-          BevelOuter = bvLowered
-          BevelWidth = 2
-          Caption = 'Standstill'
-          Color = 16384
-          Constraints.MinHeight = 28
-          Font.Color = clGray
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
-          ParentBackground = False
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 1
-        end
-        object panelTargetPosition: TPanel
-          AnchorSideRight.Side = asrBottom
-          Left = 320
-          Height = 28
-          Top = 2
-          Width = 98
-          BevelOuter = bvLowered
-          BevelWidth = 2
-          Caption = 'Target Position'
-          Color = 16384
-          Constraints.MinHeight = 28
-          Font.Color = clGray
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
-          ParentBackground = False
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 2
-        end
-      end
-      object panelDrivePosition: TPanel
-        Left = 224
-        Height = 80
-        Top = 160
-        Width = 200
-        ClientHeight = 80
-        ClientWidth = 200
-        TabOrder = 4
-        object TextPosition: TStaticText
-          Left = 1
-          Height = 16
-          Top = 63
-          Width = 198
-          Align = alBottom
-          Alignment = taCenter
-          Caption = 'Position'
-          TabOrder = 0
-        end
-      end
-      object panelDriveTarget: TPanel
-        Left = 8
-        Height = 80
-        Top = 160
-        Width = 200
-        ClientHeight = 80
-        ClientWidth = 200
-        TabOrder = 5
-        object TextTarget: TStaticText
-          Left = 1
-          Height = 16
-          Top = 63
-          Width = 198
-          Align = alBottom
-          Alignment = taCenter
-          Caption = 'Target'
-          TabOrder = 0
-        end
-      end
-      object panelDriveExtra: TPanel
-        AnchorSideLeft.Control = grpDriveDashBoard
-        AnchorSideTop.Side = asrBottom
-        Left = 224
-        Height = 80
-        Top = 256
-        Width = 200
-        Anchors = []
-        BorderSpacing.Around = 4
-        ClientHeight = 80
-        ClientWidth = 200
-        Constraints.MinHeight = 60
-        TabOrder = 6
-        object TextExtra: TStaticText
-          Left = 1
-          Height = 16
-          Top = 63
-          Width = 198
-          Align = alBottom
-          Alignment = taCenter
-          Caption = 'Extra'
-          TabOrder = 0
-        end
       end
     end
     object grpDriveInfo: TGroupBox
@@ -2187,15 +1744,15 @@ object Form1: TForm1
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = grpDriveDashBoard
       AnchorSideRight.Side = asrBottom
-      Left = 536
-      Height = 86
-      Top = 288
+      Left = 456
+      Height = 118
+      Top = 216
       Width = 232
       Anchors = []
       Caption = 'Drive Info'
-      ClientHeight = 66
+      ClientHeight = 98
       ClientWidth = 228
-      TabOrder = 4
+      TabOrder = 2
       object stFirmware: TStaticText
         AnchorSideLeft.Control = grpDriveInfo
         AnchorSideTop.Control = stControllerType
@@ -2308,6 +1865,466 @@ object Form1: TForm1
         TabOrder = 5
       end
     end
+    object grpDriveDashBoard: TGroupBox
+      Left = 8
+      Height = 366
+      Top = 32
+      Width = 432
+      Caption = 'Drive Dashboard'
+      ClientHeight = 346
+      ClientWidth = 428
+      Constraints.MinWidth = 244
+      TabOrder = 3
+      object panelDriveStatus: TPanel
+        AnchorSideLeft.Control = grpDriveDashBoard
+        AnchorSideTop.Control = grpDriveDashBoard
+        AnchorSideRight.Control = grpDriveDashBoard
+        AnchorSideRight.Side = asrBottom
+        Left = 4
+        Height = 40
+        Top = 4
+        Width = 420
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Around = 4
+        ChildSizing.LeftRightSpacing = 2
+        ChildSizing.TopBottomSpacing = 2
+        ChildSizing.HorizontalSpacing = 6
+        ChildSizing.VerticalSpacing = 4
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 4
+        ClientHeight = 40
+        ClientWidth = 420
+        TabOrder = 0
+        object PanelControl: TPanel
+          Left = 2
+          Height = 36
+          Hint = 'Control voltage applied'
+          Top = 2
+          Width = 100
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Control'
+          Color = 16384
+          Constraints.MinHeight = 36
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 0
+        end
+        object PanelPower: TPanel
+          Left = 108
+          Height = 36
+          Hint = 'Drive power applied'
+          Top = 2
+          Width = 100
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Power'
+          Color = 16384
+          Constraints.MinHeight = 36
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 1
+        end
+        object PanelHalt: TPanel
+          Left = 214
+          Height = 36
+          Hint = 'Feed hold/pause. Click panel to set HOLD state'
+          Top = 2
+          Width = 100
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Halt'
+          Color = 64
+          Constraints.MinHeight = 36
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 2
+        end
+        object PanelEnable: TPanel
+          Left = 320
+          Height = 36
+          Hint = 'Busy/Running'
+          Top = 2
+          Width = 98
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Enable'
+          Color = 16384
+          Constraints.MinHeight = 36
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 3
+        end
+      end
+      object panelDriveDistance: TPanel
+        AnchorSideLeft.Control = grpDriveDashBoard
+        AnchorSideTop.Side = asrBottom
+        AnchorSideBottom.Control = panelDriveTarget
+        Left = 4
+        Height = 80
+        Top = 178
+        Width = 206
+        Anchors = [akLeft, akBottom]
+        BorderSpacing.Left = 4
+        BorderSpacing.Bottom = 4
+        ClientHeight = 80
+        ClientWidth = 206
+        Constraints.MinHeight = 60
+        TabOrder = 1
+        object TextDistance: TStaticText
+          Left = 1
+          Height = 16
+          Top = 63
+          Width = 204
+          Align = alBottom
+          Alignment = taCenter
+          Caption = 'Distance (S-0-0282)'
+          TabOrder = 0
+        end
+      end
+      object panelDrivePhase: TPanel
+        AnchorSideLeft.Control = panelDriveStatus
+        AnchorSideTop.Control = panelDriveStatus
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = panelDriveStatus
+        AnchorSideRight.Side = asrBottom
+        Left = 4
+        Height = 64
+        Top = 48
+        Width = 420
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Top = 4
+        ChildSizing.LeftRightSpacing = 2
+        ChildSizing.TopBottomSpacing = 2
+        ChildSizing.HorizontalSpacing = 24
+        ChildSizing.VerticalSpacing = 4
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 3
+        ClientHeight = 64
+        ClientWidth = 420
+        TabOrder = 2
+        object PanelPhase2: TPanel
+          Left = 2
+          Height = 30
+          Top = 2
+          Width = 123
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Phase2'
+          Color = 4194304
+          Constraints.MinHeight = 28
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 0
+        end
+        object PanelPhase3: TPanel
+          Left = 149
+          Height = 30
+          Top = 2
+          Width = 123
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Phase3'
+          Color = 4194304
+          Constraints.MinHeight = 28
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 1
+        end
+        object PanelPhase4: TPanel
+          Left = 296
+          Height = 30
+          Top = 2
+          Width = 122
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Phase4'
+          Color = 4194304
+          Constraints.MinHeight = 28
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 2
+        end
+        object btnPhase2: TButton
+          Left = 2
+          Height = 26
+          Hint = 'Click to select phase 2'
+          Top = 36
+          Width = 123
+          Caption = 'Phase 2'
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 3
+          OnClick = btnAxisCommandClick
+        end
+        object btnPhase3: TButton
+          Left = 149
+          Height = 26
+          Hint = 'Click to select phase 3'
+          Top = 36
+          Width = 123
+          Caption = 'Phase 3'
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 4
+          OnClick = btnAxisCommandClick
+        end
+        object btnPhase4: TButton
+          Left = 296
+          Height = 26
+          Hint = 'Click to select phase 4'
+          Top = 36
+          Width = 122
+          Caption = 'Phase 4'
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 5
+          OnClick = btnAxisCommandClick
+        end
+      end
+      object panelDriveDiags: TPanel
+        AnchorSideLeft.Control = panelDriveStatus
+        AnchorSideTop.Control = panelDrivePhase
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = panelDriveStatus
+        AnchorSideRight.Side = asrBottom
+        Left = 4
+        Height = 32
+        Top = 116
+        Width = 420
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Top = 4
+        ChildSizing.LeftRightSpacing = 2
+        ChildSizing.TopBottomSpacing = 2
+        ChildSizing.HorizontalSpacing = 6
+        ChildSizing.VerticalSpacing = 4
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 4
+        ClientHeight = 32
+        ClientWidth = 420
+        TabOrder = 3
+        object panelInReference: TPanel
+          Left = 2
+          Height = 28
+          Top = 2
+          Width = 100
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'In Reference'
+          Color = 16384
+          Constraints.MinHeight = 28
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 3
+        end
+        object panelInPosition: TPanel
+          Left = 108
+          Height = 28
+          Top = 2
+          Width = 100
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'In Position'
+          Color = 16384
+          Constraints.MinHeight = 28
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 0
+        end
+        object panelStandstill: TPanel
+          AnchorSideRight.Side = asrCenter
+          Left = 214
+          Height = 28
+          Top = 2
+          Width = 100
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Standstill'
+          Color = 16384
+          Constraints.MinHeight = 28
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 1
+        end
+        object panelTargetPosition: TPanel
+          AnchorSideRight.Side = asrBottom
+          Left = 320
+          Height = 28
+          Top = 2
+          Width = 98
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Target Position'
+          Color = 16384
+          Constraints.MinHeight = 28
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 2
+        end
+      end
+      object panelDrivePosition: TPanel
+        AnchorSideRight.Control = grpDriveDashBoard
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = panelDriveFeedback
+        Left = 218
+        Height = 80
+        Top = 178
+        Width = 206
+        Anchors = [akRight, akBottom]
+        BorderSpacing.Right = 4
+        BorderSpacing.Bottom = 4
+        ClientHeight = 80
+        ClientWidth = 206
+        TabOrder = 4
+        object TextPosition: TStaticText
+          Left = 1
+          Height = 16
+          Top = 63
+          Width = 204
+          Align = alBottom
+          Alignment = taCenter
+          Caption = 'Position (S-0-0047)'
+          TabOrder = 0
+        end
+      end
+      object panelDriveTarget: TPanel
+        AnchorSideLeft.Control = grpDriveDashBoard
+        AnchorSideBottom.Control = grpDriveDashBoard
+        AnchorSideBottom.Side = asrBottom
+        Left = 4
+        Height = 80
+        Top = 262
+        Width = 206
+        Anchors = [akLeft, akBottom]
+        BorderSpacing.Left = 4
+        BorderSpacing.Bottom = 4
+        ClientHeight = 80
+        ClientWidth = 206
+        TabOrder = 5
+        object TextTarget: TStaticText
+          Left = 1
+          Height = 16
+          Top = 63
+          Width = 204
+          Align = alBottom
+          Alignment = taCenter
+          Caption = 'Target  (S-0-0258)'
+          TabOrder = 0
+        end
+      end
+      object panelDriveFeedback: TPanel
+        AnchorSideLeft.Control = grpDriveDashBoard
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = grpDriveDashBoard
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = grpDriveDashBoard
+        AnchorSideBottom.Side = asrBottom
+        Left = 218
+        Height = 80
+        Top = 262
+        Width = 206
+        Anchors = [akRight, akBottom]
+        BorderSpacing.Right = 4
+        BorderSpacing.Bottom = 4
+        ClientHeight = 80
+        ClientWidth = 206
+        Constraints.MinHeight = 60
+        TabOrder = 6
+        object TextFeedback: TStaticText
+          Left = 1
+          Height = 16
+          Top = 63
+          Width = 204
+          Align = alBottom
+          Alignment = taCenter
+          Caption = 'Feedback (S-0-0051)'
+          TabOrder = 0
+        end
+      end
+      object btnSetMode: TButton
+        AnchorSideLeft.Control = grpDriveDashBoard
+        AnchorSideTop.Control = panelDriveDiags
+        AnchorSideTop.Side = asrBottom
+        Left = 4
+        Height = 26
+        Top = 152
+        Width = 110
+        BorderSpacing.Left = 4
+        BorderSpacing.Top = 4
+        Caption = 'Set Drive Mode'
+        TabOrder = 7
+        OnClick = btnSetModeClick
+      end
+      object comboDriveModes: TComboBox
+        AnchorSideLeft.Control = btnSetMode
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = btnSetMode
+        AnchorSideTop.Side = asrCenter
+        AnchorSideRight.Control = grpDriveDashBoard
+        AnchorSideRight.Side = asrBottom
+        Left = 118
+        Height = 23
+        Top = 154
+        Width = 306
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 4
+        BorderSpacing.Right = 4
+        ItemHeight = 15
+        ParentShowHint = False
+        TabOrder = 8
+        Text = 'Empty'
+      end
+    end
   end
   object lblTime: TLabel
     AnchorSideLeft.Control = btnStop
@@ -2354,7 +2371,7 @@ object Form1: TForm1
     AnchorSideBottom.Side = asrBottom
     Left = 8
     Height = 23
-    Top = 787
+    Top = 604
     Width = 408
     Anchors = [akLeft, akRight, akBottom]
     BorderSpacing.Left = 8
@@ -2384,7 +2401,7 @@ object Form1: TForm1
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 421
-    Height = 298
+    Height = 115
     Top = 512
     Width = 483
     Anchors = [akTop, akLeft, akRight, akBottom]
