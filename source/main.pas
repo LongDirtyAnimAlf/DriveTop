@@ -84,22 +84,29 @@ type
     ListView1: TListView;
     MovementPanel1: TPanel;
     Panel1: TPanel;
+    panelDriveExtra: TPanel;
     panelDriveFeedback: TPanel;
     panelDrivePosition: TPanel;
-    panelDriveTarget: TPanel;
+    panelDrivePhase: TPanel;
+    panelDriveDiags: TPanel;
     panelDriveStatus: TPanel;
     PanelControl: TPanel;
     panelDriveDistance: TPanel;
+    panelDriveTarget: TPanel;
     PanelEnable: TPanel;
     PanelHalt: TPanel;
     panelInPosition: TPanel;
+    panelInReference: TPanel;
     PanelPhase2: TPanel;
     PanelPhase3: TPanel;
     PanelPhase4: TPanel;
     PanelPower: TPanel;
     panelStandstill: TPanel;
     panelTargetPosition: TPanel;
-    shapeAlive: TShape;
+    TextPosition: TStaticText;
+    TextTarget: TStaticText;
+    StaticDistance: TStaticText;
+    TextExtra: TStaticText;
     stDriveName: TStaticText;
     stDriveAddress: TStaticText;
     stControllerType: TStaticText;
@@ -220,6 +227,7 @@ type
     PositionDisplay        : TdsSevenSegmentMultiDisplay;
     TargetDisplay          : TdsSevenSegmentMultiDisplay;
     DistanceDisplay        : TdsSevenSegmentMultiDisplay;
+    ExtraDisplay           : TdsSevenSegmentMultiDisplay;
 
     VelocityDisplay        : TdsSevenSegmentMultiDisplay;
     ForceDisplay           : TdsSevenSegmentMultiDisplay;
@@ -458,6 +466,23 @@ begin
     Hint:='Drive position';
     ShowHint:=True;
   end;
+
+  ExtraDisplay:=TdsSevenSegmentMultiDisplay.Create(panelDriveExtra);
+  with ExtraDisplay do
+  begin
+    Parent:=panelDriveExtra;
+    OnColor:=clFuchsia;
+    OffColor:=ChangeBrightness(OnColor,0.1);
+    DisplayCount:=7;
+    BorderWidth:=4;
+    //Anchors:=[akLeft,akRight];
+    //AnchorSide[akLeft].Control:=nil;
+    //AnchorSide[akTop].Control:=nil;
+    Align:=alClient;
+    Hint:='Drive position';
+    ShowHint:=True;
+  end;
+
 
   VelocityDisplay:=TdsSevenSegmentMultiDisplay.Create(panelDriveFeedback);
   with VelocityDisplay do
@@ -1637,7 +1662,6 @@ var
 begin
   if (FDCStatus<>TDATACOLLECTION.dcBasic) then
   begin
-    if shapeAlive.Brush.Color=clLime then shapeAlive.Brush.Color:=clRed else shapeAlive.Brush.Color:=clLime;
     for CC in REALTIMEDRIVEDATA do
     begin
       CD:=COMMAND2CD(CC,ActiveDrive);
