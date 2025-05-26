@@ -816,7 +816,7 @@ begin
   {$endif}
 end;
 
-function  RegisterDataCount(var MAP:TMySortedMap):integer;
+function RegisterDataCount(var MAP:TMySortedMap):integer;
 begin
   result:=MAP.Count;
 end;

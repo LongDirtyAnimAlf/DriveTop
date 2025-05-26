@@ -45,6 +45,7 @@ type
     btnClearErrors: TButton;
     btnConnectDDE: TButton;
     btnConnectDriveRS232: TButton;
+    btnConnectDriveSISRS486: TButton;
     btnDriveInfo: TButton;
     btnExecuteBlocks1Drive: TButton;
     btnGetEvents: TButton;
@@ -69,6 +70,7 @@ type
     btnGetDriveData: TButton;
     btnStoreBlockDrive: TButton;
     Button2: TButton;
+    Button3: TButton;
     chkAutoLoadDriveData: TCheckBox;
     cmboSerialPorts: TComboBox;
     comboDriveModes: TComboBox;
@@ -188,6 +190,7 @@ type
     procedure Button1Click(Sender: TObject);
     procedure btnGetDriveDataClick(Sender: TObject);
     procedure Button2Click(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
     procedure cmboSerialPortsSelect(Sender: TObject);
     procedure editDistKeyPress(Sender: TObject; var Key: char);
     procedure editStatusChange(Sender: TObject);
@@ -318,6 +321,7 @@ implementation
 uses
   StrUtils, IniFiles,
   InterfaceBase,
+  sis,
   Tools;
 
 function ChangeBrightness(lIn: tColor; factor:double): TColor;
@@ -381,6 +385,7 @@ begin
   begin
     PDI:=GetPDriveInfo(i);
     PDI^:=Default(TDRIVE);
+    PDI^.DRIVEADDRESS:=i;
   end;
   ActiveDrive:=1;
 
@@ -2348,6 +2353,22 @@ begin
     success:=ProcessCommand(CD,s,false,true);
   end;
 
+end;
+
+procedure TForm1.Button3Click(Sender: TObject);
+var
+  Data:ByteArray;
+  l,i:Integer;
+  s:ansistring;
+begin
+  BuildSISTelegram(3,'S-0-0051',1,PARAM_READ,Data,l);
+  //BuildSISStartTelegram(1,Data,l);
+  s:='';
+  for i:=1 to l do
+  begin
+    s:=s+InttoStr(Data[i])+',';
+  end;
+  i:=0;
 end;
 
 function TForm1.CheckComms:boolean;

@@ -7,21 +7,30 @@ interface
 uses
   Classes, SysUtils;
 
-implementation
-
-uses
-  common,
-  Bits;
-
 const
-  STX           = $02;
   PARAM_WRITE   = $8F;
   PARAM_READ    = $80;
-  LOCAL_ADDR    = $01;
 
 type
   ByteArray = array[1..32] of Byte;
 
+
+procedure BuildSISStartTelegram(destAddr: Byte; out telegram: ByteArray; out len: Integer);
+procedure BuildSISTelegram(destAddr: Byte; const idn: string; value: Word; service: Byte; out telegram: ByteArray; out len: Integer);
+
+
+implementation
+
+uses
+  common,
+  drive,
+  Bits;
+
+const
+  STX           = $02;
+  LOCAL_ADDR    = $01;
+
+type
   TSISHeaderControl = bitpacked record
     case integer of
         1 : (
@@ -92,6 +101,36 @@ begin
   result:=True;
 end;
 
+procedure BuildSISStartTelegram(destAddr: Byte; out telegram: ByteArray; out len: Integer);
+var
+  sum, i     : Integer;
+  DataCtrl   : TSISDataControl;
+  IDNWORD    : TIDNWORD;
+begin
+  len:=8;
+  // SIS Header
+  telegram[1] := STX;          // Start symbol: STX (0x02)
+  // telegram[2] :=            // Checksum
+  telegram[3] := len-8;        // DatL
+  telegram[4] := telegram[3];  // DatLW
+  telegram[5] := 0;            // Cntrl
+  telegram[6] := 0;            // 0x80 ... 0x8F special services for ECODRIVE
+  telegram[7] := 0;            // Address of the sender: station number (0 - 126)
+  telegram[8] := destAddr;            // Address of the receiver: 0 - 126 ==> specifies a single station, 128 ==> "point-to-point" connection; 129 - 253 ==> addresses logical groups, 254 - 255 ==> fixes a broadcast
+
+  telegram[9] := 0;
+  telegram[10] := destAddr;
+  telegram[11] := 0;
+  telegram[12] := 0;
+  telegram[13] := 0;
+
+  sum := STX;
+  for i := 3 to len do
+    sum := sum + telegram[i];
+  telegram[2] := (0 - sum) and $FF;
+end;
+
+
 procedure BuildSISTelegram(destAddr: Byte; const idn: string; value: Word; service: Byte; out telegram: ByteArray; out len: Integer);
 var
   paramType  : Byte;
@@ -115,7 +154,7 @@ begin
   // SIS Header
   telegram[1] := STX;          // Start symbol: STX (0x02)
   // telegram[2] :=            // Checksum
-  telegram[3] := len - 7;      // DatL
+  telegram[3] := len - 8;      // DatL
   telegram[4] := telegram[3];  // DatLW
   telegram[5] := Ctrl.Raw;     // Cntrl
   telegram[6] := service;      // 0x80 ... 0x8F special services for ECODRIVE
@@ -153,38 +192,73 @@ end;
 
 procedure BuildSISTelegram(const CD:TCOMMANDDATA; out telegram: ByteArray; out len: Integer);
 var
-  IDN        : ansistring;
-  IDNWORD    : TIDNWORD;
-  DataCtrl   : TSISDataControl;
-  service    : Byte;
+  IDNWORD        : TIDNWORD;
+  Ctrl           : TSISHeaderControl;
+  DataCtrl       : TSISDataControl;
+  service,size   : byte;
+  dw             : dword;
+  sum,i          : integer;
 begin
   if ((CD.CCLASS=ccNone) OR (CD.NUMID=0)) then Exit;
 
-  IDN:=GetIDN(CD);
+  if IsParameterClass(CD.CCLASS) then
+  begin
+    if (Length(CD.DATA)=0) then
+    begin
+      service:=PARAM_READ;
+      len:=8+5;                  // SIS header + user data header
+    end
+    else
+    begin
+      service:=PARAM_WRITE;
+      dw:=GetDriveAttribute(CD);
+      size:=ParameterSizeOf(dw);
+      len:=8+5+size;             // SIS header + user data header + size of user data
+    end;
 
-  IDNWORD.Raw:=0;
-  IDNWORD.Data.ParamNum:=CD.NUMID;
-  case CD.CCLASS of
-    ccDrive          : IDNWORD.Data.ParamType:=0;
-    ccDriveSpecific  : IDNWORD.Data.ParamType:=1;
+    // SIS Header
+    telegram[1] := STX;          // Start symbol: STX (0x02)
+    // telegram[2] :=            // Checksum
+    telegram[3] := len - 8;      // DatL
+    telegram[4] := telegram[3];  // DatLW
+    Ctrl.Raw:=0;
+    telegram[5] := Ctrl.Raw;     // Cntrl
+    telegram[6] := service;      // 0x80 ... 0x8F special services for ECODRIVE
+    telegram[7] := LOCAL_ADDR;   // Address of the sender: station number (0 - 126)
+    telegram[8] := CD.SETID;     // Address of the receiver: 0 - 126 ==> specifies a single station, 128 ==> "point-to-point" connection; 129 - 253 ==> addresses logical groups, 254 - 255 ==> fixes a broadcast
+
+    // SIS user data header
+    DataCtrl.Raw:=0;
+    DataCtrl.Data.Element:=GetElementNumber(CD.CSUBCLASS);
+    DataCtrl.Data.LastTransmission:=1;
+    telegram[9]  := DataCtrl.Raw;       // Control byte
+    telegram[10] := CD.SETID;           // Deviceaddress
+    telegram[11] := 0;                  // Parameter type extended
+
+    IDNWORD.Raw:=0;
+    IDNWORD.Data.ParamNum:=CD.NUMID;
+    case CD.CCLASS of
+      ccDrive          : IDNWORD.Data.ParamType:=0;
+      ccDriveSpecific  : IDNWORD.Data.ParamType:=1;
+    end;
+    case CD.MEMORY of
+      false            : IDNWORD.Data.ParamBlock:=0;
+      true             : IDNWORD.Data.ParamBlock:=7;
+    end;
+
+    telegram[12] := IDNWORD.Bytes[0];     // Parameter data LSB
+    telegram[13] := IDNWORD.Bytes[1];     // Parameter data MSB
+
+    // SIS user data
+
+
+    // SIS checksum
+    sum := STX;
+    for i := 3 to len do
+      sum := sum + telegram[i];
+    telegram[2] := (0 - sum) and $FF;
   end;
-  case CD.MEMORY of
-    false            : IDNWORD.Data.ParamBlock:=0;
-    true             : IDNWORD.Data.ParamBlock:=7;
-  end;
-
-  DataCtrl.Raw:=0;
-  DataCtrl.Data.Element:=GetElementNumber(CD.CSUBCLASS);
-  DataCtrl.Data.LastTransmission:=1;
-
-  if (Length(CD.DATA)=0) then
-    service:=PARAM_READ
-  else
-    service:=PARAM_WRITE;
-
-
 end;
-
 
 procedure SendSISParameterWrite(const destAddr: Byte; const sParam: string; value: Word);
 var

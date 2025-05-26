@@ -1,7 +1,7 @@
 object Form1: TForm1
-  Left = 165
+  Left = 110
   Height = 631
-  Top = 17
+  Top = 96
   Width = 1366
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'DriveTop'
@@ -1387,7 +1387,7 @@ object Form1: TForm1
         )
         ColWidths = (
           64
-          196
+          179
         )
       end
       object btnStartTaskA: TButton
@@ -1908,9 +1908,13 @@ object Form1: TForm1
           Caption = 'Control'
           Color = 16384
           Constraints.MinHeight = 36
+          Font.CharSet = ANSI_CHARSET
           Font.Color = clGray
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
+          Font.Height = -16
+          Font.Name = 'Arial'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
           ParentBackground = False
           ParentColor = False
           ParentFont = False
@@ -1927,9 +1931,13 @@ object Form1: TForm1
           Caption = 'Power'
           Color = 16384
           Constraints.MinHeight = 36
+          Font.CharSet = ANSI_CHARSET
           Font.Color = clGray
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
+          Font.Height = -16
+          Font.Name = 'Arial'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
           ParentBackground = False
           ParentColor = False
           ParentFont = False
@@ -1946,9 +1954,13 @@ object Form1: TForm1
           Caption = 'Halt'
           Color = 64
           Constraints.MinHeight = 36
+          Font.CharSet = ANSI_CHARSET
           Font.Color = clGray
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
+          Font.Height = -16
+          Font.Name = 'Arial'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
           ParentBackground = False
           ParentColor = False
           ParentFont = False
@@ -1965,9 +1977,13 @@ object Form1: TForm1
           Caption = 'Enable'
           Color = 16384
           Constraints.MinHeight = 36
+          Font.CharSet = ANSI_CHARSET
           Font.Color = clGray
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
+          Font.Height = -16
+          Font.Name = 'Arial'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
           ParentBackground = False
           ParentColor = False
           ParentFont = False
@@ -2409,6 +2425,32 @@ object Form1: TForm1
     BorderSpacing.Bottom = 4
     ItemHeight = 0
     TabOrder = 12
+  end
+  object btnConnectDriveSISRS486: TButton
+    AnchorSideLeft.Control = btnConnectDriveRS232
+    AnchorSideTop.Control = btnConnectDriveRS232
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = btnConnectDriveRS232
+    AnchorSideRight.Side = asrBottom
+    Left = 591
+    Height = 25
+    Top = 33
+    Width = 191
+    Anchors = []
+    AutoSize = True
+    BorderSpacing.Top = 4
+    Caption = 'Connect as  DriveTop SIS RS485'
+    TabOrder = 13
+    OnClick = btnConnectSerialClick
+  end
+  object Button3: TButton
+    Left = 650
+    Height = 21
+    Top = 64
+    Width = 74
+    Caption = 'Button3'
+    TabOrder = 14
+    OnClick = Button3Click
   end
   object OpenDialog1: TOpenDialog
     Left = 712
