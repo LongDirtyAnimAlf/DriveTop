@@ -2360,14 +2360,22 @@ var
   Data:ByteArray;
   l,i:Integer;
   s:ansistring;
+  CD:TCOMMANDDATA;
 begin
-  BuildSISTelegram(3,'S-0-0051',1,PARAM_READ,Data,l);
-  //BuildSISStartTelegram(1,Data,l);
+  CD:=Default(TCOMMANDDATA);
+  CD.CCLASS:=ccDrive;
+  CD.CSUBCLASS:=mscParameterData;
+  CD.SETID:=1;
+  CD.NUMID:=51;
+  CD.DATA:='';
+  BuildSISTelegram(CD,Data,l);
   s:='';
-  for i:=1 to l do
-  begin
-    s:=s+InttoStr(Data[i])+',';
-  end;
+  for i:=1 to l do s:=s+InttoStr(Data[i])+',';
+  BuildSISTelegram(1,'S-0-0051',1,SISServiceParamRead,Data,l);
+  s:='';
+  for i:=1 to l do s:=s+InttoStr(Data[i])+',';
+
+  //BuildSISStartTelegram(1,Data,l);
   i:=0;
 end;
 

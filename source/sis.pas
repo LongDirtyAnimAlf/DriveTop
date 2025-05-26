@@ -5,24 +5,44 @@ unit sis;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils,
+  common;
 
 const
-  PARAM_WRITE   = $8F;
-  PARAM_READ    = $80;
+  SISServiceParamRead                    = $80;
+  SISServiceListRead                     = $81;
+  SISServicePhaseRead                    = $82;
+
+  SISServicePhaseWrite                   = $8D;
+  SISServiceListWrite                    = $8E;
+  SISServiceParamWrite                   = $8F;
+
+  SISServiceUserIdentification           = $00;  // Needs address and subservice in userdata
+  SISServiceTerminationDataTransmission  = $01;
+  SISServiceFlashOperation               = $02;
+  SISServiceInitSISCommunications        = $03;
+  SISServiceExecutingListSISServices     = $04;
+
+  SISSubServiceReadOutSISVersion         = $01; // Only for SISServiceUserIdentification
+  SISSubServiceReadOutFWANumber          = $02; // Only for SISServiceUserIdentification
+  SISSubServiceReadOutUnitTypecode       = $03; // Only for SISServiceUserIdentification
+  SISSubServiceReadOutSupportedBaudRates = $04; // Only for SISServiceUserIdentification
+
+  SISSubServiceSettingTrS                = $01; // Only for SISServiceInitSISCommunications
+  SISSubServiceSettingTzA                = $02; // Only for SISServiceInitSISCommunications
+  SISSubServiceSettingTmas               = $03; // Only for SISServiceInitSISCommunications
 
 type
-  ByteArray = array[1..32] of Byte;
+  ByteArray = array[1..256] of Byte;
 
 
 procedure BuildSISStartTelegram(destAddr: Byte; out telegram: ByteArray; out len: Integer);
-procedure BuildSISTelegram(destAddr: Byte; const idn: string; value: Word; service: Byte; out telegram: ByteArray; out len: Integer);
-
+procedure BuildSISTelegram(destAddr: Byte; const idn: string; value: Word; service: Byte; out telegram: ByteArray; out len: Integer);overload;
+procedure BuildSISTelegram(const CD:TCOMMANDDATA; out telegram: ByteArray; out len: Integer);overload;
 
 implementation
 
 uses
-  common,
   drive,
   Bits;
 
@@ -104,25 +124,20 @@ end;
 procedure BuildSISStartTelegram(destAddr: Byte; out telegram: ByteArray; out len: Integer);
 var
   sum, i     : Integer;
-  DataCtrl   : TSISDataControl;
-  IDNWORD    : TIDNWORD;
 begin
-  len:=8;
+  len := 10;
   // SIS Header
-  telegram[1] := STX;          // Start symbol: STX (0x02)
-  // telegram[2] :=            // Checksum
-  telegram[3] := len-8;        // DatL
-  telegram[4] := telegram[3];  // DatLW
-  telegram[5] := 0;            // Cntrl
-  telegram[6] := 0;            // 0x80 ... 0x8F special services for ECODRIVE
-  telegram[7] := 0;            // Address of the sender: station number (0 - 126)
-  telegram[8] := destAddr;            // Address of the receiver: 0 - 126 ==> specifies a single station, 128 ==> "point-to-point" connection; 129 - 253 ==> addresses logical groups, 254 - 255 ==> fixes a broadcast
+  telegram[1]  := STX;          // Start symbol: STX (0x02)
+  // telegram[2] :=             // Checksum
+  telegram[3]  := len-8;        // DatL
+  telegram[4]  := telegram[3];  // DatLW
+  telegram[5]  := 0;            // Cntrl
+  telegram[6]  := SISServiceUserIdentification;
+  telegram[7]  := 0;            // Address of the sender: station number (0 - 126)
+  telegram[8]  := destAddr;     // Address of the receiver: 0 - 126 ==> specifies a single station, 128 ==> "point-to-point" connection; 129 - 253 ==> addresses logical groups, 254 - 255 ==> fixes a broadcast
 
-  telegram[9] := 0;
-  telegram[10] := destAddr;
-  telegram[11] := 0;
-  telegram[12] := 0;
-  telegram[13] := 0;
+  telegram[9]  := destAddr;
+  telegram[10] := SISSubServiceReadOutSISVersion;
 
   sum := STX;
   for i := 3 to len do
@@ -144,7 +159,7 @@ begin
     raise EArgumentException.CreateFmt ('Wrong IDN format : %s !',[IDN]);
 
   // ????
-  if service = PARAM_WRITE then
+  if service = SISServiceParamWrite then
     len := 15 // send word = 2 bytes
   else
     len := 13;
@@ -178,7 +193,7 @@ begin
   telegram[12]:=IDNWORD.Bytes[0];     // Parameter number LSB
   telegram[13]:=IDNWORD.Bytes[1];     // Parameter number MSB
 
-  if service = PARAM_WRITE then
+  if service = SISServiceParamWrite then
   begin
     telegram[14] := Lo(value);        // User data
     telegram[15] := Hi(value);        // User data
@@ -196,32 +211,42 @@ var
   Ctrl           : TSISHeaderControl;
   DataCtrl       : TSISDataControl;
   service,size   : byte;
-  dw             : dword;
+  aw             : dword;
   sum,i          : integer;
+  DW             : DATAWORD;
 begin
   if ((CD.CCLASS=ccNone) OR (CD.NUMID=0)) then Exit;
 
+  service:=0;
+
   if IsParameterClass(CD.CCLASS) then
   begin
-    if (Length(CD.DATA)=0) then
+    aw:=GetDriveAttribute(CD);
+    size:=ParameterSizeOf(aw);
+
+    // Set service type
+    if ParameterIsList(aw) then
     begin
-      service:=PARAM_READ;
-      len:=8+5;                  // SIS header + user data header
+      if (Length(CD.DATA)=0) then
+        service:=SISServiceListRead
+      else
+        service:=SISServiceListWrite;
     end
     else
     begin
-      service:=PARAM_WRITE;
-      dw:=GetDriveAttribute(CD);
-      size:=ParameterSizeOf(dw);
-      len:=8+5+size;             // SIS header + user data header + size of user data
+      if (Length(CD.DATA)=0) then
+        service:=SISServiceParamRead
+      else
+        service:=SISServiceParamWrite;
     end;
 
     // SIS Header
     telegram[1] := STX;          // Start symbol: STX (0x02)
-    // telegram[2] :=            // Checksum
-    telegram[3] := len - 8;      // DatL
-    telegram[4] := telegram[3];  // DatLW
+    //telegram[2] := checksum    // Checksum
+    //telegram[3] := length;     // DatL
+    //telegram[4] := length;     // DatLW
     Ctrl.Raw:=0;
+    Ctrl.Data.TelegramType:=0;   // Create command telegram
     telegram[5] := Ctrl.Raw;     // Cntrl
     telegram[6] := service;      // 0x80 ... 0x8F special services for ECODRIVE
     telegram[7] := LOCAL_ADDR;   // Address of the sender: station number (0 - 126)
@@ -245,12 +270,48 @@ begin
       false            : IDNWORD.Data.ParamBlock:=0;
       true             : IDNWORD.Data.ParamBlock:=7;
     end;
+    telegram[12] := IDNWORD.Bytes[0];   // Parameter data LSB
+    telegram[13] := IDNWORD.Bytes[1];   // Parameter data MSB
 
-    telegram[12] := IDNWORD.Bytes[0];     // Parameter data LSB
-    telegram[13] := IDNWORD.Bytes[1];     // Parameter data MSB
 
-    // SIS user data
+    if ((service=SISServiceListRead) OR (service=SISServiceListWrite)) then
+    begin
+      DW.Raw:=1*size;                   // List offset ... e.g. read second item
+      telegram[14] := DW.Bytes[0];      // List offset LSB
+      telegram[15] := DW.Bytes[1];      // List offset MSB
+      DW.Raw:=5*size;                   // List length ... e.g. read 5 items
+      telegram[16] := DW.Bytes[0];      // List length LSB
+      telegram[17] := DW.Bytes[1];      // List length MSB
+      if (Length(CD.DATA)=0) then
+        len:=8+5+2+2                    // SIS header + user data header + size of list data
+      else
+        len:=8+5+2+2+DW.Raw;            // SIS header + user data header + size of list data + size of user data
+    end;
+    if ((service=SISServiceParamRead) OR (service=SISServiceParamWrite)) then
+    begin
+      if (service=SISServiceParamRead) then len:=8+5;                  // SIS header + user data header
+      if (service=SISServiceParamWrite) then len:=8+5+size;            // SIS header + user data header + size of user data
+    end;
 
+
+
+    // Add data, if any
+    if (service=SISServiceParamWrite) then
+    begin
+      if size=1 then telegram[14] := 0;
+      if size=2 then telegram[15] := 0;
+      if size=4 then telegram[16] := 0;
+      if size=4 then telegram[17] := 0;
+    end;
+    if (service=SISServiceListWrite) then
+    begin
+
+    end;
+
+
+    // Set datalength
+    telegram[3] := len - 8;             // DatL
+    telegram[4] := telegram[3];         // DatLW
 
     // SIS checksum
     sum := STX;
@@ -265,7 +326,7 @@ var
   telegram   : ByteArray;
   len        : Integer;
 begin
-  BuildSISTelegram(destAddr, 'S-0-0258', value, PARAM_WRITE, telegram, len);
+  BuildSISTelegram(destAddr, 'S-0-0258', value, SISServiceParamWrite, telegram, len);
   SendTelegram(telegram, len);
 end;
 
@@ -276,7 +337,7 @@ var
   b          : Byte;
   response   : ByteArray;
 begin
-  BuildSISTelegram(destAddr, idn, 0, PARAM_READ, telegram, len);
+  BuildSISTelegram(destAddr, idn, 0, SISServiceParamRead, telegram, len);
   SendTelegram(telegram, len);
 
   for i := 1 to 13 do

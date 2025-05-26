@@ -131,6 +131,9 @@ type
                Bits            : bitpacked array[0..15] of T1BITS;
               );
           2 : (
+               Bytes           : packed array[0..1] of byte;
+              );
+          3 : (
                Raw             : Word;
               );
   end;
