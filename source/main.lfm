@@ -1,7 +1,7 @@
 object Form1: TForm1
-  Left = 110
+  Left = 259
   Height = 631
-  Top = 96
+  Top = 117
   Width = 1366
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'DriveTop'
@@ -17,7 +17,7 @@ object Form1: TForm1
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = btnConnectVMRS232
     AnchorSideRight.Side = asrBottom
-    Left = 193
+    Left = 427
     Height = 25
     Top = 33
     Width = 152
@@ -54,11 +54,11 @@ object Form1: TForm1
     Left = 8
     Height = 25
     Top = 33
-    Width = 173
+    Width = 204
     Anchors = [akTop, akLeft, akRight]
     AutoSize = True
     BorderSpacing.Top = 4
-    Caption = 'Connect as  DriveTop RS485'
+    Caption = 'Connect as  DriveTop ASCII RS485'
     TabOrder = 1
     OnClick = btnConnectSerialClick
   end
@@ -71,7 +71,7 @@ object Form1: TForm1
     Left = 8
     Height = 23
     Top = 66
-    Width = 173
+    Width = 204
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Top = 8
     ItemHeight = 15
@@ -84,7 +84,7 @@ object Form1: TForm1
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = btnConnectDDE
     AnchorSideRight.Side = asrBottom
-    Left = 193
+    Left = 427
     Height = 23
     Hint = 'Location of the DLL executable'
     Top = 66
@@ -1544,11 +1544,11 @@ object Form1: TForm1
     Left = 8
     Height = 25
     Top = 4
-    Width = 173
+    Width = 204
     AutoSize = True
     BorderSpacing.Left = 8
     BorderSpacing.Top = 4
-    Caption = 'Connect as  DriveTop RS232'
+    Caption = 'Connect as  DriveTop ASCII RS232'
     TabOrder = 0
     OnClick = btnConnectSerialClick
   end
@@ -2346,7 +2346,7 @@ object Form1: TForm1
     AnchorSideLeft.Control = btnStop
     AnchorSideLeft.Side = asrBottom
     AnchorSideTop.Control = btnStop
-    Left = 422
+    Left = 637
     Height = 15
     Top = 10
     Width = 149
@@ -2356,10 +2356,10 @@ object Form1: TForm1
     Caption = 'unknown'
   end
   object btnConnectVMRS232: TButton
-    AnchorSideLeft.Control = btnConnectDriveRS232
+    AnchorSideLeft.Control = btnConnectDriveSISRS232
     AnchorSideLeft.Side = asrBottom
     AnchorSideTop.Control = Owner
-    Left = 193
+    Left = 427
     Height = 25
     Top = 4
     Width = 152
@@ -2371,9 +2371,9 @@ object Form1: TForm1
     OnClick = btnConnectSerialClick
   end
   object Button1: TButton
-    Left = 456
+    Left = 760
     Height = 30
-    Top = 32
+    Top = 48
     Width = 121
     Caption = 'Button1'
     TabOrder = 9
@@ -2400,10 +2400,11 @@ object Form1: TForm1
     OnChange = editStatusChange
   end
   object btnStop: TButton
-    Left = 353
+    Left = 568
     Height = 85
     Top = 4
     Width = 63
+    Anchors = []
     Caption = 'STOP'
     TabOrder = 11
     OnClick = btnStopClick
@@ -2427,16 +2428,16 @@ object Form1: TForm1
     TabOrder = 12
   end
   object btnConnectDriveSISRS486: TButton
-    AnchorSideLeft.Control = btnConnectDriveRS232
-    AnchorSideTop.Control = btnConnectDriveRS232
+    AnchorSideLeft.Control = btnConnectDriveSISRS232
+    AnchorSideTop.Control = btnConnectDriveSISRS232
     AnchorSideTop.Side = asrBottom
-    AnchorSideRight.Control = btnConnectDriveRS232
+    AnchorSideRight.Control = btnConnectDriveSISRS232
     AnchorSideRight.Side = asrBottom
-    Left = 591
+    Left = 224
     Height = 25
     Top = 33
     Width = 191
-    Anchors = []
+    Anchors = [akTop, akLeft, akRight]
     AutoSize = True
     BorderSpacing.Top = 4
     Caption = 'Connect as  DriveTop SIS RS485'
@@ -2444,13 +2445,32 @@ object Form1: TForm1
     OnClick = btnConnectSerialClick
   end
   object Button3: TButton
-    Left = 650
+    Left = 664
     Height = 21
-    Top = 64
+    Top = 57
     Width = 74
     Caption = 'Button3'
     TabOrder = 14
     OnClick = Button3Click
+  end
+  object btnConnectDriveSISRS232: TButton
+    AnchorSideLeft.Control = btnConnectDriveRS232
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = btnConnectDriveRS232
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = btnConnectDriveRS232
+    AnchorSideRight.Side = asrBottom
+    Left = 224
+    Height = 25
+    Top = 4
+    Width = 191
+    Anchors = [akLeft]
+    AutoSize = True
+    BorderSpacing.Left = 12
+    BorderSpacing.Top = 4
+    Caption = 'Connect as  DriveTop SIS RS232'
+    TabOrder = 15
+    OnClick = btnConnectSerialClick
   end
   object OpenDialog1: TOpenDialog
     Left = 712

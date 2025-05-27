@@ -9,6 +9,12 @@ uses
   common;
 
 const
+  SISServiceUserIdentification           = $00;  // Needs address and subservice in userdata
+  SISServiceTerminationDataTransmission  = $01;  // Enter the service to be cancelled in the useful data.
+  SISServiceFlashOperation               = $02;
+  SISServiceInitSISCommunications        = $03;  // Needs address and subservice in userdata
+  SISServiceExecutingListSISServices     = $04;
+
   SISServiceParamRead                    = $80;
   SISServiceListRead                     = $81;
   SISServicePhaseRead                    = $82;
@@ -17,28 +23,36 @@ const
   SISServiceListWrite                    = $8E;
   SISServiceParamWrite                   = $8F;
 
-  SISServiceUserIdentification           = $00;  // Needs address and subservice in userdata
-  SISServiceTerminationDataTransmission  = $01;
-  SISServiceFlashOperation               = $02;
-  SISServiceInitSISCommunications        = $03;
-  SISServiceExecutingListSISServices     = $04;
+  SISSubServiceReadOutSISVersion         = $01; // Only for UserIdentification  ; subservice is implemented but not active
+  SISSubServiceReadOutFWANumber          = $02; // Only for UserIdentification  ; supplies content of S-0-0030
+  SISSubServiceReadOutUnitTypecode       = $03; // Only for UserIdentification  ; supplies content of S-0-0140
+  SISSubServiceReadOutSupportedBaudRates = $04; // Only for UserIdentification  ; read baud for serial comms
 
-  SISSubServiceReadOutSISVersion         = $01; // Only for SISServiceUserIdentification
-  SISSubServiceReadOutFWANumber          = $02; // Only for SISServiceUserIdentification
-  SISSubServiceReadOutUnitTypecode       = $03; // Only for SISServiceUserIdentification
-  SISSubServiceReadOutSupportedBaudRates = $04; // Only for SISServiceUserIdentification
+  SISSubServiceSettingTrS                = $01; // Only SISCommunications ; Sets the slave response period
+  SISSubServiceSettingTzA                = $02; // Only SISCommunications ; Specifies the separation period between characters
+  SISSubServiceSettingTmas               = $03; // Only SISCommunications ; Sets the cycle period for the master control word (MSW)
+  SISSubServiceSettingBaud               = $07; // Only SISCommunications ; Determining the baud rate initializes the baud rate of the serial transmission
+  SISSubServiceSettingBaudTest           = $08; // Only SISCommunications ; Time-controlled baud rate test allows temporary change of the baud rate
+  SISSubServiceSettingAccept             = $FF; // Only SISCommunications ; Accepting the determined values activates the values initialized with the subservices 0x01, 0x02 and 0x07
 
-  SISSubServiceSettingTrS                = $01; // Only for SISServiceInitSISCommunications
-  SISSubServiceSettingTzA                = $02; // Only for SISServiceInitSISCommunications
-  SISSubServiceSettingTmas               = $03; // Only for SISServiceInitSISCommunications
+  (*
+  $00 Error-free transmission without error
+  $01 During the execution of the requested service an error occured. The service-specific error code is contained in the useful data of the reaction telegram
+  $F0 The requested service is not supported by the addressed slave
+  $F8 In the sequential telegram, data in the useful data header, the transmitter address or the service have changed
+  $F9 The command telegram contains subaddresses.The routing of telegrams is not supported by the slave
+  $FA Useful data are missing in the command telegram. The telegram cannot be executed
+  $FB The requested subservice is not supported by the addressed slave
+  $FC The requested component is not available in the addressed slave. The component address is invalid
+  *)
 
 type
   ByteArray = array[1..256] of Byte;
 
 
-procedure BuildSISStartTelegram(destAddr: Byte; out telegram: ByteArray; out len: Integer);
-procedure BuildSISTelegram(destAddr: Byte; const idn: string; value: Word; service: Byte; out telegram: ByteArray; out len: Integer);overload;
-procedure BuildSISTelegram(const CD:TCOMMANDDATA; out telegram: ByteArray; out len: Integer);overload;
+procedure BuildSISStartTelegram(SlaveAddress: Byte; out telegram: ByteArray; out len: Integer);
+procedure BuildSISTelegram(SlaveAddress: Byte; const idn: string; value: Word; service: Byte; out telegram: ByteArray; out len: Integer);overload;
+procedure BuildSISTelegram(const CD:TPARAMETERDATA; out telegram: ByteArray; out len: Integer);overload;
 
 implementation
 
@@ -48,7 +62,7 @@ uses
 
 const
   STX           = $02;
-  LOCAL_ADDR    = $01;
+  MASTER_ADDR   = $00;
 
 type
   TSISHeaderControl = bitpacked record
@@ -76,7 +90,7 @@ type
         1 : (
           Data : record
              Reserved1          : T2BITS;
-             LastTransmission   : T1BITS;
+             LastTransmission   : T1BITS; // In case of a normal (non-list) parameter: always 1.
              Element            : T3BITS;
              Reserved2          : T2BITS;
           end
@@ -108,7 +122,7 @@ end;
 
 function ParseIDN(const IDN: ansistring; out paramType: Byte; out paramNum: Word): Boolean;
 var
-  CD   : TCOMMANDDATA;
+  CD   : TPARAMETERDATA;
 begin
   CD:=IDN2CD(IDN,0);
   case CD.CCLASS of
@@ -121,7 +135,7 @@ begin
   result:=True;
 end;
 
-procedure BuildSISStartTelegram(destAddr: Byte; out telegram: ByteArray; out len: Integer);
+procedure BuildSISStartTelegram(SlaveAddress: Byte; out telegram: ByteArray; out len: Integer);
 var
   sum, i     : Integer;
 begin
@@ -133,10 +147,10 @@ begin
   telegram[4]  := telegram[3];  // DatLW
   telegram[5]  := 0;            // Cntrl
   telegram[6]  := SISServiceUserIdentification;
-  telegram[7]  := 0;            // Address of the sender: station number (0 - 126)
-  telegram[8]  := destAddr;     // Address of the receiver: 0 - 126 ==> specifies a single station, 128 ==> "point-to-point" connection; 129 - 253 ==> addresses logical groups, 254 - 255 ==> fixes a broadcast
+  telegram[7]  := MASTER_ADDR;  // Address of the sender: station number (0 - 126)
+  telegram[8]  := SlaveAddress; // Address of the receiver: 0 - 126 ==> specifies a single station, 128 ==> "point-to-point" connection; 129 - 253 ==> addresses logical groups, 254 - 255 ==> fixes a broadcast
 
-  telegram[9]  := destAddr;
+  telegram[9]  := SlaveAddress;
   telegram[10] := SISSubServiceReadOutSISVersion;
 
   sum := STX;
@@ -146,7 +160,7 @@ begin
 end;
 
 
-procedure BuildSISTelegram(destAddr: Byte; const idn: string; value: Word; service: Byte; out telegram: ByteArray; out len: Integer);
+procedure BuildSISTelegram(SlaveAddress: Byte; const idn: string; value: Word; service: Byte; out telegram: ByteArray; out len: Integer);
 var
   paramType  : Byte;
   paramNum   : Word;
@@ -173,16 +187,16 @@ begin
   telegram[4] := telegram[3];  // DatLW
   telegram[5] := Ctrl.Raw;     // Cntrl
   telegram[6] := service;      // 0x80 ... 0x8F special services for ECODRIVE
-  telegram[7] := LOCAL_ADDR;   // Address of the sender: station number (0 - 126)
-  telegram[8] := destAddr;     // Address of the receiver: 0 - 126 ==> specifies a single station, 128 ==> "point-to-point" connection; 129 - 253 ==> addresses logical groups, 254 - 255 ==> fixes a broadcast
+  telegram[7] := MASTER_ADDR;  // Address of the sender: station number (0 - 126)
+  telegram[8] := SlaveAddress; // Address of the receiver: 0 - 126 ==> specifies a single station, 128 ==> "point-to-point" connection; 129 - 253 ==> addresses logical groups, 254 - 255 ==> fixes a broadcast
 
   // SIS data
   DataCtrl.Raw:=0;
   DataCtrl.Data.Element:=GetElementNumber(mscParameterData);
   DataCtrl.Data.LastTransmission:=1;
-  telegram[9]:=DataCtrl.Raw;          // Control byte
+  telegram[9] := DataCtrl.Raw;        // Control byte
 
-  telegram[10] := destAddr;           // Deviceaddress
+  telegram[10] := SlaveAddress;       // Deviceaddress
 
   telegram[11] := 0;                  // Parameter type extended
 
@@ -205,7 +219,7 @@ begin
   telegram[2] := (0 - sum) and $FF;
 end;
 
-procedure BuildSISTelegram(const CD:TCOMMANDDATA; out telegram: ByteArray; out len: Integer);
+procedure BuildSISTelegram(const CD:TPARAMETERDATA; out telegram: ByteArray; out len: Integer);
 var
   IDNWORD        : TIDNWORD;
   Ctrl           : TSISHeaderControl;
@@ -216,6 +230,9 @@ var
   DW             : DATAWORD;
 begin
   if ((CD.CCLASS=ccNone) OR (CD.NUMID=0)) then Exit;
+
+  if (CD.SETID=0) then
+    raise EArgumentException.CreateFmt ('Wrong slave address : %d !',[CD.SETID]);
 
   service:=0;
 
@@ -240,6 +257,12 @@ begin
         service:=SISServiceParamWrite;
     end;
 
+    if ParameterIsReadOnly(aw,4) then
+    begin
+      if ((service=SISServiceParamWrite) OR (service=SISServiceListWrite)) then
+        raise EArgumentException.CreateFmt ('Read only parameter : %s !',[GetIDN(CD)]);
+    end;
+
     // SIS Header
     telegram[1] := STX;          // Start symbol: STX (0x02)
     //telegram[2] := checksum    // Checksum
@@ -249,7 +272,7 @@ begin
     Ctrl.Data.TelegramType:=0;   // Create command telegram
     telegram[5] := Ctrl.Raw;     // Cntrl
     telegram[6] := service;      // 0x80 ... 0x8F special services for ECODRIVE
-    telegram[7] := LOCAL_ADDR;   // Address of the sender: station number (0 - 126)
+    telegram[7] := MASTER_ADDR;  // Address of the sender: station number (0 - 126)
     telegram[8] := CD.SETID;     // Address of the receiver: 0 - 126 ==> specifies a single station, 128 ==> "point-to-point" connection; 129 - 253 ==> addresses logical groups, 254 - 255 ==> fixes a broadcast
 
     // SIS user data header
@@ -273,7 +296,6 @@ begin
     telegram[12] := IDNWORD.Bytes[0];   // Parameter data LSB
     telegram[13] := IDNWORD.Bytes[1];   // Parameter data MSB
 
-
     if ((service=SISServiceListRead) OR (service=SISServiceListWrite)) then
     begin
       DW.Raw:=1*size;                   // List offset ... e.g. read second item
@@ -293,8 +315,6 @@ begin
       if (service=SISServiceParamWrite) then len:=8+5+size;            // SIS header + user data header + size of user data
     end;
 
-
-
     // Add data, if any
     if (service=SISServiceParamWrite) then
     begin
@@ -305,7 +325,7 @@ begin
     end;
     if (service=SISServiceListWrite) then
     begin
-
+      //telegram[18] := 0;
     end;
 
 
@@ -326,7 +346,7 @@ var
   telegram   : ByteArray;
   len        : Integer;
 begin
-  BuildSISTelegram(destAddr, 'S-0-0258', value, SISServiceParamWrite, telegram, len);
+  BuildSISTelegram(destAddr, sParam, value, SISServiceParamWrite, telegram, len);
   SendTelegram(telegram, len);
 end;
 

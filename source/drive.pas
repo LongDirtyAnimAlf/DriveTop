@@ -400,59 +400,59 @@ const
   SCALINGFORMAT                : array [0..1] of string = ('absolute','modulo');
   MODULOCOMMANDMODE            : array [0..2] of string = ('shortest path','positive direction','negative direction');
 
-  DRIVE_FIRMWARE               : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 30);
-  DRIVE_PRIMARYMODE            : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 32);
-  DRIVE_SECONDARYMODE1         : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 33);
-  DRIVE_SECONDARYMODE2         : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 34);
-  DRIVE_SECONDARYMODE3         : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 35);
-  DRIVE_CONTROLLERTYPE         : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 140);
-  DRIVE_MOTORTYPE              : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 141);
-  DRIVE_APPTYPE                : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 142);
-  DRIVE_MOTORSERIAL            : TCOMMAND = (CCLASS: ccDriveSpecific; CSUBCLASS: mscParameterData; NUMID: 4088);
+  DRIVE_FIRMWARE               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 30);
+  DRIVE_PRIMARYMODE            : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 32);
+  DRIVE_SECONDARYMODE1         : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 33);
+  DRIVE_SECONDARYMODE2         : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 34);
+  DRIVE_SECONDARYMODE3         : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 35);
+  DRIVE_CONTROLLERTYPE         : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 140);
+  DRIVE_MOTORTYPE              : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 141);
+  DRIVE_APPTYPE                : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 142);
+  DRIVE_MOTORSERIAL            : TPARAMETER = (CCLASS: ccDriveSpecific; CSUBCLASS: mscParameterData; NUMID: 4088);
 
-  DRIVE_CONTROLWORD            : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 134);
-  DRIVE_STATUSWORD             : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 135);
-  DRIVE_DIAGNOSTIC             : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 95);
-  DRIVE_INTERFACE              : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 14);
+  DRIVE_CONTROLWORD            : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 134);
+  DRIVE_STATUSWORD             : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 135);
+  DRIVE_DIAGNOSTIC             : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 95);
+  DRIVE_INTERFACE              : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 14);
 
-  DRIVE_COMMAND                : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 47);
-  DRIVE_FEEDBACK               : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 51);
-  DRIVE_TARGET                 : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 258);
-  DRIVE_DISTANCE               : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 282);
+  DRIVE_COMMAND                : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 47);
+  DRIVE_FEEDBACK               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 51);
+  DRIVE_TARGET                 : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 258);
+  DRIVE_DISTANCE               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 282);
 
 
-  DRIVE_SET_SPEED              : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 36);
-  DRIVE_ACTUAL_SPEED            : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 40);
-  //DRIVE_TORQUE                 : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 84);
+  DRIVE_SET_SPEED              : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 36);
+  DRIVE_ACTUAL_SPEED            : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 40);
+  //DRIVE_TORQUE                 : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 84);
 
-  DRIVE_MODELIST               : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscList;          NUMID: 292);
-  DRIVE_PARAMLIST              : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscList;          NUMID: 17);
+  DRIVE_MODELIST               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscList;          NUMID: 292);
+  DRIVE_PARAMLIST              : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscList;          NUMID: 17);
 
-  DRIVE_SIGNAL_STATUSWORD      : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 144);
-  DRIVE_SIGNAL_CONTROLWORD     : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 145);
+  DRIVE_SIGNAL_STATUSWORD      : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 144);
+  DRIVE_SIGNAL_CONTROLWORD     : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 145);
 
-  DRIVE_DIAGNOSTIC_CLASS1                   : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 11);
-  DRIVE_DIAGNOSTIC_CLASS2                   : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 12);
-  DRIVE_DIAGNOSTIC_CLASS3                   : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 13);
-  DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3      : TCOMMAND = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 182);
+  DRIVE_DIAGNOSTIC_CLASS1                   : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 11);
+  DRIVE_DIAGNOSTIC_CLASS2                   : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 12);
+  DRIVE_DIAGNOSTIC_CLASS3                   : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 13);
+  DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3      : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 182);
 
-  function  SaveDriveRegisterData(const CD:TCOMMANDDATA):boolean;
+  function  SaveDriveRegisterData(const CD:TPARAMETERDATA):boolean;
   function  SaveDriveRegisterDataRaw(const DriveNumber:word; const RR:TRegisterRecord):boolean;overload;
   function  SaveDriveRegisterDataRaw(const DriveNumber:word; aKey:TIDN; aValue:PRegisterRecord):boolean;overload;
-  function  SaveDriveRegisterDataRaw(const CD:TCOMMANDDATA; aValue:PRegisterRecord):boolean;overload;
+  function  SaveDriveRegisterDataRaw(const CD:TPARAMETERDATA; aValue:PRegisterRecord):boolean;overload;
 
-  function  LoadDriveRegisterData(const CD:TCOMMANDDATA):TCOMMANDDATA;
-  function  LoadDriveRegisterDataRaw(const CD:TCOMMANDDATA):PRegisterRecord;overload;
+  function  LoadDriveRegisterData(const CD:TPARAMETERDATA):TPARAMETERDATA;
+  function  LoadDriveRegisterDataRaw(const CD:TPARAMETERDATA):PRegisterRecord;overload;
   function  LoadDriveRegisterDataRaw(const DriveNumber:word; const index:word):PRegisterRecord;overload;
   function  LoadDriveRegisterDataRaw(const DriveNumber:word; const aKey:TIDN):PRegisterRecord;overload;
 
-  procedure DeleteDriveRegisterData(const CD:TCOMMANDDATA);
+  procedure DeleteDriveRegisterData(const CD:TPARAMETERDATA);
   procedure ClearDriveRegisterData(const DriveNumber:word);
   function  DriveRegisterDataCount(const DriveNumber:word):integer;
 
 
-  function  GetDirectDriveCommand(const CD:TCOMMANDDATA):string;
-  function  GetDriveAttribute(const CD:TCOMMANDDATA):dword;
+  function  GetDirectDriveCommand(const CD:TPARAMETERDATA):string;
+  function  GetDriveAttribute(const CD:TPARAMETERDATA):dword;
 
   function  GetDriveModeDescription(const mw:word):string; overload;
   function  GetDriveModeDescription(const ms:string):string; overload;
@@ -469,8 +469,8 @@ const
 var
   DriveOperationModes         : TOMD;
   DriveOperationModesLagLess  : TOMD;
-  BASICDRIVEDATA              : array[0..5] of TCOMMAND;
-  REALTIMEDRIVEDATA           : array[0..9] of TCOMMAND;
+  BASICDRIVEDATA              : array[0..5] of TPARAMETER;
+  REALTIMEDRIVEDATA           : array[0..9] of TPARAMETER;
 
 implementation
 
@@ -498,10 +498,13 @@ end;
 
 function GetPDriveInfo(const Drive:word):PDRIVE;
 begin
-  result:=@DriveList[Drive];
+  if Drive>0 then
+    result:=@DriveList[Drive]
+  else
+    result:=nil;
 end;
 
-function GetDirectDriveCommand(const CD:TCOMMANDDATA):string;
+function GetDirectDriveCommand(const CD:TPARAMETERDATA):string;
 var
   IDN      : ansistring;
   be       : byte;
@@ -519,7 +522,7 @@ begin
     result:=Format('%s,%d,w,',[IDN,be]);
 end;
 
-function GetDriveAttribute(const CD:TCOMMANDDATA):dword;
+function GetDriveAttribute(const CD:TPARAMETERDATA):dword;
 begin
   result:=GetAttribute(IDNDriveList[CD.SETID],CD);
 end;
@@ -602,9 +605,9 @@ begin
   end;
 end;
 
-function SaveDriveRegisterData(const CD:TCOMMANDDATA):boolean;
+function SaveDriveRegisterData(const CD:TPARAMETERDATA):boolean;
 var
-  LocalCD    : TCOMMANDDATA;
+  LocalCD    : TPARAMETERDATA;
   PRR        : PRegisterRecord;
   PRRStore   : PRegisterRecord;
 begin
@@ -651,17 +654,17 @@ begin
   result:=SaveRegisterDataRaw(aKey,aValue,IDNDriveList[DriveNumber]);
 end;
 
-function SaveDriveRegisterDataRaw(const CD:TCOMMANDDATA; aValue:PRegisterRecord):boolean;
+function SaveDriveRegisterDataRaw(const CD:TPARAMETERDATA; aValue:PRegisterRecord):boolean;
 begin
   result:=SaveRegisterDataRaw(CD,aValue,IDNDriveList[CD.SETID]);
 end;
 
-function LoadDriveRegisterData(const CD:TCOMMANDDATA):TCOMMANDDATA;
+function LoadDriveRegisterData(const CD:TPARAMETERDATA):TPARAMETERDATA;
 begin
   Result:=LoadRegisterData(CD,IDNDriveList[CD.SETID]);
 end;
 
-function LoadDriveRegisterDataRaw(const CD:TCOMMANDDATA):PRegisterRecord;
+function LoadDriveRegisterDataRaw(const CD:TPARAMETERDATA):PRegisterRecord;
 begin
   result:=LoadRegisterDataRaw(CD,IDNDriveList[CD.SETID]);
 end;
@@ -676,7 +679,7 @@ begin
   result:=LoadRegisterDataRaw(aKey,IDNDriveList[DriveNumber]);
 end;
 
-procedure DeleteDriveRegisterData(const CD:TCOMMANDDATA);
+procedure DeleteDriveRegisterData(const CD:TPARAMETERDATA);
 begin
   DeleteRegisterData(CD,IDNDriveList[CD.SETID]);
 end;

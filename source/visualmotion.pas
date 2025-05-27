@@ -191,19 +191,19 @@ type
 
   end;
 
-  function  GetCLCCommandString(const CD:TCOMMANDDATA):string;
+  function  GetCLCCommandString(const CD:TPARAMETERDATA):string;
 
   function  GenerateVisualMotionChecksum(s1:ansistring):byte;
 
-  procedure SaveCLCRegisterData(const CD:TCOMMANDDATA);
+  procedure SaveCLCRegisterData(const CD:TPARAMETERDATA);
   procedure SaveCLCRegisterDataRaw(const CLCNumber:word; const RR:TRegisterRecord);overload;
   procedure SaveCLCRegisterDataRaw(const CLCNumber:word; aKey:TIDN; aValue:PRegisterRecord);overload;
 
-  function  LoadCLCRegisterData(const CD:TCOMMANDDATA):TCOMMANDDATA;
-  function  LoadCLCRegisterDataRaw(const CD:TCOMMANDDATA):PRegisterRecord;
+  function  LoadCLCRegisterData(const CD:TPARAMETERDATA):TPARAMETERDATA;
+  function  LoadCLCRegisterDataRaw(const CD:TPARAMETERDATA):PRegisterRecord;
   function  LoadCLCRegisterDataRaw(const CLCNumber:word; const index:word):PRegisterRecord;
 
-  procedure DeleteCLCRegisterData(const CD:TCOMMANDDATA);
+  procedure DeleteCLCRegisterData(const CD:TPARAMETERDATA);
   procedure ClearCLCRegisterData(const CLCNumber:word);
   function  CLCRegisterDataCount(const CLCNumber:word):integer;
 
@@ -218,7 +218,7 @@ const
 var
   IDNCLCList                : array[0..MAXCLC] of TMySortedMap;
 
-function  GetCLCCommandString(const CD:TCOMMANDDATA):string;
+function  GetCLCCommandString(const CD:TPARAMETERDATA):string;
 var
   PW:TIDNWORD;
 begin
@@ -261,7 +261,7 @@ begin
   result:=((((crc AND $00FF) + ((crc AND $FF00) SHR 8)) * $FFFF) AND $00FF);
 end;
 
-procedure SaveCLCRegisterData(const CD:TCOMMANDDATA);
+procedure SaveCLCRegisterData(const CD:TPARAMETERDATA);
 begin
   SaveRegisterData(CD,IDNCLCList[CD.SETID]);
 end;
@@ -276,12 +276,12 @@ begin
   SaveRegisterDataRaw(aKey,aValue,IDNCLCList[CLCNumber]);
 end;
 
-function LoadCLCRegisterData(const CD:TCOMMANDDATA):TCOMMANDDATA;
+function LoadCLCRegisterData(const CD:TPARAMETERDATA):TPARAMETERDATA;
 begin
   Result:=LoadRegisterData(CD,IDNCLCList[CD.SETID]);
 end;
 
-function LoadCLCRegisterDataRaw(const CD:TCOMMANDDATA):PRegisterRecord;
+function LoadCLCRegisterDataRaw(const CD:TPARAMETERDATA):PRegisterRecord;
 begin
   result:=LoadRegisterDataRaw(CD,IDNCLCList[CD.SETID]);
 end;
@@ -291,7 +291,7 @@ begin
   result:=LoadRegisterDataRaw(index,IDNCLCList[CLCNumber]);
 end;
 
-procedure DeleteCLCRegisterData(const CD:TCOMMANDDATA);
+procedure DeleteCLCRegisterData(const CD:TPARAMETERDATA);
 begin
   DeleteRegisterData(CD,IDNCLCList[CD.SETID]);
 end;

@@ -283,13 +283,12 @@ end;
 constructor TLazSerial.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  FAsync:=true;
+  FAsync:=false;
   InitCriticalSection(FCriticalSection);
   FCommandList:=TStringList.Create;
   ReadThread:=nil;
-
+  FOnRxData:=nil;
   FSynSer:=TBlockSerial.Create;
-  //FSynSer.EnableRTSToggle(true);
   FSynSer.LinuxLock:=false;
   FHardflow:=false;
   FSoftflow:=false;

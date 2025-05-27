@@ -36,7 +36,7 @@ const
 
 
 type
-  TCOMMANDDATA = record
+  TPARAMETERDATA = record
     CCLASS         : TVMPARAMETERCLASS;
     CCLASSCHAR     : TCAPSCHAR;
     CSUBCLASS      : TVMCOMMANDPARAMETERSUBCLASS;
@@ -49,7 +49,7 @@ type
     ERROR          : string;
   end;
 
-  TCOMMAND = record
+  TPARAMETER = record
     CCLASS         : TVMPARAMETERCLASS;
     CSUBCLASS      : TVMCOMMANDPARAMETERSUBCLASS;
     NUMID          : word;
@@ -206,7 +206,7 @@ type
   function  IsParameterClass(aClass:TVMCOMMANDCLASS):boolean;
 
   function  GetAttributeDefault:dword;
-  function  GetAttribute(const MAP:TMySortedMap; const CD:TCOMMANDDATA):dword;
+  function  GetAttribute(const MAP:TMySortedMap; const CD:TPARAMETERDATA):dword;
 
   function  ParameterIsReadOnly(const pw:dword; const phase:word):boolean;
   function  ParameterIsCommand(const pw:dword):boolean;
@@ -226,27 +226,27 @@ type
   function  ParameterConversionFactor(const pw:dword):word;
   function  ParameterSizeOf(const pw:dword):byte;
 
-  function  SaveRegisterData(const CD:TCOMMANDDATA; MAP:TMySortedMap):boolean;
+  function  SaveRegisterData(const CD:TPARAMETERDATA; MAP:TMySortedMap):boolean;
   function  SaveRegisterDataRaw(const RR:TRegisterRecord; MAP:TMySortedMap):boolean;overload;
   function  SaveRegisterDataRaw(aKey:TIDN; aValue:PRegisterRecord; MAP:TMySortedMap):boolean;overload;
-  function  SaveRegisterDataRaw(const CD:TCOMMANDDATA; aValue:PRegisterRecord; MAP:TMySortedMap):boolean;overload;
+  function  SaveRegisterDataRaw(const CD:TPARAMETERDATA; aValue:PRegisterRecord; MAP:TMySortedMap):boolean;overload;
 
-  function  LoadRegisterData(const CD:TCOMMANDDATA; MAP:TMySortedMap):TCOMMANDDATA;
-  function  LoadRegisterDataRaw(const CD:TCOMMANDDATA; MAP:TMySortedMap):PRegisterRecord;overload;
+  function  LoadRegisterData(const CD:TPARAMETERDATA; MAP:TMySortedMap):TPARAMETERDATA;
+  function  LoadRegisterDataRaw(const CD:TPARAMETERDATA; MAP:TMySortedMap):PRegisterRecord;overload;
   function  LoadRegisterDataRaw(const index:word; MAP:TMySortedMap):PRegisterRecord;overload;
   function  LoadRegisterDataRaw(const aKey:TIDN; MAP:TMySortedMap):PRegisterRecord;overload;
 
-  procedure DeleteRegisterData(const CD:TCOMMANDDATA; MAP:TMySortedMap);
+  procedure DeleteRegisterData(const CD:TPARAMETERDATA; MAP:TMySortedMap);
   procedure ClearRegisterData(MAP:TMySortedMap);
   procedure CreateRegisterData(var MAP:TMySortedMap);
   function  RegisterDataCount(var MAP:TMySortedMap):integer;
 
-  function  IDN2CD(const IDN:ansistring; const DriveNumber:byte):TCOMMANDDATA;
+  function  IDN2CD(const IDN:ansistring; const DriveNumber:byte):TPARAMETERDATA;
   function  NUM2SCLASS(const S:byte; var SC:TVMCOMMANDPARAMETERSUBCLASS):boolean;
-  function  COMMAND2CD(const C:TCOMMAND; const DriveNumber:byte):TCOMMANDDATA;
-  function  GetIDN(const CD:TCOMMANDDATA):string; overload;
+  function  COMMAND2CD(const C:TPARAMETER; const DriveNumber:byte):TPARAMETERDATA;
+  function  GetIDN(const CD:TPARAMETERDATA):string; overload;
   function  GetIDN(const RR:TRegisterRecord):string; overload;
-  function  GetIDN(const C:TCOMMAND):string; overload;
+  function  GetIDN(const C:TPARAMETER):string; overload;
 
   function GetElementNumber(const SC:TVMCOMMANDPARAMETERSUBCLASS):byte;
 
@@ -376,14 +376,14 @@ begin
   result:=DecimalToHexStringBase(dw,8,dd);
 end;
 
-function IDN2CD(const IDN:ansistring; const DriveNumber:byte):TCOMMANDDATA;
+function IDN2CD(const IDN:ansistring; const DriveNumber:byte):TPARAMETERDATA;
 var
   t     : Char;
   s     : ansistring;
   Error : word;
 //  i:integer;
 begin
-  Result:=Default(TCOMMANDDATA);
+  Result:=Default(TPARAMETERDATA);
   Result.SETID:=DriveNumber;
   if (Length(IDN)>=8) then
   begin
@@ -419,7 +419,7 @@ begin
   end;
 end;
 
-//function NUM2SCLASS(c:char; var SC:TCOMMANDDATA):boolean;
+//function NUM2SCLASS(c:char; var SC:TPARAMETERDATA):boolean;
 function NUM2SCLASS(const S:byte; var SC:TVMCOMMANDPARAMETERSUBCLASS):boolean;
 begin
   result:=true;
@@ -439,9 +439,9 @@ begin
   end;
 end;
 
-function COMMAND2CD(const C:TCOMMAND; const DriveNumber:byte):TCOMMANDDATA;
+function COMMAND2CD(const C:TPARAMETER; const DriveNumber:byte):TPARAMETERDATA;
 begin
-  Result:=Default(TCOMMANDDATA);
+  Result:=Default(TPARAMETERDATA);
   Result.CCLASS:=C.CCLASS;
   Result.CSUBCLASS:=C.CSUBCLASS;
   Result.NUMID:=C.NUMID;
@@ -453,7 +453,7 @@ begin
   result:=(aClass in [TVMCOMMANDCLASS.ccAxis..TVMCOMMANDCLASS.ccTask]);
 end;
 
-function GetIDN(const CD:TCOMMANDDATA):string;
+function GetIDN(const CD:TPARAMETERDATA):string;
 var
   bs       : byte;
   bt       : char;
@@ -491,18 +491,18 @@ begin
   end;
 end;
 
-function GetIDN(const C:TCOMMAND):string; overload;
+function GetIDN(const C:TPARAMETER):string; overload;
 var
-  CD:TCOMMANDDATA;
+  CD:TPARAMETERDATA;
 begin
-  CD:=Default(TCOMMANDDATA);
+  CD:=Default(TPARAMETERDATA);
   CD.CCLASS:=C.CCLASS;
   CD.CSUBCLASS:=C.CSUBCLASS;
   CD.NUMID:=C.NUMID;
   Result:=GetIDN(CD);
 end;
 
-function IndexOfRegisterData(const CD:TCOMMANDDATA; MAP:TMySortedMap):integer;
+function IndexOfRegisterData(const CD:TPARAMETERDATA; MAP:TMySortedMap):integer;
 var
   aKey : TIDN;
 begin
@@ -523,7 +523,7 @@ begin
   {$endif}
 end;
 
-function SaveRegisterData(const CD:TCOMMANDDATA; MAP:TMySortedMap):boolean;
+function SaveRegisterData(const CD:TPARAMETERDATA; MAP:TMySortedMap):boolean;
 var
   i,j      : integer;
   P        : PRegisterRecord;
@@ -677,7 +677,7 @@ begin
   {$endif}
 end;
 
-function SaveRegisterDataRaw(const CD:TCOMMANDDATA; aValue:PRegisterRecord; MAP:TMySortedMap):boolean;overload;
+function SaveRegisterDataRaw(const CD:TPARAMETERDATA; aValue:PRegisterRecord; MAP:TMySortedMap):boolean;overload;
 var
   aKey : TIDN;
 begin
@@ -685,7 +685,7 @@ begin
   result:=SaveRegisterDataRaw(aKey,aValue,MAP);
 end;
 
-function LoadRegisterData(const CD:TCOMMANDDATA; MAP:TMySortedMap):TCOMMANDDATA;
+function LoadRegisterData(const CD:TPARAMETERDATA; MAP:TMySortedMap):TPARAMETERDATA;
 var
   P : PRegisterRecord;
   i : integer;
@@ -720,7 +720,7 @@ begin
   else Result.DATA :='';
 end;
 
-function LoadRegisterDataRaw(const CD:TCOMMANDDATA; MAP:TMySortedMap):PRegisterRecord;
+function LoadRegisterDataRaw(const CD:TPARAMETERDATA; MAP:TMySortedMap):PRegisterRecord;
 var
   P : PRegisterRecord;
   i : integer;
@@ -762,7 +762,7 @@ begin
   result:=P;
 end;
 
-procedure DeleteRegisterData(const CD:TCOMMANDDATA; MAP:TMySortedMap);
+procedure DeleteRegisterData(const CD:TPARAMETERDATA; MAP:TMySortedMap);
 var
   P : PRegisterRecord;
   i : integer;
@@ -837,10 +837,10 @@ begin
   result:=ATT.Raw;
 end;
 
-function GetAttribute(const MAP:TMySortedMap; const CD:TCOMMANDDATA):dword;
+function GetAttribute(const MAP:TMySortedMap; const CD:TPARAMETERDATA):dword;
 var
-  LocalCD:TCOMMANDDATA;
-  StoreCD:TCOMMANDDATA;
+  LocalCD:TPARAMETERDATA;
+  StoreCD:TPARAMETERDATA;
 begin
   try
     LocalCD:=CD;
