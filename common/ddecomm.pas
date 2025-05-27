@@ -59,7 +59,7 @@ type
     FActive: boolean;
     FOnRxData: TNotifyEvent;
     ReadThread: TDDECommReadThread;
-    FData:string;
+    FData:RawByteString;
     FCriticalSection: TRTLCriticalSection;
     FCommandList:TStringList;
     procedure DeviceOpen;
@@ -68,7 +68,7 @@ type
     DDEConnection        : PDDEConnection;
     FDDEThreadConnection : TDDEConnection;
     FDDENormalConnection : TDDEConnection;
-    function  GetData:string;
+    function  GetData:RawByteString;
     function  GetAsync: boolean;
     procedure SetAsync(value:boolean);
     function  GetOnRxData: TNotifyEvent;
@@ -79,9 +79,9 @@ type
     constructor Create(AOwner: TComponent);// override;
     destructor Destroy; override;
 
-    procedure WriteString(const cmd: string; var dat: string);
-    procedure WriteStringPrio(const cmd: string; var dat: string);
-    procedure WriteStringBlocking(const cmd: string; var dat: string);
+    procedure WriteString(const cmd: RawByteString; var dat: RawByteString);
+    procedure WriteStringPrio(const cmd: RawByteString; var dat: RawByteString);
+    procedure WriteStringBlocking(const cmd: RawByteString; var dat: RawByteString);
 
     function  StartDDE(aPath:string):boolean;
     function  ConnectDDE:boolean;
@@ -759,7 +759,7 @@ begin
   DDECleanUp;
 end;
 
-function TDDEComm.GetData:string;
+function TDDEComm.GetData:RawByteString;
 begin
   result:=FData;
 end;
@@ -805,7 +805,7 @@ begin
   end;
 end;
 
-procedure TDDEComm.WriteString(const cmd: string; var dat: string);
+procedure TDDEComm.WriteString(const cmd: RawByteString; var dat: RawByteString);
 begin
   if Assigned(ReadThread) then
   begin
@@ -823,7 +823,7 @@ begin
   end;
 end;
 
-procedure TDDEComm.WriteStringPrio(const cmd: string; var dat: string);
+procedure TDDEComm.WriteStringPrio(const cmd: RawByteString; var dat: RawByteString);
 begin
   if Assigned(ReadThread) then
   begin
@@ -841,7 +841,7 @@ begin
   end;
 end;
 
-procedure TDDEComm.WriteStringBlocking(const cmd: string; var dat: string);
+procedure TDDEComm.WriteStringBlocking(const cmd: RawByteString; var dat: RawByteString);
 var
   rcvd : string;
   DC:TDataConnection;

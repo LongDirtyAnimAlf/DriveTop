@@ -131,13 +131,13 @@ type
 
   TLazSerial = class(TComponent,ICommInterface)
   strict private
-    FTerminator:ansistring;
+    FTerminator:RawByteString;
     FAsync:boolean;
     FRTSToggle:boolean;
   private
     FActive: boolean;
     FSynSer: TBlockSerial;
-    FDevice: string;
+    FDevice: ansistring;
 
     FBaudRate: TBaudRate;
     FDataBits: TDataBits;
@@ -151,12 +151,12 @@ type
     FOnStatus: TStatusEvent;
     ReadThread: TComPortReadThread;
 
-    FData:ansistring;
+    FData:RawByteString;
 
     FCriticalSection: TRTLCriticalSection;
     FCommandList:TStringList;
 
-    function  GetData:ansistring;
+    function  GetData:RawByteString;
     function  GetActive: boolean;
     procedure SetActive(state: boolean);
     function  GetRTSToggle: boolean;
@@ -184,10 +184,11 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
-    procedure WriteList(const IDN: string; listdata:array of string);
-    procedure WriteString(const cmd: string; var dat: string);
-    procedure WriteStringPrio(const cmd: string; var dat: string);
-    procedure WriteStringBlocking(const cmd: string; var dat: string);
+    procedure WriteList(const IDN: RawByteString; listdata:array of RawByteString);
+    procedure ProcessSIS(buffer: pointer; var len:Integer);
+    procedure WriteString(const cmd: RawByteString; var dat: RawByteString);
+    procedure WriteStringPrio(const cmd: RawByteString; var dat: RawByteString);
+    procedure WriteStringBlocking(const cmd: RawByteString; var dat: RawByteString);
 
     // read pin states
     function ModemSignals: TModemSignals;
@@ -207,7 +208,7 @@ type
     property Async: boolean read GetAsync write SetAsync;
     property RTSToggle: boolean read GetRTSToggle write SetRTSToggle;
     property OnRxData: TNotifyEvent read GetOnRxData write SetOnRxData;
-    property Data: ansistring read GetData;
+    property Data: RawByteString read GetData;
 
     property BaudRate: TBaudRate read FBaudRate write SetBaudRate; // default br115200;
     property DataBits: TDataBits read FDataBits write SetDataBits;
@@ -215,8 +216,8 @@ type
     property FlowControl: TFlowControl read FFlowControl write SetFlowControl;
     property StopBits: TStopBits read FStopBits write SetStopBits;
     property SynSer: TBlockSerial read FSynSer write FSynSer;
-    property Device: string read FDevice write FDevice;
-    property Terminator:ansistring read FTerminator write FTerminator;
+    property Device: ansistring read FDevice write FDevice;
+    property Terminator:RawByteString read FTerminator write FTerminator;
     property OnStatus: TStatusEvent read FOnStatus write FOnStatus;
   end;
 
@@ -363,7 +364,7 @@ begin
   FOnRxData:=event;
 end;
 
-function TLazSerial.GetData:ansistring;
+function TLazSerial.GetData:RawByteString;
 begin
   result:=FData;
 end;
@@ -442,13 +443,38 @@ begin
   end;
 end;
 
-procedure TLazSerial.WriteList(const IDN: string; listdata:array of string);
+procedure TLazSerial.ProcessSIS(buffer: pointer; var len:Integer);
+begin
+  FSynSer.SendBuffer(buffer,len);
+  len:=0;
+  if (FSynSer.LastError=0) then
+  begin
+    // The SIS slave always sends:
+    // 8 header bytes
+    // 3 user data bytes
+    // So, receive at least 8+3 = 11 bytes
+    FSynSer.RecvBufferEx(buffer,11,1000);
+    if (FSynSer.LastError=0) then
+    begin
+      // The header contains the length at position 2 [=1]
+      len:=PByteArray(buffer)^[1];
+      // Receive rest of userdata, if any
+      if len>0 then
+      begin
+        FSynSer.RecvBufferEx(@PByteArray(buffer)^[11],len,1000);
+      end;
+      Inc(len,11);
+    end;
+  end;
+end;
+
+procedure TLazSerial.WriteList(const IDN: RawByteString; listdata:array of RawByteString);
 var
-  rcvd          : string;
+  rcvd          : RawByteString;
   re            : boolean;
   b             : byte;
   i,j           : dword;
-  datas         : ansistring;
+  datas         : RawByteString;
 begin
   re:=Assigned(ReadThread);
   if re then
@@ -458,7 +484,6 @@ begin
     StopReader;
   end;
   try
-    rcvd:='';
     // i.e.: "P-0-4007,7,w,>"(CR)
     FSynSer.SendString(IDN+',7,w,>'+CR);
     b:=0;
@@ -504,7 +529,6 @@ begin
       // Write the data if all ok
       for i:=1 to Length(listdata) do
       begin
-        rcvd:='';
         b:=0;
         FSynSer.SendString(listdata[i-1]+CR);
 
@@ -556,7 +580,7 @@ begin
 end;
 
 
-procedure TLazSerial.WriteString(const cmd: string; var dat: string);
+procedure TLazSerial.WriteString(const cmd: RawByteString; var dat: RawByteString);
 begin
   if Assigned(ReadThread) then
   begin
@@ -574,7 +598,7 @@ begin
   end;
 end;
 
-procedure TLazSerial.WriteStringPrio(const cmd: string; var dat: string);
+procedure TLazSerial.WriteStringPrio(const cmd: RawByteString; var dat: RawByteString);
 begin
   if Assigned(ReadThread) then
   begin
@@ -592,7 +616,7 @@ begin
   end;
 end;
 
-procedure TLazSerial.WriteStringBlocking(const cmd: string; var dat: string);
+procedure TLazSerial.WriteStringBlocking(const cmd: RawByteString; var dat: RawByteString);
 var
   rcvd  : ansistring;
   re    : boolean;

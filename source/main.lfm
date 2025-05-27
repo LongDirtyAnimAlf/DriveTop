@@ -2370,15 +2370,6 @@ object Form1: TForm1
     TabOrder = 8
     OnClick = btnConnectSerialClick
   end
-  object Button1: TButton
-    Left = 760
-    Height = 30
-    Top = 48
-    Width = 121
-    Caption = 'Button1'
-    TabOrder = 9
-    OnClick = Button1Click
-  end
   object editStatus: TEdit
     AnchorSideLeft.Control = Owner
     AnchorSideRight.Control = Memo1
@@ -2396,7 +2387,7 @@ object Form1: TForm1
     Font.Color = clAqua
     ParentFont = False
     ReadOnly = True
-    TabOrder = 10
+    TabOrder = 9
     OnChange = editStatusChange
   end
   object btnStop: TButton
@@ -2406,7 +2397,7 @@ object Form1: TForm1
     Width = 63
     Anchors = []
     Caption = 'STOP'
-    TabOrder = 11
+    TabOrder = 10
     OnClick = btnStopClick
   end
   object lbDriveModes: TListBox
@@ -2425,7 +2416,7 @@ object Form1: TForm1
     BorderSpacing.Left = 5
     BorderSpacing.Bottom = 4
     ItemHeight = 0
-    TabOrder = 12
+    TabOrder = 11
   end
   object btnConnectDriveSISRS486: TButton
     AnchorSideLeft.Control = btnConnectDriveSISRS232
@@ -2441,7 +2432,7 @@ object Form1: TForm1
     AutoSize = True
     BorderSpacing.Top = 4
     Caption = 'Connect as  DriveTop SIS RS485'
-    TabOrder = 13
+    TabOrder = 12
     OnClick = btnConnectSerialClick
   end
   object Button3: TButton
@@ -2450,7 +2441,7 @@ object Form1: TForm1
     Top = 57
     Width = 74
     Caption = 'Button3'
-    TabOrder = 14
+    TabOrder = 13
     OnClick = Button3Click
   end
   object btnConnectDriveSISRS232: TButton
@@ -2469,7 +2460,7 @@ object Form1: TForm1
     BorderSpacing.Left = 12
     BorderSpacing.Top = 4
     Caption = 'Connect as  DriveTop SIS RS232'
-    TabOrder = 15
+    TabOrder = 14
     OnClick = btnConnectSerialClick
   end
   object OpenDialog1: TOpenDialog

@@ -66,7 +66,6 @@ type
     btnGetPoints: TButton;
     btnRefreshDriveData: TButton;
     btnConnectVMRS232: TButton;
-    Button1: TButton;
     btnStop: TButton;
     btnGetDriveData: TButton;
     btnStoreBlockDrive: TButton;
@@ -188,7 +187,6 @@ type
     procedure btnGetListsClick({%H-}Sender: TObject);
     procedure btnManualAxisClick({%H-}Sender: TObject);
     procedure btnDriveInfoClick({%H-}Sender: TObject);
-    procedure Button1Click(Sender: TObject);
     procedure btnGetDriveDataClick(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
@@ -252,10 +250,10 @@ type
     function  CommandExecuteAndWait(const aCD: TPARAMETERDATA):boolean;
     {$ifdef MSWindows}
     procedure HandleInfo(var Msg: TLMessage); message WM_DDEINFO;
-    function  ProcessDDECommand(const Command:string; var Value:string; const prio,blocking:boolean):boolean;
+    function  ProcessDDECommand(const Command:RawByteString; var Value:RawByteString; const prio,blocking:boolean):boolean;
     {$endif}
-    function  ProcessSerialCommand(const Command:string; var Value:string; const prio,blocking:boolean):boolean;
-    function  ProcessDirectDriveCommand(const Command:string; var Value:string; const prio,blocking:boolean):boolean;
+    function  ProcessSerialCommand(const Command:RawByteString; var Value:RawByteString; const prio,blocking:boolean):boolean;
+    function  ProcessDirectDriveCommand(const Command:RawByteString; var Value:RawByteString; const prio,blocking:boolean):boolean;
     procedure ArrowMouse(Sender: TObject; Button: TMouseButton; Shift: TShiftState; {%H-}X, {%H-}Y: Integer);
     function  GetAxisActive:TAXIS;
     procedure ApplicationIdle({%H-}Sender: TObject; var Done: Boolean);
@@ -275,7 +273,7 @@ type
     procedure OnRXDDEData({%H-}Sender: TObject);
     {$endif}
 
-    function  ProcessCommDataString(const s:ansistring):TPARAMETERDATA;
+    function  ProcessResponse(const CD:TPARAMETERDATA; const s:RawByteString):TPARAMETERDATA;
     procedure ProcessCommResult(const CD:TPARAMETERDATA);
 
     procedure ProcessModeList(const CD: TPARAMETERDATA);
@@ -314,7 +312,7 @@ type
     procedure OnCommData(const s:ansistring);
   public
     { public declarations }
-    function  ProcessParameter(const CD:TPARAMETERDATA;out response:string; prio:boolean=false; blocking:boolean=false; verbose:boolean=false):boolean;
+    function  ProcessParameter(const CD:TPARAMETERDATA;out response:RawByteString; prio:boolean=false; blocking:boolean=false; verbose:boolean=false):boolean;
     function  JogAxis(aDir:TAXISDIRECTION;Engage:boolean):boolean;
   end;
 
@@ -643,7 +641,7 @@ var
   LB                : TListBox;
   CD                : TCOMMANDDATA;
   id                : word;
-  CommandString     : string;
+  CommandString     : RawByteString;
   SUBCLASSIDARRAY   : PSCA;
 begin
   if CheckComms then exit;
@@ -750,7 +748,7 @@ end;
 
 function TForm1.CommandExecuteAndWait(const aCD: TPARAMETERDATA):boolean;
 var
-  c,s      : ansistring;
+  c,s      : RawByteString;
   i        : word;
   SCS      : SERCOSCOMMAND_STATUS;
   success  : boolean;
@@ -792,7 +790,7 @@ begin
     begin
       success:=ProcessParameter(CD,s,false,true);
     end;
-    CDStatus:=ProcessCommDataString(s);
+    CDStatus:=ProcessResponse(CD,s);
 
     sleep(150);
 
@@ -826,7 +824,7 @@ end;
 
 procedure TForm1.btnResetAxisClick(Sender: TObject);
 var
-  s       : ansistring;
+  s       : RawByteString;
   axis    : word;
   CD      : TPARAMETERDATA;
   SCS     : SERCOSCOMMAND_STATUS;
@@ -1041,7 +1039,7 @@ end;
 
 procedure TForm1.btnExecuteBlocks0DriveClick(Sender: TObject);
 var
-  s                    : ansistring;
+  s                    : RawByteString;
   i,axis               : word;
   CD,StatusCD          : TPARAMETERDATA;
   //SC13                 : TDRIVEPARAMETER_0013;
@@ -1087,7 +1085,7 @@ begin
     CD.DATA:='';
     // Get current register value
     success:=ProcessParameter(CD,s,false,true);
-    StatusCD:=ProcessCommDataString(s);
+    StatusCD:=ProcessResponse(CD,s);
     SC346.Raw:=BinaryStringToDecimal(StatusCD.DATA);
 
     // Engage drive by toggling strobe bit
@@ -1105,7 +1103,7 @@ begin
       sleep(100);
       Inc(i);
       success:=ProcessParameter(CD,s,false,true);
-      StatusCD:=ProcessCommDataString(s);
+      StatusCD:=ProcessResponse(CD,s);
       Memo1.Lines.Append(StatusCD.DATA);
       DR182.Raw:=BinaryStringToDecimal(StatusCD.DATA);
     until ((DR182.Data.InTargetPosition=1) OR (i>1));
@@ -1125,7 +1123,7 @@ type
     EventArray : TEventArray;
   end;
 var
-  s          : ansistring;
+  s          : RawByteString;
   i,j        : word;
   listlength : word;
   CD         : TPARAMETERDATA;
@@ -1331,7 +1329,7 @@ end;
 
 procedure TForm1.btnAxisHomeClick(Sender: TObject);
 var
-  s       : ansistring;
+  s       : RawByteString;
   axis    : word;
   CD      : TPARAMETERDATA;
   SC0403  : TDRIVEPARAMETER_0403;
@@ -1390,7 +1388,7 @@ end;
 
 procedure TForm1.btnAxisStatusClick(Sender: TObject);
 var
-  s          : ansistring;
+  s          : RawByteString;
   i,axis     : word;
   success    : boolean;
   CD         : TPARAMETERDATA;
@@ -1509,7 +1507,7 @@ end;
 
 procedure TForm1.btnSendReceiveClick(Sender: TObject);
 var
-  c,s      : ansistring;
+  c,s      : RawByteString;
   ro       : boolean;
 begin
   c:=editCommand.Text;
@@ -1556,7 +1554,7 @@ end;
 
 procedure TForm1.btnSpeedLimitClick(Sender: TObject);
 var
-  s          : ansistring;
+  s          : RawByteString;
   axis       : word;
   CD         : TPARAMETERDATA;
   success    : boolean;
@@ -1579,7 +1577,7 @@ end;
 
 procedure TForm1.SetDriveMode;
 var
-  s          : ansistring;
+  s          : RawByteString;
   CD         : TPARAMETERDATA;
   success    : boolean;
   OM         : TOPERATIONMODE;
@@ -1612,7 +1610,7 @@ procedure TForm1.GetDriveData;
 const
   BLOCK        = True;
 var
-  c,s          : ansistring;
+  c,s          : RawByteString;
   CD           : TPARAMETERDATA;
   CDStorage    : TPARAMETERDATA;
   CC           : TPARAMETER;
@@ -1758,7 +1756,7 @@ end;
 
 procedure TForm1.btnStartTaskAClick(Sender: TObject);
 var
-  s       : ansistring;
+  s       : RawByteString;
   success : boolean;
   CD      : TPARAMETERDATA;
   TC      : TSERCOSREGISTER_TASKCONTROL;
@@ -1877,7 +1875,7 @@ end;
 
 procedure TForm1.btnMoveClick(Sender: TObject);
 var
-  s                    : ansistring;
+  s                    : RawByteString;
   i,axis               : word;
   CD,StatusCD          : TPARAMETERDATA;
   //SC13                 : TDRIVEPARAMETER_0013;
@@ -1946,7 +1944,7 @@ begin
     CD.DATA:='';
     // Get current register value
     success:=ProcessParameter(CD,s,false,true);
-    StatusCD:=ProcessCommDataString(s);
+    StatusCD:=ProcessResponse(CD,s);
     SC346.Raw:=BinaryStringToDecimal(StatusCD.DATA);
     // Engage drive by toggling stobe bit
     SC346.Data.AcceptPositionToggle:=1-SC346.Data.AcceptPositionToggle; // toggle strobe bit
@@ -1989,7 +1987,7 @@ end;
 
 procedure TForm1.btnGetListsClick(Sender: TObject);
 var
-  s          : ansistring;
+  s          : RawByteString;
   i          : word;
   listlength : word;
   CD         : TPARAMETERDATA;
@@ -2062,7 +2060,7 @@ end;
 
 procedure TForm1.btnManualAxisClick(Sender: TObject);
 var
-  s                    : ansistring;
+  s                    : RawByteString;
   CD                   : TPARAMETERDATA;
   success              : boolean;
   axis                 : integer;
@@ -2125,8 +2123,8 @@ const
   DRIVECOMMANDS     : array [0..3] of word =(141,142,30,32);
   TELEGRAMCOMMANDS  : array [0..1] of word =(16,24);
 var
-  s            : ansistring;
-  data         : string;
+  s            : RawByteString;
+  data         : ansistring;
   success      : boolean;
   CD           : TPARAMETERDATA;
   listlength   : integer;
@@ -2226,33 +2224,6 @@ begin
   end;
 end;
 
-procedure TForm1.Button1Click(Sender: TObject);
-var
-  DataString,s:string;
-  CD:TPARAMETERDATA;
-begin
-  //FDirectDrive:=True;
-  //s:='S-0-0292,7,r';
-  //s:='S-0-0128,7,w,0000000000000011b';
-
-
-  DataString:='>1 DP 1.104 !05 Greater than maximum value'#13#10;
-
-
-  if s='S-0-0032,7,r' then DataString:=s+#13+'0000000000001011b'+#13+'A01:>';
-  if s='S-0-0292,7,r' then DataString:=s+#13+'0001h'+#13+'0002h'+#13+'0003h'+#13+'000Bh'+#13+'0013h'+#13+'001Bh'+#13+'0004h'+#13+'000Ch'+#13+'!19 List is finished'+#13+'A01:>';
-  if s='S-0-0040,7,r' then DataString:=s+#13+'34.872'+#13+'A01:>';
-  if s='S-0-0134,7,r' then DataString:=s+#13+'1110000000000000b'+#13+'A01:>';
-  if s='S-0-0135,7,r' then DataString:=s+#13+'1100000000000000b'+#13+'A01:>';
-
-  if s='S-0-0127,7,w,0000000000000011b' then DataString:='S-0-0127,7,w,0000000000000011b'#$0D#$0D#$0A'#7005'#$0D#$0A#$0D'E02:>';
-  if s='S-0-0128,7,w,0000000000000011b' then DataString:='S-0-0127,7,w,0000000000000011b'#$0D#$0A#$0D'E02:>';
-
-
-  CD:=ProcessCommDataString(DataString);
-  ProcessCommResult(CD);
-end;
-
 procedure TForm1.btnGetDriveDataClick(Sender: TObject);
 begin
   GetDriveData;
@@ -2260,7 +2231,7 @@ end;
 
 procedure TForm1.Button2Click(Sender: TObject);
 var
-  s                    : ansistring;
+  s                    : RawByteString;
   i,axis               : word;
   CD,StatusCD          : TPARAMETERDATA;
   //SC13                 : TDRIVEPARAMETER_0013;
@@ -2293,7 +2264,7 @@ end;
 
 procedure TForm1.Button3Click(Sender: TObject);
 var
-  Data:ByteArray;
+  Data:SISByteArray;
   l,i:Integer;
   s:ansistring;
   CD:TPARAMETERDATA;
@@ -2340,9 +2311,9 @@ begin
   end;
 end;
 
-function TForm1.ProcessDirectDriveCommand(const Command:string; var Value:string; const prio,blocking:boolean):boolean;
+function TForm1.ProcessDirectDriveCommand(const Command:RawByteString; var Value:RawByteString; const prio,blocking:boolean):boolean;
 var
-  c,s      : ansistring;
+  c,s      : RawByteString;
   ro       : boolean;
 begin
   result:=true;
@@ -2387,7 +2358,7 @@ begin
   StrDispose(MsgStr);
 end;
 
-function TForm1.ProcessDDECommand(const Command:string; var Value:string; const prio,blocking:boolean):boolean;
+function TForm1.ProcessDDECommand(const Command:RawByteString; var Value:RawByteString; const prio,blocking:boolean):boolean;
 begin
   result:=false;
   if (ActiveSerialConnection=TCONNECTION.conCLCDDE) then
@@ -2409,9 +2380,9 @@ begin
   end;
 end;
 {$endif}
-function TForm1.ProcessSerialCommand(const Command:string; var Value:string; const prio,blocking:boolean):boolean;
+function TForm1.ProcessSerialCommand(const Command:RawByteString; var Value:RawByteString; const prio,blocking:boolean):boolean;
 var
-  s,v,c    : ansistring;
+  s,v,c    : RawByteString;
   cs       : byte;
   ro       : boolean;
 begin
@@ -3072,14 +3043,16 @@ begin
   {$endif UNIX}
 end;
 
-function TForm1.ProcessParameter(const CD:TPARAMETERDATA;out response:string; prio:boolean=false; blocking:boolean=false; verbose:boolean=false):boolean;
+function TForm1.ProcessParameter(const CD:TPARAMETERDATA;out response:RawByteString; prio:boolean=false; blocking:boolean=false; verbose:boolean=false):boolean;
 var
-  s,c      : ansistring;
+  s,c      : RawByteString;
   success  : boolean;
   ro       : boolean;
   LocalCD  : TPARAMETERDATA;
   StoreCD  : TPARAMETERDATA;
   wp,wb    : boolean;
+  SISData  : SISByteArray;
+  l,i      : Integer;
 begin
   result:=false;
 
@@ -3148,8 +3121,18 @@ begin
     begin
       c:=GetDirectDriveCommand(LocalCD);
       success:=ProcessDirectDriveCommand(c,s,wp,wb);
-
-
+    end
+    else
+    if SISDrive then
+    begin
+      BuildSISTelegram(LocalCD,SISData,l);
+      (ComDevice AS TLazSerial).ProcessSIS(@SISData,l);
+      s:='';
+      if l>0 then
+      begin
+        SetLength(s,l);
+        for i:=1 to l do s[i]:=Chr(SISData[i]);
+      end;
     end
     else
     begin
@@ -3198,7 +3181,7 @@ end;
 procedure TForm1.ValueListEditor1DblClick(Sender: TObject);
 type
   TLookup = record
-    Name:string;
+    Name:ansistring;
     CClass:TVMCOMMANDCLASS;
   end;
 const
@@ -3215,7 +3198,7 @@ const
 var
   VLE:TValueListEditor;
   VC:TVMCOMMANDCLASS;
-  s,cc:string;
+  s,cc:ansistring;
   i:integer;
 begin
   VLE:=TValueListEditor(Sender);
@@ -3237,7 +3220,7 @@ procedure TForm1.vleParamDetailsDrawCell(Sender: TObject; aCol, aRow: Integer;
   aRect: TRect; aState: TGridDrawState);
 var
   aTextStyle   : TTextStyle;
-  s            : string;
+  s            : ansistring;
   pw           : dword;
   ro           : boolean;
   vle          : TValueListEditor;
@@ -3317,7 +3300,7 @@ procedure TForm1.vleParamDetailsEditingDone(Sender: TObject);
 var
   vle:TValueListEditor;
   li:TListItem;
-  IDN,s,data:string;
+  IDN,s,data:RawByteString;
   CD:TPARAMETERDATA;
 begin
   vle:=TValueListEditor(Sender);
@@ -3892,23 +3875,27 @@ end;
 procedure TForm1.OnCommData(const s:ansistring);
 var
   CD:TPARAMETERDATA;
+  CDStatus:TPARAMETERDATA;
 begin
   Memo1.Lines.Append('Received: '+s);
-  CD:=ProcessCommDataString(s);
-  ProcessCommResult(CD);
+  CD:=Default(TPARAMETERDATA);
+  CDStatus:=ProcessResponse(CD,s);
+  ProcessCommResult(CDStatus);
 end;
 
-function TForm1.ProcessCommDataString(const s:ansistring):TPARAMETERDATA;
+function TForm1.ProcessResponse(const CD:TPARAMETERDATA; const s:RawByteString):TPARAMETERDATA;
 var
-  index,j:integer;
-  ro:boolean;
-  SC_IDN:boolean;
-  cs,rcs:byte;
-  PW:TIDNWORD;
-  cc:TVMCOMMANDCLASS;
-  csc:TVMCOMMANDPARAMETERSUBCLASS;
-  s1:string;
-  datas:ansistring;
+  index,j            : integer;
+  ro                 : boolean;
+  SC_IDN             : boolean;
+  cs,rcs             : byte;
+  PW                 : TIDNWORD;
+  cc                 : TVMCOMMANDCLASS;
+  csc                : TVMCOMMANDPARAMETERSUBCLASS;
+  s1                 : string;
+  datas              : ansistring;
+  success            : boolean;
+  telegram           : SISByteArray;
 begin
   Result:=Default(TPARAMETERDATA);
   datas:=s;
@@ -3924,8 +3911,17 @@ begin
 
   // Parse datastring
 
+  if SISDrive then
+  begin
+    // We need the supplied CD, as the raw repsonse from the slave does not contain any data from its parameter source
+    Result:=ParseSISTelegram(CD,datas);
+  end
+  else
   if DirectDrive then
   begin
+    // We might use the supplied CD, if any !!
+    //Result:=CD;
+
     Result:=IDN2CD(datas,0);
     //Result:=IDN2CD(datas,ActiveDriveNumber);
     if ((Result.CCLASS=ccDrive) OR (Result.CCLASS=ccDriveSpecific)) then
@@ -4164,7 +4160,7 @@ var
   i,len    : word;
   success  : boolean;
   CC       : TPARAMETER;
-  s        : string;
+  s        : RawByteString;
   ATT      : ATTRIBUTEDWORD;
   LocalCD  : TPARAMETERDATA;
   IDNCD    : TPARAMETERDATA;
@@ -4406,7 +4402,7 @@ end;
 
 function TForm1.JogAxis(aDir:TAXISDIRECTION;Engage:boolean):boolean;
 var
-  s              : string;
+  s              : RawByteString;
   axis           : integer;
   success        : boolean;
   AxisControl    : TSERCOSREGISTER_AXISCONTROL;
@@ -4525,9 +4521,11 @@ end;
 procedure TForm1.SetActiveDriveNumber(value:word);
 var
   Success      : boolean;
-  c,s          : ansistring;
+  c,s          : RawByteString;
   CD,StatusCD  : TPARAMETERDATA;
   SC0393       : TDRIVEPARAMETER_0393;
+  SISData      : SISByteArray;
+  l,i          : integer;
 begin
   if (value<>FActiveDriveNumber) then
   begin
@@ -4544,9 +4542,24 @@ begin
         c:=Format('BCD:%.2d',[GetPDriveInfo(ActiveDriveNumber)^.DRIVEADDRESS]);
         s:='';
         Success:=ProcessDirectDriveCommand(c,s,false,true);
-        Memo1.Lines.Append('Select drive response: '+s);
+        Memo1.Lines.Append('Select drive ASCII response: '+s);
         c:=Format('E%.2d:>',[GetPDriveInfo(ActiveDriveNumber)^.DRIVEADDRESS]);
         if s=c then Memo1.Lines.Append('Selected drive connected !');
+      end;
+
+      if SISDrive then
+      begin
+        // Init/activate SIS serial bus for comms
+        // Might be superfluous after the first time
+        BuildSISStartTelegram(GetPDriveInfo(ActiveDriveNumber)^.DRIVEADDRESS,SISData,l);
+        (ComDevice AS TLazSerial).ProcessSIS(@SISData,l);
+        s:='';
+        if l>0 then
+        begin
+          SetLength(s,l);
+          for i:=1 to l do s[i]:=Chr(SISData[i]);
+        end;
+        Memo1.Lines.Append('Select drive SIS response: '+s);
       end;
 
       if SISDrive OR DirectDrive then
@@ -4600,8 +4613,9 @@ begin
         // Command value mode
         CD.NUMID:=393;
         CD.DATA:='';
+        s:='';
         success:=ProcessParameter(CD,s,false,true);
-        StatusCD:=ProcessCommDataString(s);
+        StatusCD:=ProcessResponse(CD,s);
         SC0393.Raw:=BinaryStringToDecimal(StatusCD.DATA);
         if (SC0393.Data.TargetPosAfter=0) then
         begin
@@ -4614,6 +4628,7 @@ begin
         // Might be decided by global switch
         CD.NUMID:=269;
         CD.DATA:='1';
+        s:='';
         success:=ProcessParameter(CD,s,false,true);
 
       end;

@@ -9,6 +9,8 @@ uses
   common;
 
 const
+  STX                                    = $02;  // SIS header pre-amble
+
   SISServiceUserIdentification           = $00;  // Needs address and subservice in userdata
   SISServiceTerminationDataTransmission  = $01;  // Enter the service to be cancelled in the useful data.
   SISServiceFlashOperation               = $02;
@@ -47,12 +49,13 @@ const
   *)
 
 type
-  ByteArray = array[1..256] of Byte;
+  SISByteArray = array[1..256] of Byte;
 
-
-procedure BuildSISStartTelegram(SlaveAddress: Byte; out telegram: ByteArray; out len: Integer);
-procedure BuildSISTelegram(SlaveAddress: Byte; const idn: string; value: Word; service: Byte; out telegram: ByteArray; out len: Integer);overload;
-procedure BuildSISTelegram(const CD:TPARAMETERDATA; out telegram: ByteArray; out len: Integer);overload;
+procedure BuildSISStartTelegram(SlaveAddress: Byte; out telegram: SISByteArray; out len: Integer);
+procedure BuildSISTelegram(SlaveAddress: Byte; const idn: string; value: Word; service: Byte; out telegram: SISByteArray; out len: Integer);overload;
+procedure BuildSISTelegram(const CD: TPARAMETERDATA; out telegram: SISByteArray; out len: Integer);overload;
+function  ParseSISTelegram(const SourceCD: TPARAMETERDATA; const telegram: SISByteArray; const len: Integer):TPARAMETERDATA; overload;
+function  ParseSISTelegram(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA; overload;
 
 implementation
 
@@ -61,7 +64,6 @@ uses
   Bits;
 
 const
-  STX           = $02;
   MASTER_ADDR   = $00;
 
 type
@@ -112,7 +114,7 @@ function ReceiveByte(var b: Byte): Boolean;
 begin
 end;
 
-procedure SendTelegram(const telegram: ByteArray; const len: Integer);
+procedure SendTelegram(const telegram: SISByteArray; const len: Integer);
 var
   i: Integer;
 begin
@@ -135,7 +137,7 @@ begin
   result:=True;
 end;
 
-procedure BuildSISStartTelegram(SlaveAddress: Byte; out telegram: ByteArray; out len: Integer);
+procedure BuildSISStartTelegram(SlaveAddress: Byte; out telegram: SISByteArray; out len: Integer);
 var
   sum, i     : Integer;
 begin
@@ -160,7 +162,7 @@ begin
 end;
 
 
-procedure BuildSISTelegram(SlaveAddress: Byte; const idn: string; value: Word; service: Byte; out telegram: ByteArray; out len: Integer);
+procedure BuildSISTelegram(SlaveAddress: Byte; const idn: string; value: Word; service: Byte; out telegram: SISByteArray; out len: Integer);
 var
   paramType  : Byte;
   paramNum   : Word;
@@ -219,7 +221,7 @@ begin
   telegram[2] := (0 - sum) and $FF;
 end;
 
-procedure BuildSISTelegram(const CD:TPARAMETERDATA; out telegram: ByteArray; out len: Integer);
+procedure BuildSISTelegram(const CD:TPARAMETERDATA; out telegram: SISByteArray; out len: Integer);
 var
   IDNWORD        : TIDNWORD;
   Ctrl           : TSISHeaderControl;
@@ -299,11 +301,16 @@ begin
     if ((service=SISServiceListRead) OR (service=SISServiceListWrite)) then
     begin
       DW.Raw:=1*size;                   // List offset ... e.g. read second item
-      telegram[14] := DW.Bytes[0];      // List offset LSB
-      telegram[15] := DW.Bytes[1];      // List offset MSB
+      //telegram[14] := DW.Bytes[0];      // List offset LSB
+      //telegram[15] := DW.Bytes[1];      // List offset MSB
+      telegram[14] := DW.Lo;            // List offset LSB
+      telegram[15] := DW.Hi;            // List offset MSB
       DW.Raw:=5*size;                   // List length ... e.g. read 5 items
-      telegram[16] := DW.Bytes[0];      // List length LSB
-      telegram[17] := DW.Bytes[1];      // List length MSB
+      //telegram[16] := DW.Bytes[0];      // List length LSB
+      //telegram[17] := DW.Bytes[1];      // List length MSB
+      telegram[16] := DW.Lo;            // List length LSB
+      telegram[17] := DW.Hi;            // List length MSB
+
       if (Length(CD.DATA)=0) then
         len:=8+5+2+2                    // SIS header + user data header + size of list data
       else
@@ -343,7 +350,7 @@ end;
 
 procedure SendSISParameterWrite(const destAddr: Byte; const sParam: string; value: Word);
 var
-  telegram   : ByteArray;
+  telegram   : SISByteArray;
   len        : Integer;
 begin
   BuildSISTelegram(destAddr, sParam, value, SISServiceParamWrite, telegram, len);
@@ -352,10 +359,10 @@ end;
 
 function ReadSISParameter(const destAddr: Byte; const idn: string; out value: Word): Boolean;
 var
-  telegram   : ByteArray;
+  telegram   : SISByteArray;
   len, i     : Integer;
   b          : Byte;
-  response   : ByteArray;
+  response   : SISByteArray;
 begin
   BuildSISTelegram(destAddr, idn, 0, SISServiceParamRead, telegram, len);
   SendTelegram(telegram, len);
@@ -378,6 +385,41 @@ begin
 
   value := response[12] + (response[13] shl 8);
   ReadSISParameter := True;
+end;
+
+function ParseSISTelegram(const SourceCD: TPARAMETERDATA; const telegram: SISByteArray; const len: Integer):TPARAMETERDATA;
+begin
+  result:=SourceCD;
+end;
+
+function ParseSISTelegram(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA;
+var
+  datas:ansistring;
+  Success:boolean;
+  i:integer;
+begin
+  datas:=s;
+  result:=SourceCD;
+  // Look at the SIS header
+  if Length(datas)>=8 then
+  begin
+    Success:=(Ord(datas[1])=STX);
+    Delete(datas,1,8);
+  end;
+  // Look at the user header
+  if Length(datas)>=3 then
+  begin
+    Delete(datas,1,3);
+  end;
+  // Look at the user data
+  if Length(datas)>=1 then
+  begin
+    for i:=1 to Length(datas) do
+    begin
+
+    end;
+  end;
+
 end;
 
 

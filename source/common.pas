@@ -133,7 +133,13 @@ type
           2 : (
                Bytes           : packed array[0..1] of byte;
               );
-          3 : (
+
+          {$ifdef FPC_LITTLE_ENDIAN}
+          3:     (Lo,Hi : Byte;);
+          {$else FPC_LITTLE_ENDIAN}
+          3:     (Hi,Lo : Byte;);
+          {$endif FPC_LITTLE_ENDIAN}
+          4 : (
                Raw             : Word;
               );
   end;
