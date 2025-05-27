@@ -26,7 +26,7 @@ procedure SetCountStringList(aSL:TSTringList;Value: Integer);
 function  GetTargetCPU:string;
 function  GetTargetOS:string;
 function  GetTargetCPUOS:string;
-function  ExtractWhileConforming(const S: string; const ValidChars: TCharSet): string;
+function  ExtractWhileConforming(const S: RawByteString; const ValidChars: TCharSet): RawByteString;
 
 implementation
 
@@ -385,7 +385,7 @@ begin
   result:=GetTargetCPU+'-'+GetTargetOS;
 end;
 
-function ExtractWhileConforming(const S: string; const ValidChars: TCharSet): string;
+function ExtractWhileConforming(const S: RawByteString; const ValidChars: TCharSet): RawByteString;
 var
   DestI: Integer;
   SourceI: Integer;

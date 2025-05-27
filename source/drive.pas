@@ -460,11 +460,8 @@ const
 
   function  DriveParameterIsDriveMode(const IDN:TIDN):boolean;
 
-  //function  GetDriveInfo(const Drive:word):TDRIVE;
   function  GetPDriveInfo(const Drive:word):PDRIVE;
-  //procedure SetDriveInfo(const Drive:word; value:TDRIVE);
-
-  function GetDriveErrorDescription(derr:word):string;
+  function  GetDriveErrorDescription(derr:word):string;
 
 var
   DriveOperationModes         : TOMD;
@@ -489,11 +486,6 @@ begin
   if (Length(result.CONTROLLER)=0) then result.CONTROLLER:=sUN;
   if (Length(result.MOTORTYPE)=0) then result.MOTORTYPE:=sUN;
   if (Length(result.MOTORSERIAL)=0) then result.MOTORSERIAL:=sUN;
-end;
-
-procedure SetDriveInfo(const Drive:word; value:TDRIVE);
-begin
-  DriveList[Drive]:=value;
 end;
 
 function GetPDriveInfo(const Drive:word):PDRIVE;

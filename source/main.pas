@@ -193,8 +193,7 @@ type
     procedure cmboSerialPortsSelect(Sender: TObject);
     procedure editDistKeyPress(Sender: TObject; var Key: char);
     procedure editStatusChange(Sender: TObject);
-    procedure lvParametersSelectItem({%H-}Sender: TObject; Item: TListItem;
-      Selected: Boolean);
+    procedure lvParametersSelectItem({%H-}Sender: TObject; Item: TListItem; Selected: Boolean);
     procedure MenuConnectionClick(Sender: TObject);
     procedure editDLLFileNameClick(Sender: TObject);
     procedure lbCOMMANDSDblClick(Sender: TObject);
@@ -204,19 +203,15 @@ type
     procedure panelDriveVelocityResize(Sender: TObject);
     procedure selectDirectionClick(Sender: TObject);
     procedure selectDirectionSelectionChanged(Sender: TObject);
-    procedure ArrowMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure ArrowMouseUp({%H-}Sender: TObject; {%H-}Button: TMouseButton;
-      {%H-}Shift: TShiftState; {%H-}X, {%H-}Y: Integer);
+    procedure ArrowMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure ArrowMouseUp({%H-}Sender: TObject; {%H-}Button: TMouseButton; {%H-}Shift: TShiftState; {%H-}X, {%H-}Y: Integer);
     procedure TabControl1Change(Sender: TObject);
     procedure Timer1Timer({%H-}Sender: TObject);
     procedure UpDownDriveAddressClick(Sender: TObject; Button: TUDBtnType);
     procedure ValueListEditor1DblClick(Sender: TObject);
-    procedure vleParamDetailsDrawCell(Sender: TObject; aCol, aRow: Integer;
-      aRect: TRect; aState: TGridDrawState);
+    procedure vleParamDetailsDrawCell(Sender: TObject; aCol, aRow: Integer; aRect: TRect; aState: TGridDrawState);
     procedure vleParamDetailsEditingDone(Sender: TObject);
-    procedure vleParamDetailsSelectEditor(Sender: TObject; aCol, aRow: Integer;
-      var Editor: TWinControl);
+    procedure vleParamDetailsSelectEditor(Sender: TObject; aCol, aRow: Integer; var Editor: TWinControl);
   private
     { private declarations }
     FActiveSerialConnection     : TCONNECTION;
@@ -857,6 +852,8 @@ begin
 
   success:=false;
 
+  if CheckComms then exit;
+
   if CheckAxis(axis) then exit;
 
   CD:=Default(TPARAMETERDATA);
@@ -937,9 +934,6 @@ end;
 procedure TForm1.btnConnectSerialClick(Sender: TObject);
 var
   Success      : boolean;
-  c,s          : ansistring;
-  CD,StatusCD  : TPARAMETERDATA;
-  SC0393       : TDRIVEPARAMETER_0393;
   OldDN        : word;
 begin
   if Assigned(ComDevice) then
@@ -1049,6 +1043,8 @@ var
   DriveMode            : TOPERATIONMODE;
   success              : boolean;
 begin
+  if CheckComms then exit;
+
   if CheckAxis(axis) then exit;
 
   CD:=Default(TPARAMETERDATA);
@@ -1278,6 +1274,8 @@ var
   success    : boolean;
   DP14       : TDRIVEPARAMETER_0014;
 begin
+  if CheckComms then exit;
+
   if CheckAxis(axis) then exit;
 
   CD:=Default(TPARAMETERDATA);
@@ -1337,6 +1335,8 @@ var
   success : boolean;
 begin
   success:=false;
+
+  if CheckComms then exit;
 
   if CheckAxis(axis) then exit;
 
@@ -1398,6 +1398,8 @@ var
   SC0393     : TDRIVEPARAMETER_0393;
   AxisAlert  : boolean;
 begin
+  if CheckComms then exit;
+
   if CheckAxis(axis) then exit;
 
   AxisAlert:=false;
@@ -1559,6 +1561,8 @@ var
   CD         : TPARAMETERDATA;
   success    : boolean;
 begin
+  if CheckComms then exit;
+
   if CheckAxis(axis) then exit;
 
   CD:=Default(TPARAMETERDATA);
@@ -1825,6 +1829,7 @@ var
   SC4019     : TDRIVEPARAMETER_4019;
 begin
   if CheckComms then exit;
+
   //if CheckAxis(axis) then exit;
 
   // Tricky, we might move axis that is not active !!
@@ -1884,6 +1889,8 @@ var
   DriveMode            : TOPERATIONMODE;
   success              : boolean;
 begin
+  if CheckComms then exit;
+
   if CheckAxis(axis) then exit;
 
   // Tricky, we might move axis that is not active !!
@@ -2240,6 +2247,8 @@ var
   DriveMode            : TOPERATIONMODE;
   success              : boolean;
 begin
+  if CheckComms then exit;
+
   if CheckAxis(axis) then exit;
 
   CD:=Default(TPARAMETERDATA);
@@ -2266,7 +2275,7 @@ procedure TForm1.Button3Click(Sender: TObject);
 var
   Data:SISByteArray;
   l,i:Integer;
-  s:ansistring;
+  s:RawByteString;
   CD:TPARAMETERDATA;
 begin
   CD:=Default(TPARAMETERDATA);
@@ -3892,10 +3901,7 @@ var
   PW                 : TIDNWORD;
   cc                 : TVMCOMMANDCLASS;
   csc                : TVMCOMMANDPARAMETERSUBCLASS;
-  s1                 : string;
-  datas              : ansistring;
-  success            : boolean;
-  telegram           : SISByteArray;
+  s1,datas           : RawByteString;
 begin
   Result:=Default(TPARAMETERDATA);
   datas:=s;

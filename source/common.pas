@@ -41,12 +41,12 @@ type
     CCLASSCHAR     : TCAPSCHAR;
     CSUBCLASS      : TVMCOMMANDPARAMETERSUBCLASS;
     CSUBCLASSCHAR  : TCAPSCHAR;
-    MEMORY         : boolean;
-    SETID          : word; // = Drive number ; Program handle ; Task ID
-    NUMID          : word;
+    NUMID          : word;           // Parameter number
+    MEMORY         : boolean;        // Parameter block
+    SETID          : word;           // = Drive number ; Program handle ; Task ID
     STEPID         : word;
-    DATA           : string;
-    ERROR          : string;
+    DATA           : ansistring;
+    ERROR          : ansistring;
   end;
 
   TPARAMETER = record
@@ -64,11 +64,11 @@ type
     DRIVEADDRESS   : byte;
     PHASE          : byte;
     MODE           : word;
-    NAME           : string;
-    FIRMWARE       : string;
-    CONTROLLER     : string;
-    MOTORTYPE      : string;
-    MOTORSERIAL    : string;
+    NAME           : ansistring;
+    FIRMWARE       : ansistring;
+    CONTROLLER     : ansistring;
+    MOTORTYPE      : ansistring;
+    MOTORSERIAL    : ansistring;
   end;
   PDRIVE = ^TDRIVE;
 
@@ -85,30 +85,29 @@ type
                ParamType                           : T1BITS;
              end
              );
-          2 : (
-               Bits            : bitpacked array[0..15] of T1BITS;
-              );
-          3 : (
-               Bytes           : packed array[0..1] of byte;
-              );
-          4 : (
-               Raw             : Word;
-              );
+          2 : (Bits            : bitpacked array[0..15] of T1BITS;);
+          3 : (Bytes           : packed array[0..1] of byte;);
+          {$ifdef FPC_LITTLE_ENDIAN}
+          4:  (Lo,Hi           : Byte;);
+          {$else FPC_LITTLE_ENDIAN}
+          4:  (Hi,Lo           : Byte;);
+          {$endif FPC_LITTLE_ENDIAN}
+          5 : (Raw             : Word;);
   end;
 
   TRegisterRecord = record
     CClass         : TVMCOMMANDCLASS;
     IDN            : TIDNWORD;
     Attribute      : dword;
-    Min            : string;
-    Max            : string;
-    Measure        : string;
-    Name           : string;
-    Value          : string;
+    Min            : ansistring;
+    Max            : ansistring;
+    Measure        : ansistring;
+    Name           : ansistring;
+    Value          : ansistring;
   end;
   PRegisterRecord = ^TRegisterRecord;
 
-  TIDN                              = string[8];
+  TIDN                              = String[8];
   {$ifdef USEHASHLIST}
   TMySortedMap                      = TFPHashObjectList;
   {$else}
@@ -117,31 +116,20 @@ type
 
   DATABYTE = bitpacked record
       case integer of
-          1 : (
-               Bits            : bitpacked array[0..7] of T1BITS;
-              );
-          2 : (
-               Raw             : byte;
-              );
+          1 : (Bits            : bitpacked array[0..7] of T1BITS;);
+          2 : (Raw             : byte;);
   end;
 
   DATAWORD = bitpacked record
       case integer of
-          1 : (
-               Bits            : bitpacked array[0..15] of T1BITS;
-              );
-          2 : (
-               Bytes           : packed array[0..1] of byte;
-              );
-
+          1 : (Bits            : bitpacked array[0..15] of T1BITS;);
+          2 : (Bytes           : packed array[0..1] of byte;);
           {$ifdef FPC_LITTLE_ENDIAN}
-          3:     (Lo,Hi : Byte;);
+          3:  (Lo,Hi           : Byte;);
           {$else FPC_LITTLE_ENDIAN}
-          3:     (Hi,Lo : Byte;);
+          3:  (Hi,Lo           : Byte;);
           {$endif FPC_LITTLE_ENDIAN}
-          4 : (
-               Raw             : Word;
-              );
+          4 : (Raw             : Word;);
   end;
 
   DATADWORD = bitpacked record
@@ -535,7 +523,6 @@ var
   P        : PRegisterRecord;
   Found    : boolean;
   DataList : TStringList;
-  s        : string;
   aKey     : TIDN;
 begin
   P:=nil;
@@ -605,19 +592,14 @@ end;
 
 function SaveRegisterDataRaw(const RR:TRegisterRecord; MAP:TMySortedMap):boolean;
 var
-  P        : PRegisterRecord;
   aKey     : TIDN;
-  Found    : boolean;
-  i        : integer;
+  //P        : PRegisterRecord;
+  //Found    : boolean;
+  //i        : integer;
 begin
   aKey:=GetIDN(RR);
   result:=SaveRegisterDataRaw(aKey,@RR,MAP);
   (*
-
-
-
-
-
   i:=IndexOfRegisterData(aKey,MAP);
   Found:=(i<>-1);
   {$ifdef USEHASHLIST}
@@ -791,7 +773,9 @@ procedure ClearRegisterData(MAP:TMySortedMap);
 var
   i    : integer;
   P    : PRegisterRecord;
+  {$ifndef USEHASHLIST}
   s    : boolean;
+  {$endif}
 begin
   {$ifndef USEHASHLIST}
   s:=MAP.Sorted;
@@ -1092,7 +1076,7 @@ const
   //--------------------------------------------------------------------------------------------
   // Data Block Elements
   //--------------------------------------------------------------------------------------------
-  CSMD_SERC_ELEM0            = 0;   // Close Service Channel
+  //CSMD_SERC_ELEM0            = 0;   // Close Service Channel
   CSMD_SERC_ELEM1            = 1;   // IDN
   CSMD_SERC_ELEM2            = 2;   // Name
   CSMD_SERC_ELEM3            = 3;   // Attribute
