@@ -492,7 +492,7 @@ begin
     OnColor:=clLime;
     OffColor:=ChangeBrightness(OnColor,0.1);
     DisplayCount:=5;
-    BorderWidth:=2;
+    BorderWidth:=4;
     //Anchors:=[akLeft,akRight];
     //AnchorSide[akLeft].Control:=nil;
     //AnchorSide[akTop].Control:=nil;
@@ -507,7 +507,7 @@ begin
     OnColor:=clLime;
     OffColor:=ChangeBrightness(OnColor,0.1);
     DisplayCount:=5;
-    BorderWidth:=2;
+    BorderWidth:=4;
     //Anchors:=[akLeft,akRight];
     //AnchorSide[akLeft].Control:=nil;
     //AnchorSide[akTop].Control:=nil;
@@ -1093,7 +1093,7 @@ begin
     success:=ProcessParameter(CD,s,false,true);
 
     // Wait for position
-    CD:=COMMAND2CD(DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3,ActiveDriveNumber);
+    CD:=COMMAND2CD(DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3,GetDriveAddress(ActiveDriveNumber));
     i:=0;
     repeat
       sleep(100);
@@ -1279,8 +1279,7 @@ begin
   if CheckAxis(axis) then exit;
 
   CD:=Default(TPARAMETERDATA);
-
-  CD.SETID:=ActiveDriveNumber;
+  CD.SETID:=GetDriveAddress(ActiveDriveNumber);
 
   if (Sender=btnPhase2) then
   begin
@@ -1590,7 +1589,7 @@ var
   LagLess    : boolean;
   OMData     : POMD;
 begin
-  CD:=COMMAND2CD(DRIVE_PRIMARYMODE,ActiveDriveNumber);
+  CD:=COMMAND2CD(DRIVE_PRIMARYMODE,GetDriveAddress(ActiveDriveNumber));
   if (comboDriveModes.ItemIndex<>-1) then
   begin
     DB.Raw:=({%H-}PtrUInt(Pointer(comboDriveModes.Items.Objects[comboDriveModes.ItemIndex])) AND $FF);
@@ -1621,11 +1620,13 @@ var
   success      : boolean;
   i,listlength : integer;
 begin
+  if CheckComms then exit;
+
   if (DCStatus<>TDATACOLLECTION.dcBasic) then
   begin
     for CC in REALTIMEDRIVEDATA do
     begin
-      CD:=COMMAND2CD(CC,ActiveDriveNumber);
+      CD:=COMMAND2CD(CC,GetDriveAddress(ActiveDriveNumber));
       success:=ProcessParameter(CD,s,true,false);
     end;
   end;
@@ -1634,7 +1635,7 @@ begin
   begin
     for CC in BASICDRIVEDATA do
     begin
-      CD:=COMMAND2CD(CC,ActiveDriveNumber);
+      CD:=COMMAND2CD(CC,GetDriveAddress(ActiveDriveNumber));
       success:=ProcessParameter(CD,s,(NOT BLOCK),BLOCK);
       if BLOCK then OnCommData(s);
     end;
@@ -1643,7 +1644,7 @@ begin
   CD:=Default(TPARAMETERDATA);
   CD.CCLASS:=ccDrive;
   CD.CSUBCLASS:=mscParameterData;
-  CD.SETID:=ActiveDriveNumber;
+  CD.SETID:=GetDriveAddress(ActiveDriveNumber);
 
   case DCStatus of
     TDATACOLLECTION.dcBasic:
@@ -1695,7 +1696,7 @@ begin
       for i:=0 to Pred(listlength) do
       begin
         c:=lvParameters.Items.Item[i].Caption;
-        CD:=IDN2CD(c,ActiveDriveNumber);
+        CD:=IDN2CD(c,GetDriveAddress(ActiveDriveNumber));
         if (CD.CCLASS<>ccNone) then
         begin
           // First, get the attributes to be able to identify the data types, if needed
@@ -1728,7 +1729,7 @@ begin
       for i:=0 to Pred(listlength) do
       begin
         c:=lvParameters.Items.Item[i].Caption;
-        CD:=IDN2CD(c,ActiveDriveNumber);
+        CD:=IDN2CD(c,GetDriveAddress(ActiveDriveNumber));
         if (CD.CCLASS<>ccNone) then
         begin
           CD.CSUBCLASS:=mscName;
@@ -1979,7 +1980,7 @@ begin
     (*
 
     // Wait for position
-    CD:=COMMAND2CD(DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3,ActiveDriveNumber);
+    CD:=COMMAND2CD(DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3,GetDriveAddress(ActiveDriveNumber));
     i:=0;
     repeat
       Inc(i);
@@ -2092,6 +2093,8 @@ begin
   CD:=Default(TPARAMETERDATA);
   CD.CCLASS:=ccAxis;
   CD.CSUBCLASS:=mscParameterData;
+
+  raise EArgumentException.Create ('Bad code !!!');
   //for axis:=1 to 2 do
   for axis:=ActiveDriveNumber to ActiveDriveNumber do
   begin
@@ -2142,12 +2145,12 @@ begin
   if (NOT DirectDrive) then
   begin
     CD:=Default(TPARAMETERDATA);
+    CD.SETID:=GetDriveAddress(ActiveDriveNumber);
 
     // Get the list length by a block command ... faster !
     CD.CCLASS:=ccControl;
     CD.CSUBCLASS:=mscBlock;
     CD.NUMID:=2011;
-    CD.SETID:=ActiveDriveNumber;
 
     CD.STEPID:=STEPLISTSTART;
     success:=ProcessParameter(CD,s);
@@ -2472,7 +2475,7 @@ var
   s       : ansistring;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     vleParamDetails.BeginUpdate;
     IDN:=GetIDN(CD);
@@ -2619,13 +2622,13 @@ begin
   CreateRegisterData({%H-}IDNIniList);
 
   // Get controller type
-  LocalCD:=COMMAND2CD(DRIVE_CONTROLLERTYPE,Drive);
+  LocalCD:=COMMAND2CD(DRIVE_CONTROLLERTYPE,GetDriveAddress(Drive));
   StoreCD:=LoadDriveRegisterData(LocalCD);
   CT:=StoreCD.DATA;
   if (Length(CT)=0) then CT:=sUN;
 
   // Get motor serial
-  LocalCD:=COMMAND2CD(DRIVE_MOTORSERIAL,Drive);
+  LocalCD:=COMMAND2CD(DRIVE_MOTORSERIAL,GetDriveAddress(Drive));
   StoreCD:=LoadDriveRegisterData(LocalCD);
   SN:=StoreCD.DATA;
   if (Length(SN)=0) then SN:=sUN;
@@ -2646,7 +2649,7 @@ begin
         IniFile.ReadSectionRaw(aKey,Section);
         New(P);
         P^:=Default(TRegisterRecord);
-        LocalCD:=IDN2CD(aKey,Drive);
+        LocalCD:=IDN2CD(aKey,GetDriveAddress(Drive));
         P^.CClass:=LocalCD.CCLASS;
         P^.IDN.Data.ParamNum:=LocalCD.NUMID;
         for m:=0 to Pred(Section.Count) do
@@ -2916,7 +2919,7 @@ begin
 
     CD:=Default(TPARAMETERDATA);
     CD.CCLASS:=ccDrive;
-    CD.SETID:=ActiveDriveNumber;
+    CD.SETID:=GetDriveAddress(ActiveDriveNumber);
     CD.DATA:='';
 
     RR:=Default(TRegisterRecord);
@@ -2932,6 +2935,7 @@ begin
     PositionDisplay.Value:=0;
     TargetDisplay.Value:=0;
     DistanceDisplay.Value:=0;
+    FeedbackDisplay.Value:=0;
 
     ActualVelocityDisplay.Value:=0;
     SetVelocityDisplay.Value:=0;
@@ -2977,10 +2981,10 @@ begin
 
     // Fill lists with new drive data
 
-    CD:=COMMAND2CD(DRIVE_PARAMLIST,ActiveDriveNumber);
+    CD:=COMMAND2CD(DRIVE_PARAMLIST,GetDriveAddress(ActiveDriveNumber));
     CD:=LoadDriveRegisterData(CD);
     ProcessIDNList(CD);
-    CD:=COMMAND2CD(DRIVE_MODELIST,ActiveDriveNumber);
+    CD:=COMMAND2CD(DRIVE_MODELIST,GetDriveAddress(ActiveDriveNumber));
     CD:=LoadDriveRegisterData(CD);
     ProcessModeList(CD);
 
@@ -3324,7 +3328,7 @@ begin
       if (s<>data) then
       begin
         IDN:=li.Caption;
-        CD:=IDN2CD(IDN,ActiveDriveNumber);
+        CD:=IDN2CD(IDN,GetDriveAddress(ActiveDriveNumber));
         if (CD.CCLASS<>ccNone) then
         begin
           CD.CSUBCLASS:=mscParameterData;
@@ -3355,7 +3359,7 @@ var
   DR11          : TDRIVEPARAMETER_0011;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     DR11.Raw:=BinaryStringToDecimal(CD.DATA);
   end;
@@ -3366,7 +3370,7 @@ var
   DR12          : TDRIVEPARAMETER_0012;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     DR12.Raw:=BinaryStringToDecimal(CD.DATA);
   end;
@@ -3377,7 +3381,7 @@ var
   DR13          : TDRIVEPARAMETER_0013;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     DR13.Raw:=BinaryStringToDecimal(CD.DATA);
   end;
@@ -3389,7 +3393,7 @@ var
   PDI     : PDRIVE;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     DP14.Raw:=BinaryStringToDecimal(CD.DATA);
     //SetInfoPanel(PanelPhase1,(DP14.Data.CommPhase=1));
@@ -3416,7 +3420,7 @@ var
   HaltState  : boolean;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     HaltState:=false;
     SC134.Raw:=BinaryStringToDecimal(CD.DATA);
@@ -3431,7 +3435,7 @@ var
   SC135      : TDRIVEPARAMETER_0135;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     SC135.Raw:=BinaryStringToDecimal(CD.DATA);
     SetInfoPanel(PanelControl,(SC135.Data.DriveReady>0));
@@ -3454,7 +3458,7 @@ var
   DR182          : TDRIVEPARAMETER_0182;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     DR182.Raw:=BinaryStringToDecimal(CD.DATA);
     SetInfoPanel(panelInPosition,(DR182.Data.EndPosition=1));
@@ -3470,7 +3474,7 @@ var
   StoreCD        : TPARAMETERDATA;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     PDI:=GetPDriveInfo(ActiveDriveNumber);
     PDI^.MOTORSERIAL:=CD.DATA;
@@ -3492,7 +3496,7 @@ var
 begin
   if (CD.DATA=sUN) then exit;
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     PDI:=GetPDriveInfo(ActiveDriveNumber);
     PDI^.MODE:=BinaryStringToDecimal(CD.DATA);
@@ -3505,7 +3509,7 @@ var
   PDI:PDRIVE;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     PDI:=GetPDriveInfo(ActiveDriveNumber);
     PDI^.MOTORTYPE:=CD.DATA;
@@ -3518,7 +3522,7 @@ var
   PDI:PDRIVE;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     PDI:=GetPDriveInfo(ActiveDriveNumber);
     PDI^.FIRMWARE:=CD.DATA;
@@ -3531,7 +3535,7 @@ var
   PDI : PDRIVE;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     PDI:=GetPDriveInfo(ActiveDriveNumber);
     PDI^.CONTROLLER:=CD.DATA;
@@ -3544,7 +3548,7 @@ var
   PDI : PDRIVE;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     PDI:=GetPDriveInfo(ActiveDriveNumber);
     PDI^.NAME:=CD.DATA;
@@ -3555,7 +3559,7 @@ end;
 procedure TForm1.ProcessDiagnostic(const CD: TPARAMETERDATA);
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     stDriveDiagnostic.Caption:=CD.DATA;
   end;
@@ -3564,7 +3568,7 @@ end;
 procedure TForm1.ProcessRealtimeData(const CD: TPARAMETERDATA);
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     with DRIVE_SET_SPEED do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then ActualVelocityDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
     with DRIVE_ACTUAL_SPEED do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then SetVelocityDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
@@ -3609,7 +3613,7 @@ begin
       // Always add realtime data
       for CC in REALTIMEDRIVEDATA do
       begin
-        LocalCD:=COMMAND2CD(CC,LocalDrive);
+        LocalCD:=COMMAND2CD(CC,GetDriveAddress(LocalDrive));
         aKey:=GetIDN(LocalCD);
         if aKey='-' then continue;
         IDNList.Append(aKey);
@@ -3618,7 +3622,7 @@ begin
       // Always add basic data
       for CC in BASICDRIVEDATA do
       begin
-        LocalCD:=COMMAND2CD(CC,LocalDrive);
+        LocalCD:=COMMAND2CD(CC,GetDriveAddress(LocalDrive));
         aKey:=GetIDN(LocalCD);
         if aKey='-' then continue;
         IDNList.Append(aKey);
@@ -3633,7 +3637,7 @@ begin
         for i:=0 to Pred(len) do
         begin
           aKey:=IDNList[i];
-          LocalCD:=IDN2CD(aKey,LocalDrive);
+          LocalCD:=IDN2CD(aKey,GetDriveAddress(LocalDrive));
           RR:=LoadDriveRegisterDataRaw(LocalCD);
           if Assigned(RR) then
           begin
@@ -3662,7 +3666,7 @@ begin
       if (len>0) then for i:=0 to Pred(len) do SaveDriveRegisterDataRaw(LocalDrive,StoreRR[i]);
 
       // This is a GUI update, so only process if we have data of the current visible drive
-      if (CD.SETID=ActiveDriveNumber) then
+      if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
       begin
         lvParameters.BeginUpdate;
         lvParameters.Clear;
@@ -3700,7 +3704,7 @@ var
   PRR:PRegisterRecord;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     IDN:=GetIDN(CD);
     li:=lvParameters.Items.FindCaption(0,IDN,false,true,false,true);
@@ -3727,7 +3731,7 @@ var
   s         : ansistring;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     if CD.CCLASS in [ccDrive,ccDriveSpecific] then
     begin
@@ -3784,7 +3788,7 @@ var
   OMData   : POMD;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
-  if (CD.SETID=ActiveDriveNumber) then
+  if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     comboDriveModes.Items.Clear;
     lbDriveModes.Items.Clear;
@@ -3929,7 +3933,7 @@ begin
     //Result:=CD;
 
     Result:=IDN2CD(datas,0);
-    //Result:=IDN2CD(datas,ActiveDriveNumber);
+    //Result:=IDN2CD(datas,GetDriveAddress(ActiveDriveNumber));
     if ((Result.CCLASS=ccDrive) OR (Result.CCLASS=ccDriveSpecific)) then
     try
       Delete(datas,1,9); // delete IDN and comma
@@ -4557,7 +4561,7 @@ begin
       begin
         // Init/activate SIS serial bus for comms
         // Might be superfluous after the first time
-        BuildSISStartTelegram(GetPDriveInfo(ActiveDriveNumber)^.DRIVEADDRESS,SISData,l);
+        BuildSISStartTelegram(GetDriveAddress(ActiveDriveNumber),SISData,l);
         (ComDevice AS TLazSerial).ProcessSIS(@SISData,l);
         s:='';
         if l>0 then
@@ -4573,7 +4577,7 @@ begin
         CD:=Default(TPARAMETERDATA);
         CD.CSUBCLASS:=mscParameterData;
         CD.CCLASS:=ccDrive;
-        CD.SETID:=ActiveDriveNumber;
+        CD.SETID:=GetDriveAddress(ActiveDriveNumber);
 
         // Serial config
         (*

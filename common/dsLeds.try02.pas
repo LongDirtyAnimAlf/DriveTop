@@ -20,11 +20,11 @@ interface
 
 uses
   {$IFDEF FPC}
-  LCLType, LCLIntf, LMessages, LCLProc, LResources,
+  LCLType, LCLIntf, LCLProc, LResources,
   {$ELSE}
   Windows, Messages,
   {$ENDIF}
-  SysUtils, Classes, Graphics, Controls, Forms, ExtCtrls, StrUtils;
+  SysUtils, Classes, Graphics, Controls, Forms, ExtCtrls;
 
 type
 
@@ -162,6 +162,8 @@ type
 
     FOnDouble: TNotifyEvent;
 
+    Epsilon:Extended;
+
     procedure SetDisplayCount(value:integer);
     procedure SetValue(value:double);
     procedure SetTemp(value:double);
@@ -283,6 +285,9 @@ type
     );
 
 implementation
+
+uses
+  Math; // for SameValue
 
 constructor TPLSLED7Seg.Create(AnOwner: TComponent);
 begin
@@ -645,7 +650,7 @@ begin
     // Fill the background
     Brush.Color := FBackColor;
     Pen.Color := FBackColor;
-    //Rectangle(0, 0, Width, Height);
+    Rectangle(0, 0, Width, Height);
     //FValue:=Ord('%');
     if FValue>31 then
     begin
@@ -692,8 +697,7 @@ begin
     if FDecimal then
     begin
       Brush.Color := FBrightColor;
-      Ellipse(Self.Width-FSegWidth+1,Self.Height-FSegWidth+1, (Self.Width)+1, (Self.Height)+1);
-      //Ellipse(Self.Width-FSegWidth+1,Self.Height-FSegWidth+0, (Self.Width+1), (Self.Height+1));
+      Ellipse(Self.Width-FSegWidth,Self.Height-FSegWidth, (Self.Width), (Self.Height));
     end;
 
   end;
@@ -830,7 +834,6 @@ end;
 
 procedure TdsSevenSegmentDisplay.DblClick;
 begin
-  halt;
   if Assigned(fOnDouble) then fOnDouble(Self);
 end;
 
@@ -1074,10 +1077,11 @@ begin
   BevelWidth:=FBevel;
   Color:=clBlack;
   Width:=400;
-  Height:=300;
+  Height:=100;
   FOnColor:=clRed;
   FOffColor:=RGB(50,0,0);
   FSignDigit:=false;
+  Epsilon:=0;
   DisplayCount:=4;
 end;
 
@@ -1088,6 +1092,7 @@ begin
   if (value>0) AND (value<>FDisplayCount) then
   begin
     FDisplayCount:=value;
+    Epsilon:=1/(value*10);
     for x:=Low(FDisplays) to High(FDisplays) do FDisplays[x].Destroy;
     Setlength(FDisplays,DisplayCount);
     for x:=0 to (DisplayCount-1) do
@@ -1111,8 +1116,11 @@ var
   temp1,x:integer;
   numberchar:char;
 begin
+  if SameValue(FValue,value,Epsilon) then exit;
+  //if (FValue=value) then exit;
   FValue:=value;
-  temp2:=FloattoStrF(value,fffixed,12,7);
+  x:=High(FDisplays);
+  temp2:=FloattoStrF(value,fffixed,x+7,x);
   temp1:=1;
   x:=0;
   repeat
@@ -1181,10 +1189,10 @@ begin
     FDisplays[x].OffColor:=FOffColor;
     //FDisplays[x].SegmentWidth:=5;
     //FDisplays[x].BackColor:=FDisplays[x].OffColor;
-    FDisplays[x].Top:=10;
-    FDisplays[x].Height:=Self.Height-20;
-    FDisplays[x].Width:=((Self.Width-20) DIV DisplayCount)-1;
-    FDisplays[x].Left:=(FDisplays[x].Width+1)*x+10;
+    FDisplays[x].Top:=BevelWidth*2-1;
+    FDisplays[x].Height:=Self.Height-BevelWidth*4;
+    FDisplays[x].Width:=((Self.Width-BevelWidth*4) DIV DisplayCount)-1;
+    FDisplays[x].Left:=(FDisplays[x].Width+1)*x+BevelWidth*2;
   end;
 end;
 

@@ -450,7 +450,6 @@ const
   procedure ClearDriveRegisterData(const DriveNumber:word);
   function  DriveRegisterDataCount(const DriveNumber:word):integer;
 
-
   function  GetDirectDriveCommand(const CD:TPARAMETERDATA):string;
   function  GetDriveAttribute(const CD:TPARAMETERDATA):dword;
 
@@ -461,6 +460,8 @@ const
   function  DriveParameterIsDriveMode(const IDN:TIDN):boolean;
 
   function  GetPDriveInfo(const Drive:word):PDRIVE;
+  function  GetDriveAddress(const Drive:word):byte;
+
   function  GetDriveErrorDescription(derr:word):string;
 
 var
@@ -494,6 +495,18 @@ begin
     result:=@DriveList[Drive]
   else
     result:=nil;
+  if (Drive=0) then
+    raise EArgumentException.CreateFmt ('Wrong drive address : %d !',[Drive]);
+end;
+
+function GetDriveAddress(const Drive:word):byte;
+begin
+  if Drive>0 then
+    result:=DriveList[Drive].DRIVEADDRESS
+  else
+    result:=$FF;
+  if (Drive=0) then
+    raise EArgumentException.CreateFmt ('Wrong drive address : %d !',[Drive]);
 end;
 
 function GetDirectDriveCommand(const CD:TPARAMETERDATA):string;

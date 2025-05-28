@@ -43,7 +43,7 @@ type
     CSUBCLASSCHAR  : TCAPSCHAR;
     NUMID          : word;           // Parameter number
     MEMORY         : boolean;        // Parameter block
-    SETID          : word;           // = Drive number ; Program handle ; Task ID
+    SETID          : word;           // Drive address ; Program handle ; Task ID
     STEPID         : word;
     DATA           : ansistring;
     ERROR          : ansistring;
@@ -235,9 +235,9 @@ type
   procedure CreateRegisterData(var MAP:TMySortedMap);
   function  RegisterDataCount(var MAP:TMySortedMap):integer;
 
-  function  IDN2CD(const IDN:ansistring; const DriveNumber:byte):TPARAMETERDATA;
+  function  IDN2CD(const IDN:ansistring; const DriveAddress:byte):TPARAMETERDATA;
+  function  COMMAND2CD(const C:TPARAMETER; const DriveAddress:byte):TPARAMETERDATA;
   function  NUM2SCLASS(const S:byte; var SC:TVMCOMMANDPARAMETERSUBCLASS):boolean;
-  function  COMMAND2CD(const C:TPARAMETER; const DriveNumber:byte):TPARAMETERDATA;
   function  GetIDN(const CD:TPARAMETERDATA):string; overload;
   function  GetIDN(const RR:TRegisterRecord):string; overload;
   function  GetIDN(const C:TPARAMETER):string; overload;
@@ -370,7 +370,7 @@ begin
   result:=DecimalToHexStringBase(dw,8,dd);
 end;
 
-function IDN2CD(const IDN:ansistring; const DriveNumber:byte):TPARAMETERDATA;
+function IDN2CD(const IDN:ansistring; const DriveAddress:byte):TPARAMETERDATA;
 var
   t     : Char;
   s     : ansistring;
@@ -378,7 +378,7 @@ var
 //  i:integer;
 begin
   Result:=Default(TPARAMETERDATA);
-  Result.SETID:=DriveNumber;
+  Result.SETID:=DriveAddress;
   if (Length(IDN)>=8) then
   begin
     (*
@@ -433,13 +433,13 @@ begin
   end;
 end;
 
-function COMMAND2CD(const C:TPARAMETER; const DriveNumber:byte):TPARAMETERDATA;
+function COMMAND2CD(const C:TPARAMETER; const DriveAddress:byte):TPARAMETERDATA;
 begin
   Result:=Default(TPARAMETERDATA);
   Result.CCLASS:=C.CCLASS;
   Result.CSUBCLASS:=C.CSUBCLASS;
   Result.NUMID:=C.NUMID;
-  Result.SETID:=DriveNumber;
+  Result.SETID:=DriveAddress;
 end;
 
 function IsParameterClass(aClass:TVMCOMMANDCLASS):boolean;
@@ -464,7 +464,7 @@ begin
       false            : bs:=0;
       true             : bs:=7;
     end;
-    result:=Format('%s-%d-%.4d',[bt,bs,CD.NUMID])
+    result:=Format('%s-%d-%.4d',[bt,bs,CD.NUMID]);
   end;
 end;
 
@@ -481,7 +481,7 @@ begin
     else
     end;
     if RR.IDN.Data.ParamType=1 then bt:='P';
-    result:=Format('%s-%d-%.4d',[bt,RR.IDN.Data.ParamBlock,RR.IDN.Data.ParamNum])
+    result:=Format('%s-%d-%.4d',[bt,RR.IDN.Data.ParamBlock,RR.IDN.Data.ParamNum]);
   end;
 end;
 

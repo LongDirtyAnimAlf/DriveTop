@@ -141,6 +141,9 @@ procedure BuildSISStartTelegram(SlaveAddress: Byte; out telegram: SISByteArray; 
 var
   sum, i     : Integer;
 begin
+  if (SlaveAddress=0) then
+    raise EArgumentException.CreateFmt ('Wrong slave address : %d !',[SlaveAddress]);
+
   len := 10;
   // SIS Header
   telegram[1]  := STX;          // Start symbol: STX (0x02)

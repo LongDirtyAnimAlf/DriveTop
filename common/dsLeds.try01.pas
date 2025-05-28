@@ -692,7 +692,7 @@ begin
     if FDecimal then
     begin
       Brush.Color := FBrightColor;
-      Ellipse(Self.Width-FSegWidth+1,Self.Height-FSegWidth+1, (Self.Width)+1, (Self.Height)+1);
+      Ellipse(Self.Width-FSegWidth,Self.Height-FSegWidth, (Self.Width), (Self.Height));
       //Ellipse(Self.Width-FSegWidth+1,Self.Height-FSegWidth+0, (Self.Width+1), (Self.Height+1));
     end;
 
