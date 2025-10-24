@@ -1,5 +1,5 @@
 object Form1: TForm1
-  Left = 198
+  Left = 141
   Height = 631
   Top = 136
   Width = 1366
@@ -8,9 +8,9 @@ object Form1: TForm1
   ClientHeight = 631
   ClientWidth = 1366
   Menu = MainMenu1
+  LCLVersion = '4.2.0.0'
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  LCLVersion = '3.2.0.0'
   object btnConnectDDE: TButton
     AnchorSideLeft.Control = btnConnectVMRS232
     AnchorSideTop.Control = btnConnectVMRS232
@@ -110,12 +110,12 @@ object Form1: TForm1
     Height = 615
     Top = 8
     Width = 446
-    ActivePage = TabSheet1
+    ActivePage = tabMove
     Anchors = [akTop, akRight, akBottom]
     BorderSpacing.Top = 8
     BorderSpacing.Right = 8
     BorderSpacing.Bottom = 8
-    TabIndex = 0
+    TabIndex = 1
     TabOrder = 6
     object TabSheet1: TTabSheet
       Caption = 'Drive data'
@@ -180,7 +180,7 @@ object Form1: TForm1
         AnchorSideRight.Control = synDataUpdate
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = synDataUpdate
-        Left = 246
+        Left = 118
         Height = 25
         Top = 422
         Width = 122
@@ -202,7 +202,7 @@ object Form1: TForm1
         Left = 8
         Height = 124
         Top = 455
-        Width = 360
+        Width = 232
         BorderSpacing.Around = 8
         Anchors = [akLeft, akBottom]
         Constraints.MinHeight = 80
@@ -695,17 +695,16 @@ object Form1: TForm1
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = TabSheet1
         AnchorSideBottom.Side = asrBottom
-        Left = 376
+        Left = 248
         Height = 160
         Hint = 'Edit value field to update data.'
         Top = 419
-        Width = 54
+        Width = 182
         Anchors = [akLeft, akRight, akBottom]
         AutoEdit = False
         BorderSpacing.Around = 8
         DefaultDrawing = False
         ExtendedSelect = False
-        FixedCols = 0
         Flat = True
         HeaderHotZones = []
         HeaderPushZones = []
@@ -730,7 +729,7 @@ object Form1: TForm1
         )
         ColWidths = (
           64
-          0
+          100
         )
       end
     end
@@ -744,12 +743,12 @@ object Form1: TForm1
         AnchorSideRight.Control = tabMove
         AnchorSideRight.Side = asrBottom
         Left = 0
-        Height = 457
+        Height = 497
         Top = 0
         Width = 438
         Anchors = [akTop, akLeft, akRight]
         BevelOuter = bvNone
-        ClientHeight = 457
+        ClientHeight = 497
         ClientWidth = 438
         TabOrder = 0
         object shapeBase: TShape
@@ -805,9 +804,9 @@ object Form1: TForm1
           BorderSpacing.Bottom = 8
           Brush.Color = clLime
           Pen.Width = 2
+          Shape = stTriangle
           OnMouseDown = ArrowMouseDown
           OnMouseUp = ArrowMouseUp
-          Shape = stTriangle
         end
         object shapeArrowDown: TShape
           AnchorSideLeft.Control = shapeStar
@@ -822,9 +821,9 @@ object Form1: TForm1
           BorderSpacing.Top = 8
           Brush.Color = clLime
           Pen.Width = 2
+          Shape = stTriangleDown
           OnMouseDown = ArrowMouseDown
           OnMouseUp = ArrowMouseUp
-          Shape = stTriangleDown
         end
         object shapeArrowRight: TShape
           AnchorSideLeft.Control = shapeStar
@@ -839,9 +838,9 @@ object Form1: TForm1
           BorderSpacing.Left = 12
           Brush.Color = clLime
           Pen.Width = 2
+          Shape = stTriangleRight
           OnMouseDown = ArrowMouseDown
           OnMouseUp = ArrowMouseUp
-          Shape = stTriangleRight
         end
         object shapeArrowLeft: TShape
           AnchorSideTop.Control = shapeStar
@@ -856,9 +855,9 @@ object Form1: TForm1
           BorderSpacing.Right = 12
           Brush.Color = clLime
           Pen.Width = 2
+          Shape = stTriangleLeft
           OnMouseDown = ArrowMouseDown
           OnMouseUp = ArrowMouseUp
-          Shape = stTriangleLeft
         end
         object labelReps: TLabel
           AnchorSideLeft.Control = editReps
@@ -867,7 +866,7 @@ object Form1: TForm1
           AnchorSideBottom.Control = editReps
           Left = 255
           Height = 15
-          Top = 435
+          Top = 478
           Width = 59
           Caption = 'Repetitions'
         end
@@ -877,7 +876,7 @@ object Form1: TForm1
           AnchorSideTop.Side = asrBottom
           Left = 255
           Height = 38
-          Top = 397
+          Top = 440
           Width = 64
           BorderSpacing.Top = 16
           Font.CharSet = ANSI_CHARSET
@@ -895,13 +894,13 @@ object Form1: TForm1
           AnchorSideRight.Control = MovementPanel1
           AnchorSideRight.Side = asrBottom
           Left = 255
-          Height = 377
+          Height = 420
           Top = 4
           Width = 183
           Anchors = [akTop, akRight]
           BorderSpacing.Top = 4
           Caption = 'Movement settings'
-          ClientHeight = 357
+          ClientHeight = 400
           ClientWidth = 179
           TabOrder = 1
           object selectDirection: TRadioGroup
@@ -931,9 +930,9 @@ object Form1: TForm1
               'Left/right'
               'Jog'
             )
+            TabOrder = 0
             OnClick = selectDirectionClick
             OnSelectionChanged = selectDirectionSelectionChanged
-            TabOrder = 0
           end
           object labelSpeed: TLabel
             AnchorSideLeft.Control = grpSettings
@@ -963,7 +962,7 @@ object Form1: TForm1
             BorderSpacing.Around = 8
             NumbersOnly = True
             TabOrder = 1
-            Text = '10000'
+            Text = '5000'
           end
           object labelAccel: TLabel
             AnchorSideLeft.Control = grpSettings
@@ -1026,15 +1025,15 @@ object Form1: TForm1
           end
           object btnMove: TButton
             AnchorSideLeft.Control = grpSettings
-            AnchorSideTop.Control = editAccel
+            AnchorSideTop.Control = editFeed
             AnchorSideTop.Side = asrBottom
             AnchorSideRight.Control = grpSettings
             AnchorSideRight.Side = asrBottom
             AnchorSideBottom.Control = grpSettings
             AnchorSideBottom.Side = asrBottom
             Left = 8
-            Height = 46
-            Top = 303
+            Height = 27
+            Top = 365
             Width = 75
             Anchors = [akTop, akLeft, akBottom]
             BorderSpacing.Top = 8
@@ -1042,6 +1041,37 @@ object Form1: TForm1
             Caption = 'Move'
             TabOrder = 4
             OnClick = btnMoveClick
+          end
+          object editFeed: TEdit
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = labelFeed
+            AnchorSideTop.Side = asrBottom
+            AnchorSideRight.Control = grpSettings
+            AnchorSideRight.Side = asrBottom
+            Left = 8
+            Height = 23
+            Top = 326
+            Width = 163
+            Anchors = [akTop, akLeft, akRight]
+            BorderSpacing.Around = 8
+            NumbersOnly = True
+            TabOrder = 5
+            Text = '25'
+          end
+          object labelFeed: TLabel
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = editAccel
+            AnchorSideTop.Side = asrBottom
+            AnchorSideRight.Control = grpSettings
+            AnchorSideRight.Side = asrBottom
+            Left = 8
+            Height = 15
+            Top = 303
+            Width = 163
+            Anchors = [akTop, akLeft, akRight]
+            BorderSpacing.Top = 8
+            BorderSpacing.Around = 8
+            Caption = 'Feedrate [%]'
           end
         end
       end
@@ -1052,11 +1082,11 @@ object Form1: TForm1
         AnchorSideBottom.Control = tabMove
         AnchorSideBottom.Side = asrBottom
         Left = 0
-        Height = 128
-        Top = 459
+        Height = 83
+        Top = 504
         Width = 438
         Anchors = [akTop, akLeft, akRight, akBottom]
-        ClientHeight = 128
+        ClientHeight = 83
         ClientWidth = 438
         TabOrder = 1
         object ListView1: TListView
@@ -1355,7 +1385,6 @@ object Form1: TForm1
         AutoEdit = False
         BorderSpacing.Around = 8
         ExtendedSelect = False
-        FixedCols = 0
         RowCount = 24
         TabOrder = 0
         OnDblClick = ValueListEditor1DblClick
@@ -1415,7 +1444,6 @@ object Form1: TForm1
         BorderSpacing.Around = 8
         DefaultColWidth = 90
         ExtendedSelect = False
-        FixedCols = 0
         RowCount = 24
         ScrollBars = ssAutoVertical
         TabOrder = 2
@@ -1488,7 +1516,6 @@ object Form1: TForm1
         BorderSpacing.Around = 8
         DefaultColWidth = 70
         ExtendedSelect = False
-        FixedCols = 0
         RowCount = 24
         ScrollBars = ssAutoVertical
         TabOrder = 5
@@ -1672,13 +1699,13 @@ object Form1: TForm1
       Anchors = [akTop, akLeft, akRight]
       ArrowKeys = False
       Min = 1
-      OnClick = UpDownDriveAddressClick
       Orientation = udHorizontal
       ParentShowHint = False
       Position = 1
       ShowHint = True
       TabOrder = 4
       Thousands = False
+      OnClick = UpDownDriveAddressClick
     end
     object stDriveAddress: TStaticText
       AnchorSideTop.Control = TabControl1
@@ -1897,11 +1924,11 @@ object Form1: TForm1
         ClientWidth = 420
         TabOrder = 0
         object PanelControl: TPanel
-          Left = 2
+          Left = 3
           Height = 36
           Hint = 'Control voltage applied'
-          Top = 2
-          Width = 100
+          Top = 3
+          Width = 99
           BevelOuter = bvLowered
           BevelWidth = 2
           Caption = 'Control'
@@ -1923,8 +1950,8 @@ object Form1: TForm1
           Left = 108
           Height = 36
           Hint = 'Drive power applied'
-          Top = 2
-          Width = 100
+          Top = 3
+          Width = 99
           BevelOuter = bvLowered
           BevelWidth = 2
           Caption = 'Power'
@@ -1943,11 +1970,11 @@ object Form1: TForm1
           TabOrder = 1
         end
         object PanelHalt: TPanel
-          Left = 214
+          Left = 213
           Height = 36
           Hint = 'Feed hold/pause. Click panel to set HOLD state'
-          Top = 2
-          Width = 100
+          Top = 3
+          Width = 99
           BevelOuter = bvLowered
           BevelWidth = 2
           Caption = 'Halt'
@@ -1966,11 +1993,11 @@ object Form1: TForm1
           TabOrder = 2
         end
         object PanelEnable: TPanel
-          Left = 320
+          Left = 318
           Height = 36
           Hint = 'Busy/Running'
-          Top = 2
-          Width = 98
+          Top = 3
+          Width = 99
           BevelOuter = bvLowered
           BevelWidth = 2
           Caption = 'Enable'
@@ -2039,10 +2066,10 @@ object Form1: TForm1
         ClientWidth = 420
         TabOrder = 2
         object PanelPhase2: TPanel
-          Left = 2
-          Height = 30
-          Top = 2
-          Width = 123
+          Left = 3
+          Height = 28
+          Top = 3
+          Width = 122
           BevelOuter = bvLowered
           BevelWidth = 2
           Caption = 'Phase2'
@@ -2058,9 +2085,9 @@ object Form1: TForm1
         end
         object PanelPhase3: TPanel
           Left = 149
-          Height = 30
-          Top = 2
-          Width = 123
+          Height = 28
+          Top = 3
+          Width = 122
           BevelOuter = bvLowered
           BevelWidth = 2
           Caption = 'Phase3'
@@ -2075,9 +2102,9 @@ object Form1: TForm1
           TabOrder = 1
         end
         object PanelPhase4: TPanel
-          Left = 296
-          Height = 30
-          Top = 2
+          Left = 295
+          Height = 28
+          Top = 3
           Width = 122
           BevelOuter = bvLowered
           BevelWidth = 2
@@ -2093,11 +2120,11 @@ object Form1: TForm1
           TabOrder = 2
         end
         object btnPhase2: TButton
-          Left = 2
+          Left = 3
           Height = 26
           Hint = 'Click to select phase 2'
-          Top = 36
-          Width = 123
+          Top = 35
+          Width = 122
           Caption = 'Phase 2'
           ParentShowHint = False
           ShowHint = True
@@ -2108,8 +2135,8 @@ object Form1: TForm1
           Left = 149
           Height = 26
           Hint = 'Click to select phase 3'
-          Top = 36
-          Width = 123
+          Top = 35
+          Width = 122
           Caption = 'Phase 3'
           ParentShowHint = False
           ShowHint = True
@@ -2117,10 +2144,10 @@ object Form1: TForm1
           OnClick = btnAxisCommandClick
         end
         object btnPhase4: TButton
-          Left = 296
+          Left = 295
           Height = 26
           Hint = 'Click to select phase 4'
-          Top = 36
+          Top = 35
           Width = 122
           Caption = 'Phase 4'
           ParentShowHint = False
@@ -2153,10 +2180,10 @@ object Form1: TForm1
         ClientWidth = 420
         TabOrder = 3
         object panelInReference: TPanel
-          Left = 2
+          Left = 3
           Height = 28
-          Top = 2
-          Width = 100
+          Top = 3
+          Width = 99
           BevelOuter = bvLowered
           BevelWidth = 2
           Caption = 'In Reference'
@@ -2173,8 +2200,8 @@ object Form1: TForm1
         object panelInPosition: TPanel
           Left = 108
           Height = 28
-          Top = 2
-          Width = 100
+          Top = 3
+          Width = 99
           BevelOuter = bvLowered
           BevelWidth = 2
           Caption = 'In Position'
@@ -2190,10 +2217,10 @@ object Form1: TForm1
         end
         object panelStandstill: TPanel
           AnchorSideRight.Side = asrCenter
-          Left = 214
+          Left = 213
           Height = 28
-          Top = 2
-          Width = 100
+          Top = 3
+          Width = 99
           BevelOuter = bvLowered
           BevelWidth = 2
           Caption = 'Standstill'
@@ -2209,10 +2236,10 @@ object Form1: TForm1
         end
         object panelTargetPosition: TPanel
           AnchorSideRight.Side = asrBottom
-          Left = 320
+          Left = 318
           Height = 28
-          Top = 2
-          Width = 98
+          Top = 3
+          Width = 99
           BevelOuter = bvLowered
           BevelWidth = 2
           Caption = 'Target Position'

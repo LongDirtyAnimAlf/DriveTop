@@ -74,12 +74,14 @@ type
     chkAutoLoadDriveData: TCheckBox;
     cmboSerialPorts: TComboBox;
     comboDriveModes: TComboBox;
+    editFeed: TEdit;
     EditPos: TEdit;
     editStatus: TEdit;
     editCommand: TEdit;
     editValue: TEdit;
     grpDriveDashBoard: TGroupBox;
     grpDriveInfo: TGroupBox;
+    labelFeed: TLabel;
     lbDriveModes: TListBox;
     lblTime: TLabel;
     ListView1: TListView;
@@ -603,11 +605,11 @@ begin
 
     i                             := StrToIntDef(editSpeed.Text,0);
     i                             := ini.ReadInteger('Move','Speed',i);
-    editSpeed.Text                 := InttoStr(i);
+    editSpeed.Text                := InttoStr(i);
 
     i                             := StrToIntDef(editAccel.Text,0);
     i                             := ini.ReadInteger('Move','Acceleration',i);
-    editAccel.Text                 := InttoStr(i);
+    editAccel.Text                := InttoStr(i);
 
     i                             := StrToIntDef(editReps.Text,0);
     i                             := ini.ReadInteger('Move','Repetitions',i);
@@ -628,13 +630,9 @@ begin
 end;
 
 procedure TForm1.lbCOMMANDSDblClick(Sender: TObject);
-{$ifndef VISUALMOTION}
-begin
-end;
-{$else}
 var
   LB                : TListBox;
-  CD                : TCOMMANDDATA;
+  CD                : TPARAMETERDATA;
   id                : word;
   CommandString     : RawByteString;
   SUBCLASSIDARRAY   : PSCA;
@@ -643,7 +641,7 @@ begin
   if DirectDrive then exit;
 
   LB:=TListBox(Sender);
-  CD:=Default(TCOMMANDDATA);
+  CD:=Default(TPARAMETERDATA);
   CommandString:=sUN;
 
   if Sender=lbVMSYSTEMCOMMANDS then CD.CCLASS:=ccControl;
@@ -652,7 +650,7 @@ begin
   if Sender=lbSERCOSCOMMANDS then CD.CCLASS:=ccDrive;
   if Sender=lbSERCOSPARAMS then CD.CCLASS:=ccDriveSpecific;
 
-  id := ActiveDrive;
+  id := GetDriveAddress(ActiveDriveNumber);
   if ((Sender=lbVMAXISCOMMANDS) OR (Sender=lbSERCOSCOMMANDS) OR (Sender=lbSERCOSPARAMS)) then
   begin
     if (AxisActive=axisOne) then id:=1;
@@ -691,7 +689,6 @@ begin
 
   editCommand.Text:=CommandString;
 end;
-{$endif}
 
 procedure TForm1.pageRawCommandsChange(Sender: TObject);
 var
@@ -1019,7 +1016,7 @@ begin
     tabVMRegister.TabVisible:=VisualMotion;
     *)
 
-    if DirectDrive then
+    if DirectDrive OR SISDrive then
     begin
       // Force the activedrive change magic
       // Bit tricky ... ;-)
@@ -1077,7 +1074,7 @@ begin
     success:=ProcessParameter(CD,s,false,true);
 
     // Get strobe flag to toggle
-    CD.NUMID:=346;
+    CD:=SetCommand(DRIVE_SETUPRELATIVECOMMAND);
     CD.DATA:='';
     // Get current register value
     success:=ProcessParameter(CD,s,false,true);
@@ -1284,27 +1281,21 @@ begin
   if (Sender=btnPhase2) then
   begin
     // C400 Communication phase 2 transition
-    CD.CCLASS:=ccDriveSpecific;
-    //CD.CSUBCLASS:=mscParameterData;
-    CD.NUMID:=4023;
+    CD:=SetCommand(DRIVE_PHASE2);
     m:='Axis back in Phase 2';
   end;
 
   if (Sender=btnPhase3) then
   begin
     // C100 Communication phase 3 transition check
-    CD.CCLASS:=ccDrive;
-    //CD.CSUBCLASS:=mscParameterData;
-    CD.NUMID:=127;
+    CD:=SetCommand(DRIVE_PHASE3);
     m:='Axis from Phase 2 to Phase 3';
   end;
 
   if (Sender=btnPhase4) then
   begin
     // C200 Communication phase 4 transition check
-    CD.CCLASS:=ccDrive;
-    //CD.CSUBCLASS:=mscParameterData;
-    CD.NUMID:=128;
+    CD:=SetCommand(DRIVE_PHASE4);
     m:='Axis from Phase 3 to Phase 4'
   end;
 
@@ -1406,10 +1397,8 @@ begin
   CD:=Default(TPARAMETERDATA);
 
   // Get axis status
-  CD.CCLASS:=ccDrive;
-  CD.CSUBCLASS:=mscParameterData;
+  CD:=SetCommand(DRIVE_STATUSWORD);
   CD.SETID:=axis;
-  CD.NUMID:=135;
   success:=ProcessParameter(CD,s);
   if success then
   begin
@@ -1420,16 +1409,25 @@ begin
     for i:=1 to 3 do
     begin
       AxisAlert:=false;
-      if (i=1) then AxisAlert:=(SC135.Data.ChangeClass1Diag=1);
-      if (i=2) then AxisAlert:=(SC135.Data.ChangeClass2Diag=1);
-      if (i=3) then AxisAlert:=(SC135.Data.ChangeClass3Diag=1);
+      if (i=1) then
+      begin
+        AxisAlert:=(SC135.Data.ChangeClass1Diag=1);
+        CD:=SetCommand(DRIVE_DIAGNOSTIC_CLASS1);
+      end;
+      if (i=2) then
+      begin
+        AxisAlert:=(SC135.Data.ChangeClass2Diag=1);
+        CD:=SetCommand(DRIVE_DIAGNOSTIC_CLASS2);
+      end;
+      if (i=3) then
+      begin
+        AxisAlert:=(SC135.Data.ChangeClass3Diag=1);
+        CD:=SetCommand(DRIVE_DIAGNOSTIC_CLASS3);
+      end;
       if AxisAlert then
       begin
         AxisAlert:=false;
-        CD.CCLASS:=ccDrive;
-        CD.CSUBCLASS:=mscParameterData;
         CD.SETID:=axis;
-        CD.NUMID:=(11+i-1);
         success:=ProcessParameter(CD,s);
         if success then
         begin
@@ -1441,10 +1439,8 @@ begin
       if AxisAlert then
       begin
         // Get axis diag number
-        CD.CCLASS:=ccDrive;
-        CD.CSUBCLASS:=mscParameterData;
+        CD:=SetCommand(DRIVE_DIAGNOSTICNUMBER);
         CD.SETID:=axis;
-        CD.NUMID:=390;
         success:=ProcessParameter(CD,s);
         if success then
         begin
@@ -1452,10 +1448,8 @@ begin
           Memo1.Lines.Append('Axis diagnostic class '+InttoStr(i)+'. Number: '+s);
         end;
         // Get axis diag message
-        CD.CCLASS:=ccDrive;
-        CD.CSUBCLASS:=mscParameterData;
+        CD:=SetCommand(DRIVE_DIAGNOSTIC);
         CD.SETID:=axis;
-        CD.NUMID:=95;
         success:=ProcessParameter(CD,s);
         if success then
         begin
@@ -1466,10 +1460,8 @@ begin
   end;
 
   // Get diagnostic message
-  CD.CCLASS:=ccDrive;
-  CD.CSUBCLASS:=mscParameterData;
+  CD:=SetCommand(DRIVE_DIAGNOSTIC);
   CD.SETID:=axis;
-  CD.NUMID:=95;
   success:=ProcessParameter(CD,s);
   if (success AND (s<>sERR)) then
   begin
@@ -1493,10 +1485,8 @@ begin
   end;
 
   // Command value mode for modulo format
-  CD.CCLASS:=ccDrive;
-  CD.CSUBCLASS:=mscParameterData;
+  CD:=SetCommand(DRIVE_COMMANDMODE);
   CD.SETID:=axis;
-  CD.NUMID:=393;
   success:=ProcessParameter(CD,s);
   if (success AND (s<>sERR)) then
   begin
@@ -1616,6 +1606,7 @@ var
   c,s          : RawByteString;
   CD           : TPARAMETERDATA;
   CDStorage    : TPARAMETERDATA;
+  CDResult     : TPARAMETERDATA;
   CC           : TPARAMETER;
   success      : boolean;
   i,listlength : integer;
@@ -1637,7 +1628,12 @@ begin
     begin
       CD:=COMMAND2CD(CC,GetDriveAddress(ActiveDriveNumber));
       success:=ProcessParameter(CD,s,(NOT BLOCK),BLOCK);
-      if BLOCK then OnCommData(s);
+      //if BLOCK then OnCommData(s);
+      if BLOCK then
+      begin
+        CDResult:=ProcessResponse(CD,s);
+        ProcessCommResult(CDResult);
+      end;
     end;
   end;
 
@@ -1901,26 +1897,24 @@ begin
   begin
     CD:=Default(TPARAMETERDATA);
 
-    CD.CCLASS:=ccDrive;
-    CD.CSUBCLASS:=mscParameterData;
     CD.SETID:=axis;
     CD.STEPID:=0;
 
     // Set speed
     // Can only be set in Phase2 ... :-(
-    CD.NUMID:=259;
+    CD:=SetCommand(DRIVE_SPEED);
     CD.DATA:=editSpeed.Text;
     success:=ProcessParameter(CD,s,false,true);
 
     // Set acceleration
     // Can only be set in Phase2 ... :-(
-    CD.NUMID:=260;
+    CD:=SetCommand(DRIVE_ACCEL);
     CD.DATA:=editAccel.Text;
     success:=ProcessParameter(CD,s,false,true);
 
     // Set feedrate
-    CD.NUMID:=108;
-    CD.DATA:='100'; // 100% = no changes
+    CD:=SetCommand(DRIVE_FEED);
+    CD.DATA:=editFeed.Text; // 100% = no changes
     success:=ProcessParameter(CD,s,false,true);
 
     (*
@@ -1933,7 +1927,7 @@ begin
     if (DriveMode=omRDIE1) then
     begin
       // Set relative travel distance
-      CD.NUMID:=282; // only with omRDIE1
+      CD:=SetCommand(DRIVE_DISTANCE); // only with omRDIE1
       CD.DATA:=editDist.Text;
       success:=ProcessParameter(CD,s,false,true);
     end;
@@ -1941,28 +1935,35 @@ begin
     if (DriveMode=omDIE1) then
     begin
       // Set absolute target position
-      CD.NUMID:=258; // only with omDIE1
+      CD:=SetCommand(DRIVE_TARGET); // only with omDIE1
       CD.DATA:=editDist.Text;
       success:=ProcessParameter(CD,s,false,true);
     end;
 
 
-    // Get strobe flag to toggle
-    CD.NUMID:=346;
-    CD.DATA:='';
-    // Get current register value
-    success:=ProcessParameter(CD,s,false,true);
-    StatusCD:=ProcessResponse(CD,s);
-    SC346.Raw:=BinaryStringToDecimal(StatusCD.DATA);
-    // Engage drive by toggling stobe bit
-    SC346.Data.AcceptPositionToggle:=1-SC346.Data.AcceptPositionToggle; // toggle strobe bit
-    SC346.Data.PositionType:=1;
-    SC346.Data.Reference:=1;
-    SC346.Data.TargetOverride:=1;
-    CD.DATA:=DecimalToBinaryString(SC346.Raw,DirectDrive);
-    success:=ProcessParameter(CD,s,false,true);
+    if (DriveMode in (DriveInternalInterpolationModesRelative+PositionControlBlockModes)) then
+    begin
+      // Get strobe flag to toggle
+      CD:=SetCommand(DRIVE_SETUPRELATIVECOMMAND);
+      CD.DATA:='';
+      // Get current register value
+      success:=ProcessParameter(CD,s,false,true);
+      StatusCD:=ProcessResponse(CD,s);
+      SC346.Raw:=BinaryStringToDecimal(StatusCD.DATA);
+      // Engage drive by toggling strobe bit
+      SC346.Data.AcceptPositionToggle:=1-SC346.Data.AcceptPositionToggle; // toggle strobe bit
+      SC346.Data.PositionType:=1;
+      SC346.Data.Reference:=1;
+      SC346.Data.TargetOverride:=1;
+      CD.DATA:=DecimalToBinaryString(SC346.Raw,DirectDrive);
+      success:=ProcessParameter(CD,s,false,true);
+    end;
 
     //Sleep(1000);
+
+    
+    //CD.CCLASS:=ccDrive;
+    //CD.CSUBCLASS:=mscParameterData;
 
     // Wait for position
     (*
@@ -2282,10 +2283,8 @@ var
   CD:TPARAMETERDATA;
 begin
   CD:=Default(TPARAMETERDATA);
-  CD.CCLASS:=ccDrive;
-  CD.CSUBCLASS:=mscParameterData;
+  CD:=SetCommand(DRIVE_POSITIONFEEDBACK);
   CD.SETID:=1;
-  CD.NUMID:=51;
   CD.DATA:='';
   BuildSISTelegram(CD,Data,l);
   s:='';
@@ -3458,6 +3457,7 @@ var
   DR182          : TDRIVEPARAMETER_0182;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
+  exit;
   if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
   begin
     DR182.Raw:=BinaryStringToDecimal(CD.DATA);
@@ -3572,10 +3572,17 @@ begin
   begin
     with DRIVE_SET_SPEED do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then ActualVelocityDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
     with DRIVE_ACTUAL_SPEED do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then SetVelocityDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
-    with DRIVE_COMMAND do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then PositionDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
-    with DRIVE_FEEDBACK do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then FeedbackDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
+    with DRIVE_POSITIONCOMMAND do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then PositionDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
+    with DRIVE_POSITIONFEEDBACK do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then FeedbackDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
+    //with DRIVE_FOLLOWINGERROR do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then FeedbackDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
     with DRIVE_TARGET do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then TargetDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
     with DRIVE_DISTANCE do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then DistanceDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
+
+
+    SetInfoPanel(panelStandstill,(SetVelocityDisplay.Value<10));
+    SetInfoPanel(panelInPosition,((Abs(PositionDisplay.Value-TargetDisplay.Value)<1)));
+    //SetInfoPanel(panelTargetPosition,(DR182.Data.InTargetPosition=1));
+
   end;
 end;
 
@@ -3887,13 +3894,13 @@ end;
 
 procedure TForm1.OnCommData(const s:ansistring);
 var
-  CD:TPARAMETERDATA;
-  CDStatus:TPARAMETERDATA;
+  CD        : TPARAMETERDATA;
+  CDResult  : TPARAMETERDATA;
 begin
   Memo1.Lines.Append('Received: '+s);
   CD:=Default(TPARAMETERDATA);
-  CDStatus:=ProcessResponse(CD,s);
-  ProcessCommResult(CDStatus);
+  CDResult:=ProcessResponse(CD,s);
+  ProcessCommResult(CDResult);
 end;
 
 function TForm1.ProcessResponse(const CD:TPARAMETERDATA; const s:RawByteString):TPARAMETERDATA;
@@ -4263,10 +4270,10 @@ begin
     with DRIVE_CONTROLLERTYPE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))      then ProcessControllerType(LocalCD);
     with DRIVE_MOTORSERIAL do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))         then ProcessMotorSerial(LocalCD);
 
-    with DRIVE_COMMAND do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))             then ProcessRealtimeData(LocalCD);
+    with DRIVE_POSITIONCOMMAND do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))             then ProcessRealtimeData(LocalCD);
     with DRIVE_TARGET do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))              then ProcessRealtimeData(LocalCD);
     with DRIVE_DISTANCE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))            then ProcessRealtimeData(LocalCD);
-    with DRIVE_FEEDBACK do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))            then ProcessRealtimeData(LocalCD);
+    with DRIVE_POSITIONFEEDBACK do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))            then ProcessRealtimeData(LocalCD);
     with DRIVE_ACTUAL_SPEED do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))        then ProcessRealtimeData(LocalCD);
     with DRIVE_SET_SPEED do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))           then ProcessRealtimeData(LocalCD);
 
@@ -4561,7 +4568,15 @@ begin
       begin
         // Init/activate SIS serial bus for comms
         // Might be superfluous after the first time
-        BuildSISStartTelegram(GetDriveAddress(ActiveDriveNumber),SISData,l);
+        BuildSISStartTelegram(2,SISData,l);
+        s:='';
+        if l>0 then
+        begin
+          for i:=1 to l do
+          begin
+            s:=s+InttoStr(SISData[i])+',';
+          end;
+        end;
         (ComDevice AS TLazSerial).ProcessSIS(@SISData,l);
         s:='';
         if l>0 then
@@ -4621,7 +4636,8 @@ begin
         *)
 
         // Command value mode
-        CD.NUMID:=393;
+        CD:=SetCommand(DRIVE_COMMANDMODE);
+        CD.SETID:=GetDriveAddress(ActiveDriveNumber);
         CD.DATA:='';
         s:='';
         success:=ProcessParameter(CD,s,false,true);

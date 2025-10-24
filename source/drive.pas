@@ -16,9 +16,10 @@ type
   TOPERATIONMODE                    = (omNone,omTC,omVC,omPCE1,omPCE2,omPCE12,omPC,omDIE1,omDIE2,omDIE12,omRDIE1,omRDIE2,omRDIE12,omPCBME1,omPCBME2,omPCBME12,omVSV,omASVE1,omASVE2,omCAMVE1,omCAMVE2,omASE1,omVS,omCAME1,omSM,omJM);
 
 const
-  DriveInternalInterpolationModes   = [omDIE1,omDIE2,omDIE12,omRDIE1,omRDIE2,omRDIE12];
-  PositionControl                   = [omPCE1,omPCE2,omPCE12];
-  PositionControlBlockModes         = [omPCBME1,omPCBME2,omPCBME12];
+  DriveInternalInterpolationModes          = [omDIE1,omDIE2,omDIE12,omRDIE1,omRDIE2,omRDIE12];
+  DriveInternalInterpolationModesRelative  = [omRDIE1,omRDIE2,omRDIE12];
+  PositionControl                          = [omPCE1,omPCE2,omPCE12];
+  PositionControlBlockModes                = [omPCBME1,omPCBME2,omPCBME12];
 
 type
   TOMDATA = record
@@ -408,21 +409,33 @@ const
   DRIVE_CONTROLLERTYPE         : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 140);
   DRIVE_MOTORTYPE              : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 141);
   DRIVE_APPTYPE                : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 142);
+
+  DRIVE_PHASE2                 : TPARAMETER = (CCLASS: ccDriveSpecific; CSUBCLASS: mscNone; NUMID: 4023);
+  DRIVE_PHASE3                 : TPARAMETER = (CCLASS: ccDrive; CSUBCLASS: mscNone; NUMID: 127);
+  DRIVE_PHASE4                 : TPARAMETER = (CCLASS: ccDrive; CSUBCLASS: mscNone; NUMID: 128);
+
   DRIVE_MOTORSERIAL            : TPARAMETER = (CCLASS: ccDriveSpecific; CSUBCLASS: mscParameterData; NUMID: 4088);
 
   DRIVE_CONTROLWORD            : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 134);
   DRIVE_STATUSWORD             : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 135);
   DRIVE_DIAGNOSTIC             : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 95);
-  DRIVE_INTERFACE              : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 14);
+  DRIVE_DIAGNOSTICNUMBER       : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 390);
 
-  DRIVE_COMMAND                : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 47);
-  DRIVE_FEEDBACK               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 51);
+  DRIVE_POSITIONCOMMAND        : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 47);
+  DRIVE_POSITIONFEEDBACK       : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 51);
+  DRIVE_FEED                   : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 108);
   DRIVE_TARGET                 : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 258);
+  DRIVE_SPEED                  : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 259);
+  DRIVE_ACCEL                  : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 260);
   DRIVE_DISTANCE               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 282);
 
+  DRIVE_SETUPRELATIVECOMMAND   : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 346);
+  DRIVE_COMMANDMODE            : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 393);
+
+  DRIVE_FOLLOWINGERROR         : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 189);
 
   DRIVE_SET_SPEED              : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 36);
-  DRIVE_ACTUAL_SPEED            : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 40);
+  DRIVE_ACTUAL_SPEED           : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 40);
   //DRIVE_TORQUE                 : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 84);
 
   DRIVE_MODELIST               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscList;          NUMID: 292);
@@ -431,9 +444,11 @@ const
   DRIVE_SIGNAL_STATUSWORD      : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 144);
   DRIVE_SIGNAL_CONTROLWORD     : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 145);
 
-  DRIVE_DIAGNOSTIC_CLASS1                   : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 11);
-  DRIVE_DIAGNOSTIC_CLASS2                   : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 12);
-  DRIVE_DIAGNOSTIC_CLASS3                   : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 13);
+  DRIVE_DIAGNOSTIC_CLASS1      : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 11);
+  DRIVE_DIAGNOSTIC_CLASS2      : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 12);
+  DRIVE_DIAGNOSTIC_CLASS3      : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 13);
+  DRIVE_INTERFACE              : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 14);
+
   DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3      : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 182);
 
   function  SaveDriveRegisterData(const CD:TPARAMETERDATA):boolean;
@@ -464,11 +479,12 @@ const
 
   function  GetDriveErrorDescription(derr:word):string;
 
+  function  SetCommand(aValue:TPARAMETER):TPARAMETERDATA;
 var
   DriveOperationModes         : TOMD;
   DriveOperationModesLagLess  : TOMD;
   BASICDRIVEDATA              : array[0..5] of TPARAMETER;
-  REALTIMEDRIVEDATA           : array[0..9] of TPARAMETER;
+  REALTIMEDRIVEDATA           : array[0..10] of TPARAMETER;
 
 implementation
 
@@ -478,6 +494,14 @@ const
 var
   IDNDriveList                : array[0..MAXDRIVES] of TMySortedMap;
   DriveList                   : array[1..MAXDRIVES] of TDRIVE;
+
+
+function SetCommand(aValue:TPARAMETER):TPARAMETERDATA;
+begin
+  result.CCLASS:=aValue.CCLASS;
+  result.CSUBCLASS:=aValue.CSUBCLASS;
+  result.NUMID:=aValue.NUMID;
+end;
 
 function GetDriveInfo(const Drive:word):TDRIVE;
 begin
@@ -813,7 +837,7 @@ begin
   BASICDRIVEDATA[5]:=DRIVE_PRIMARYMODE;
 
   REALTIMEDRIVEDATA[0]:=DRIVE_TARGET;
-  REALTIMEDRIVEDATA[1]:=DRIVE_COMMAND;
+  REALTIMEDRIVEDATA[1]:=DRIVE_POSITIONCOMMAND;
   REALTIMEDRIVEDATA[2]:=DRIVE_DISTANCE;
   REALTIMEDRIVEDATA[3]:=DRIVE_CONTROLWORD;
   REALTIMEDRIVEDATA[4]:=DRIVE_STATUSWORD;
@@ -821,8 +845,11 @@ begin
   REALTIMEDRIVEDATA[6]:=DRIVE_INTERFACE;
   REALTIMEDRIVEDATA[7]:=DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3;
 
-  REALTIMEDRIVEDATA[8]:=DRIVE_SET_SPEED;
-  REALTIMEDRIVEDATA[9]:=DRIVE_ACTUAL_SPEED;
+  //REALTIMEDRIVEDATA[8]:=DRIVE_FOLLOWINGERROR;
+  REALTIMEDRIVEDATA[8]:=DRIVE_POSITIONFEEDBACK;
+
+  REALTIMEDRIVEDATA[9]:=DRIVE_SET_SPEED;
+  REALTIMEDRIVEDATA[10]:=DRIVE_ACTUAL_SPEED;
 
   //REALTIMEDRIVEDATA[x]:=DRIVE_DIAGNOSTIC_CLASS1;
   //REALTIMEDRIVEDATA[x]:=DRIVE_DIAGNOSTIC_CLASS2;
