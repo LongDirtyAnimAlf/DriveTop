@@ -121,6 +121,28 @@ type
             );
   end;
 
+  (*
+
+  //101 .. 116 data block number
+  //1 .. 40 drive addresses
+  //1 .. 2 master axis addresses
+  //0 SERCOS master (PPC)
+
+  The unit address of a drive is read in the command telegram and copied
+  into the response telegram.
+  The serial interface permits
+  • direct SIS communication with drives supporting SIS interface. In this
+  case the unit address is the same as the SIS address of the receiver.
+  • accessing drive parameters via a motion control, in case of drives not
+  supporting SIS interface. The SIS address is related to the motion
+  control and the unit address to the drive.
+  Given SIS communication with a motion control as a SIS slave and a
+  SERCOS master, then the SERCOS master must be informed as to
+  which unit the request relates to. This unit can be the SERCOS master
+  itself or any of the drives it controls.
+  The address set at the drive controller or "0" are transmitted.
+  *)
+
   TSISUserDataHeader = packed record
     case integer of
         1 : (
@@ -206,13 +228,8 @@ begin
     AddrRecv   := Address;
   end;
 
-  //101 .. 116 data block number
-  //1 .. 40 drive addresses
-  //1 .. 2 master axis addresses
-  //0 SERCOS master (PPC)
-  // Unitaddress = 0 for the drive itself !
-  // Might be wrong !!
-  telegram[USERDATAOFFSET]  := 0;
+  // Unitaddress
+  telegram[USERDATAOFFSET]  := Address;
   telegram[USERDATAOFFSET+1] := SISSubService;
   i:=0;
   case SISSubService of
@@ -335,9 +352,7 @@ begin
     UserHeader.Data.Control.Raw:=0;
     UserHeader.Data.Control.Data.Element:=GetElementNumber(CD.CSUBCLASS);
     UserHeader.Data.Control.Data.LastTransmission:=1;
-    // Unitaddress = 0 for the drive itself !
-    // Might be wrong !!
-    UserHeader.Data.UnitAdddress := 0;
+    UserHeader.Data.UnitAdddress := CD.SETID;
     // Parameter type extended = 0 for S and P arameters
     UserHeader.Data.ParamExtended := 0;
     // Parameter type and number
@@ -374,16 +389,11 @@ begin
     for i:=0 to 4 do telegram[USERHEADEROFFSET+i] := UserHeader.Bytes[i];
 
     // Fill telegram with userdata itself, if any
-    if (SISService=SISServiceParamWrite) then
+    if ((SISService=SISServiceParamWrite) AND (DataSize>0)) then
     begin
       len:=len+DataSize;
       DDW.Raw:=StrToIntDef(CD.DATA,0);
-      i:=0;
-      while i<DataSize do
-      begin
-        telegram[USERDATAOFFSET+i] := DDW.Bytes[i];
-        Inc(i);
-      end;
+      for i:=0 to Pred(DataSize) do telegram[USERDATAOFFSET+i] := DDW.Bytes[i];
     end;
 
     // Set datalength
