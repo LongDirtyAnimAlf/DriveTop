@@ -37,17 +37,6 @@ const
   SISSubServiceSettingBaudTest           = $08; // Only SISCommunications ; Time-controlled baud rate test allows temporary change of the baud rate
   SISSubServiceSettingAccept             = $FF; // Only SISCommunications ; Accepting the determined values activates the values initialized with the subservices 0x01, 0x02 and 0x07
 
-  (*
-  $00 Error-free transmission without error
-  $01 During the execution of the requested service an error occured. The service-specific error code is contained in the useful data of the reaction telegram
-  $F0 The requested service is not supported by the addressed slave
-  $F8 In the sequential telegram, data in the useful data header, the transmitter address or the service have changed
-  $F9 The command telegram contains subaddresses.The routing of telegrams is not supported by the slave
-  $FA Useful data are missing in the command telegram. The telegram cannot be executed
-  $FB The requested subservice is not supported by the addressed slave
-  $FC The requested component is not available in the addressed slave. The component address is invalid
-  *)
-
 type
   SISByteArray = array[1..256] of Byte;
 
@@ -162,7 +151,7 @@ type
     case integer of
         1 : (
           Data : packed record
-             StatusParamData    : byte;
+             Status             : byte;
              Control            : TSISDataControl;
              UnitAdddress       : byte;
           end
@@ -486,23 +475,32 @@ var
   Success:boolean;
   i:integer;
 begin
+  result.ERROR:='Unknown error';
   datas:=s;
   result:=SourceCD;
   // Look at the SIS header
   if Length(datas)>=8 then
   begin
-    for i:=0 to 7 do
-    begin
-      Header.Bytes[i]:=Ord(datas[1+i]);
-    end;
+    for i:=0 to 7 do Header.Bytes[i]:=Ord(datas[1+i]);
     Delete(datas,1,8);
   end;
   // Look at the user header
   if Length(datas)>=3 then
   begin
-    for i:=0 to 2 do
-    begin
-      UserHeader.Bytes[i]:=Ord(datas[1+i]);
+    for i:=0 to 2 do UserHeader.Bytes[i]:=Ord(datas[1+i]);
+    case UserHeader.Data.Status of
+      $00 : result.ERROR:='';
+      $01 : result.ERROR:='During the execution of the requested service an error occured. The service-specific error code is contained in the useful data of the reaction telegram.';
+      $02 : result.ERROR:='An error occurred while accessing the (internal) transmission channel. The specific error code is in the user data of the response telegram.';
+      $F0 : result.ERROR:='The requested service is not supported by the addressed slave.';
+      $F1 : result.ERROR:='The telegram cannot be evaluated because, for example, a slave received a response telegram from the master or the start character was not found.';
+      $F2 : result.ERROR:='The two length entries in the telegram do not match.';
+      $F4 : result.ERROR:='The transmitted checksum does not match the one calculated internally.';
+      $F8 : result.ERROR:='In the sequential telegram, data in the useful data header, the transmitter address or the service have changed.';
+      $F9 : result.ERROR:='The command telegram contains subaddresses.The routing of telegrams is not supported by the slave.';
+      $FA : result.ERROR:='Useful data are missing in the command telegram. The telegram cannot be executed.';
+      $FB : result.ERROR:='The requested subservice is not supported by the addressed slave.';
+      $FC : result.ERROR:='The requested component is not available in the addressed slave. The component address is invalid.';
     end;
     Delete(datas,1,3);
   end;
@@ -510,10 +508,8 @@ begin
   FillChar({%H-}SISData,SizeOf(SISData),0);
   if ((Length(datas)>=1) AND (Length(datas)<SizeOf(SISData))) then
   begin
-    for i:=0 to Pred(Length(datas)) do
-    begin
-      SISData[i]:=Ord(datas[1+i]);
-    end;
+    result.DATA:=datas;
+    for i:=0 to Pred(Length(datas)) do SISData[i]:=Ord(datas[1+i]);
   end;
 
 end;

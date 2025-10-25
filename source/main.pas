@@ -2281,15 +2281,17 @@ var
   l,i:Integer;
   CD:TPARAMETERDATA;
 begin
+  // Get supported baudrates
   FillChar({%H-}Data,SizeOf(SISByteArray),0);
-  //BuildSISCommand(SISServiceInitSISCommunications,SISSubServiceSettingBaud,3,8,Data,l);
+  BuildSISCommand(SISServiceUserIdentification,SISSubServiceReadOutSupportedBaudRates,GetDriveAddress(ActiveDriveNumber),0,Data,l);
+  // Set the baudrate
+  FillChar({%H-}Data,SizeOf(SISByteArray),0);
   BuildSISCommand(SISServiceInitSISCommunications,SISSubServiceSettingBaud,GetDriveAddress(ActiveDriveNumber),0,Data,l);
   FillChar({%H-}Data,SizeOf(SISByteArray),0);
   CD:=Default(TPARAMETERDATA);
   CD:=SetCommand(DRIVE_TARGET);
   CD.SETID:=GetDriveAddress(ActiveDriveNumber);
-  CD.DATA:='204';
-  l:=0;
+  FillChar({%H-}Data,SizeOf(SISByteArray),0);
   BuildSISTelegram(CD,Data,l);
   i:=0;
 end;
