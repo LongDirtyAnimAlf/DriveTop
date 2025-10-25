@@ -498,6 +498,7 @@ var
 
 function SetCommand(aValue:TPARAMETER):TPARAMETERDATA;
 begin
+  result:=Default(TPARAMETERDATA);
   result.CCLASS:=aValue.CCLASS;
   result.CSUBCLASS:=aValue.CSUBCLASS;
   result.NUMID:=aValue.NUMID;

@@ -137,7 +137,9 @@ type
           1 : (
                Bits            : bitpacked array[0..31] of T1BITS;
               );
-          2 : (
+          2 : (Bytes           : packed array[0..3] of byte;);
+
+          3 : (
                Raw             : DWord;
               );
   end;
@@ -241,6 +243,7 @@ type
   function  GetIDN(const CD:TPARAMETERDATA):string; overload;
   function  GetIDN(const RR:TRegisterRecord):string; overload;
   function  GetIDN(const C:TPARAMETER):string; overload;
+  function  GetIDNWord(const CD:TPARAMETERDATA):TIDNWORD;
 
   function GetElementNumber(const SC:TVMCOMMANDPARAMETERSUBCLASS):byte;
 
@@ -485,7 +488,7 @@ begin
   end;
 end;
 
-function GetIDN(const C:TPARAMETER):string; overload;
+function GetIDN(const C:TPARAMETER):string;
 var
   CD:TPARAMETERDATA;
 begin
@@ -494,6 +497,20 @@ begin
   CD.CSUBCLASS:=C.CSUBCLASS;
   CD.NUMID:=C.NUMID;
   Result:=GetIDN(CD);
+end;
+
+function GetIDNWord(const CD:TPARAMETERDATA):TIDNWORD;
+begin
+  Result.Raw:=0;
+  Result.Data.ParamNum:=CD.NUMID;
+  case CD.CCLASS of
+    ccDrive          : Result.Data.ParamType:=0;
+    ccDriveSpecific  : Result.Data.ParamType:=1;
+  end;
+  case CD.MEMORY of
+    false            : Result.Data.ParamBlock:=0;
+    true             : Result.Data.ParamBlock:=7;
+  end;
 end;
 
 function IndexOfRegisterData(const CD:TPARAMETERDATA; MAP:TMySortedMap):integer;
@@ -540,9 +557,7 @@ begin
     new(P);
     P^:=Default(TRegisterRecord);
     P^.CClass:=CD.CCLASS;
-    P^.IDN.Data.ParamNum:=CD.NUMID;
-    if (CD.CCLASS=ccDriveSpecific) then P^.IDN.Data.ParamType:=1;
-    if CD.MEMORY then P^.IDN.Data.ParamBlock:=7;
+    P^.IDN:=GetIDNWord(CD);
   end;
 
   if (CD.CSUBCLASS=mscList) then

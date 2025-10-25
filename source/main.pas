@@ -2279,21 +2279,14 @@ procedure TForm1.Button3Click(Sender: TObject);
 var
   Data:SISByteArray;
   l,i:Integer;
-  s:RawByteString;
   CD:TPARAMETERDATA;
 begin
+  FillChar(Data,SizeOf(SISByteArray),0);
   CD:=Default(TPARAMETERDATA);
-  CD:=SetCommand(DRIVE_POSITIONFEEDBACK);
-  CD.SETID:=1;
-  CD.DATA:='';
+  CD:=SetCommand(DRIVE_TARGET);
+  CD.SETID:=GetDriveAddress(ActiveDriveNumber);
+  CD.DATA:='1234';
   BuildSISTelegram(CD,Data,l);
-  s:='';
-  for i:=1 to l do s:=s+InttoStr(Data[i])+',';
-  BuildSISTelegram(1,'S-0-0051',1,SISServiceParamRead,Data,l);
-  s:='';
-  for i:=1 to l do s:=s+InttoStr(Data[i])+',';
-
-  //BuildSISStartTelegram(1,Data,l);
   i:=0;
 end;
 
@@ -4566,9 +4559,10 @@ begin
 
       if SISDrive then
       begin
+        FillChar({%H-}SISData,SizeOf(SISData),0);
         // Init/activate SIS serial bus for comms
         // Might be superfluous after the first time
-        BuildSISStartTelegram(2,SISData,l);
+        BuildSISStartTelegram(GetDriveAddress(ActiveDriveNumber),SISData,l);
         s:='';
         if l>0 then
         begin
