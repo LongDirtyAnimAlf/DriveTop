@@ -2281,11 +2281,15 @@ var
   l,i:Integer;
   CD:TPARAMETERDATA;
 begin
-  FillChar(Data,SizeOf(SISByteArray),0);
+  FillChar({%H-}Data,SizeOf(SISByteArray),0);
+  //BuildSISCommand(SISServiceInitSISCommunications,SISSubServiceSettingBaud,3,8,Data,l);
+  BuildSISCommand(SISServiceInitSISCommunications,SISSubServiceSettingBaud,GetDriveAddress(ActiveDriveNumber),0,Data,l);
+  FillChar({%H-}Data,SizeOf(SISByteArray),0);
   CD:=Default(TPARAMETERDATA);
   CD:=SetCommand(DRIVE_TARGET);
   CD.SETID:=GetDriveAddress(ActiveDriveNumber);
-  CD.DATA:='1234';
+  CD.DATA:='204';
+  l:=0;
   BuildSISTelegram(CD,Data,l);
   i:=0;
 end;
@@ -4562,7 +4566,7 @@ begin
         FillChar({%H-}SISData,SizeOf(SISData),0);
         // Init/activate SIS serial bus for comms
         // Might be superfluous after the first time
-        BuildSISStartTelegram(GetDriveAddress(ActiveDriveNumber),SISData,l);
+        BuildSISCommand(SISServiceInitSISCommunications,SISSubServiceSettingBaud,GetDriveAddress(ActiveDriveNumber),0,SISData,l);
         s:='';
         if l>0 then
         begin
