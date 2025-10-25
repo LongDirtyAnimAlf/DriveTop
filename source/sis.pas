@@ -66,25 +66,6 @@ const
   MASTER_ADDR   = $10;
 
 type
-  TSISTelegramHeader = bitpacked record
-    case integer of
-       1 : (
-         Data : packed record
-           StartChar   : Byte;   // always $02
-           CheckSum    : Byte;   // negated sum of all bytes
-           DataLen     : Byte;   // DatL
-           DataLenRep  : Byte;   // DatLW
-           Control     : Byte;   // see SIS spec, bit 4 = 0 cmd / 1 response
-           Service     : Byte;   // SIS service code
-           AddrSender  : Byte;   // Address of the sender: station number (0 - 127)
-           AddrRecv    : Byte;   // Address of the receiver: 0 - 126 ==> specifies a single station, 128 ==> "point-to-point" connection; 129 - 253 ==> addresses logical groups, 254 - 255 ==> fixes a broadcast
-         end
-          );
-       2 : (
-         Bytes            : packed array[0..7] of byte;
-           );
-  end;
-
   TSISHeaderControl = bitpacked record
     case integer of
         1 : (
@@ -101,8 +82,27 @@ type
         3 : (
           Raw             : byte;
             );
-
   end;
+
+  TSISTelegramHeader = bitpacked record
+    case integer of
+       1 : (
+         Data : packed record
+           StartChar   : Byte;   // always $02
+           CheckSum    : Byte;   // negated sum of all bytes
+           DataLen     : Byte;   // DatL
+           DataLenRep  : Byte;   // DatLW
+           Control     : TSISHeaderControl;   // see SIS spec, bit 4 = 0 cmd / 1 response
+           Service     : Byte;   // SIS service code
+           AddrSender  : Byte;   // Address of the sender: station number (0 - 127)
+           AddrRecv    : Byte;   // Address of the receiver: 0 - 126 ==> specifies a single station, 128 ==> "point-to-point" connection; 129 - 253 ==> addresses logical groups, 254 - 255 ==> fixes a broadcast
+         end
+          );
+       2 : (
+         Bytes            : packed array[0..7] of byte;
+           );
+  end;
+
   TSISDataControl = bitpacked record
     case integer of
         1 : (
@@ -158,6 +158,20 @@ type
             );
   end;
 
+  TSISUserDataResponseHeader = packed record
+    case integer of
+        1 : (
+          Data : packed record
+             StatusParamData    : byte;
+             Control            : TSISDataControl;
+             UnitAdddress       : byte;
+          end
+           );
+        2 : (
+          Bytes            : packed array[0..2] of byte;
+            );
+  end;
+
 
 function CalculateCS(Telegram: array of Byte): Byte;
 var
@@ -206,26 +220,23 @@ const
   USERDATAOFFSET = HEADEROFFSET+8;
 var
   Header         : TSISTelegramHeader;
-  Ctrl           : TSISHeaderControl;
   i              : integer;
   sum            : byte;
   DDW            : DATADWORD;
 begin
   len:=10;
 
-  Ctrl.Raw:=0;
-  Ctrl.Data.TelegramType:=0;
-
   with Header.Data do
   begin
-    StartChar  := STX;
-    CheckSum   := 0;
-    DataLen    := 0;
-    DataLenRep := 0;
-    Control    := Ctrl.Raw;
-    Service    := SISService;
-    AddrSender := MASTER_ADDR;
-    AddrRecv   := Address;
+    StartChar    := STX;
+    CheckSum     := 0;
+    DataLen      := 0;
+    DataLenRep   := 0;
+    Control.Raw  := 0;
+    Control.Data.TelegramType:=0;
+    Service      := SISService;
+    AddrSender   := MASTER_ADDR;
+    AddrRecv     := Address;
   end;
 
   // Unitaddress
@@ -333,18 +344,17 @@ begin
         raise EArgumentException.CreateFmt ('Read only parameter : %s !',[GetIDN(CD)]);
     end;
 
-    Ctrl.Raw:=0;
-    Ctrl.Data.TelegramType:=0;   // Create command telegram
     with Header.Data do
     begin
-      StartChar  := STX;
-      CheckSum   := 0;
-      DataLen    := 0;
-      DataLenRep := 0;
-      Control    := Ctrl.Raw;
-      Service    := SISService;
-      AddrSender := MASTER_ADDR;
-      AddrRecv   := CD.SETID;
+      StartChar    := STX;
+      CheckSum     := 0;
+      DataLen      := 0;
+      DataLenRep   := 0;
+      Control.Raw  := 0;
+      Control.Data.TelegramType:=0;   // Create command telegram
+      Service      := SISService;
+      AddrSender   := MASTER_ADDR;
+      AddrRecv     := CD.SETID;
     end;
 
     // SIS user data header
@@ -468,6 +478,10 @@ end;
 
 function ParseSISTelegram(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA;
 var
+  Header         : TSISTelegramHeader;
+  UserHeader     : TSISUserDataResponseHeader;
+  SISData        : SISByteArray;
+
   datas:ansistring;
   Success:boolean;
   i:integer;
@@ -477,20 +491,28 @@ begin
   // Look at the SIS header
   if Length(datas)>=8 then
   begin
-    Success:=(Ord(datas[1])=STX);
+    for i:=0 to 7 do
+    begin
+      Header.Bytes[i]:=Ord(datas[1+i]);
+    end;
     Delete(datas,1,8);
   end;
   // Look at the user header
   if Length(datas)>=3 then
   begin
+    for i:=0 to 2 do
+    begin
+      UserHeader.Bytes[i]:=Ord(datas[1+i]);
+    end;
     Delete(datas,1,3);
   end;
   // Look at the user data
-  if Length(datas)>=1 then
+  FillChar({%H-}SISData,SizeOf(SISData),0);
+  if ((Length(datas)>=1) AND (Length(datas)<SizeOf(SISData))) then
   begin
-    for i:=1 to Length(datas) do
+    for i:=0 to Pred(Length(datas)) do
     begin
-
+      SISData[i]:=Ord(datas[1+i]);
     end;
   end;
 
