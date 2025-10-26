@@ -42,7 +42,7 @@ type
 
 procedure BuildSISCommand(SISService,SISSubService,Address:byte; Data:dword; out telegram: SISByteArray; out len: Integer);
 procedure BuildSISTelegram(const CD: TPARAMETERDATA; out telegram: SISByteArray; out len: Integer);overload;
-function  ParseSISTelegram(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA; overload;
+function  ParseSISResponse(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA; overload;
 
 implementation
 
@@ -449,7 +449,7 @@ begin
 end;
 *)
 
-function ParseSISTelegram(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA;
+function ParseSISResponse(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA;
 var
   Header         : TSISTelegramHeader;
   UserHeader     : TSISUserDataResponseHeader;
@@ -518,59 +518,7 @@ begin
   if ((UserHeader.Data.Status=$01) OR (UserHeader.Data.Status=$02)) then
   begin
     // Report extended error code !!
-    case UserHeader.Error.ErrorCode of
-      $0001 : result.ERROR:='service channel not open';
-      $0009 : result.ERROR:='incorrect access to element 0';
-      $0700 : result.ERROR:='Baud rate not supported';
-      $0800 : result.ERROR:='Baud rate not supported';
-      $0801 : result.ERROR:='Internal timer value for the test duration is too large';
-      $1001 : result.ERROR:='no IDN available';
-      $1009 : result.ERROR:='incorrect access to element 1';
-      $2001 : result.ERROR:='no name available';
-      $2002 : result.ERROR:='name transmission too short';
-      $2003 : result.ERROR:='name transmission too long';
-      $2004 : result.ERROR:='name cannot be changed';
-      $2005 : result.ERROR:='name presently write-protected';
-      $3002 : result.ERROR:='attribute transmission too short';
-      $3003 : result.ERROR:='attribute transmission too long';
-      $3004 : result.ERROR:='attribute cannot be changed';
-      $3005 : result.ERROR:='attribute presently write-protected';
-      $4001 : result.ERROR:='no unit available';
-      $4002 : result.ERROR:='unit transmission too short';
-      $4003 : result.ERROR:='unit transmission too long';
-      $4004 : result.ERROR:='unit cannot be changed';
-      $4005 : result.ERROR:='unit presently write-protected';
-      $5001 : result.ERROR:='no minimum input value available';
-      $5002 : result.ERROR:='minimum input value transmission too short';
-      $5003 : result.ERROR:='minimum input value transmission too long';
-      $5004 : result.ERROR:='minimum input value cannot be changed';
-      $5005 : result.ERROR:='minimum input value presently write-protected';
-      $6001 : result.ERROR:='no maximum input value available';
-      $6002 : result.ERROR:='maximum input value transmission too short';
-      $6003 : result.ERROR:='maximum input value transmission too long';
-      $6004 : result.ERROR:='maximum input value cannot be changed';
-      $6005 : result.ERROR:='maximum input value presently write-protected';
-      $7002 : result.ERROR:='data transmission too short';
-      $7003 : result.ERROR:='data transmission too long';
-      $7004 : result.ERROR:='data cannot be changed';
-      $7005 : result.ERROR:='data presently write-protected';
-      $7006 : result.ERROR:='data smaller than minimum input value';
-      $7007 : result.ERROR:='data greater than maximum input value';
-      $7008 : result.ERROR:='data not correct';
-      $700C : result.ERROR:='"data exceeds numeric range". The transmitted value is smaller than zero or greater than the "modulo value" (S-0-0103) in the case of a modulo axis.';
-      $700D : result.ERROR:='"data length cannot presently be changed". The data length in current mode cannot be changed.';
-      $700E : result.ERROR:='"data length cannot be changed". The length of the data is permanently write protected.';
-      $700F : result.ERROR:='"list element not available“. List offset set in SIS services 0x91 or 0x9E exceeds range of list or does not show the start address of a list element.';
-      // SERCOS errors
-      $8001 : result.ERROR:='Transmission channel currently busy (BUSY). The desired access is currently not possible, because the transmission channel is busy processing the request. The command telegram is repeated until the transmission channel is available again.';
-      $8002 : result.ERROR:='Transmission Channel Error. The request cannot be forwarded to the desired user. Possibly repeat the command telegram, to test for a longterm transmission channel problem.';
-      $8004 : result.ERROR:='Incorrect phase specified via serial protocol';
-      $800B : result.ERROR:='Transmission aborted (because of the higher priority of another request). Repeat the command telegram until it is executed without being aborted.';
-      $800C : result.ERROR:='Access denied (transmission channel is currently active). A new request was started, before the last transmission was completed. Repeat the command telegram until the active request is completed.';
-      $D005 : result.ERROR:='"Phase switching still active". A phase switching presently not possible as one is still active';
-      $D006 : result.ERROR:='"Phase switching with drive enable not possible". Set for at least one drive - "AF"';
-      $D007 : result.ERROR:='"Phase switching with rotating master axis not permitted"';
-    end;
+    result.ERROR:=GetDriveErrorDescription(UserHeader.Error.ErrorCode);
   end;
 
   // Now look at the user data

@@ -27,6 +27,9 @@ type
   TVMCOMMANDPARAMETERSUBCLASS       = (mscNone,mscAttributes,mscBlock,mscList,mscUpperLimit,mscLowerLimit,mscParameterData,mscName,mscUnits);
 
 const
+  TERDT  = ':>';
+  CSS    = '$';
+
   STEPLISTSTART                      : word = word(-1);
   CAPSCHARS                          : set of TCAPSCHAR = ['A'..'Z'];
 
@@ -247,6 +250,8 @@ type
 
   function GetElementNumber(const SC:TVMCOMMANDPARAMETERSUBCLASS):byte;
 
+  function GetDriveErrorDescription(derr:word):string;
+
   function StringToIntSafe(const sv:string):Longint;
 
   function HexStringToDecimal(const hexstring:string):DWord;
@@ -266,6 +271,8 @@ uses
   Tools;
 
 const
+  {$I driveerrors.inc}
+
   //--------------------------------------------------------------------------
   // Attribute    Bits 22-20:     Data type and display format
   //--------------------------------------------------------------------------
@@ -1111,6 +1118,21 @@ begin
     mscList          : result:=CSMD_SERC_ELEM7;
     mscName          : result:=CSMD_SERC_ELEM2;
     mscUnits         : result:=CSMD_SERC_ELEM4;
+  end;
+end;
+
+function GetDriveErrorDescription(derr:word):string;
+var
+ error:TERROR;
+begin
+  result:=sUN;
+  for error in DRIVE_ERRORS do
+  begin
+    if (error.NUMBER=derr) then
+    begin
+      result:=error.EXPLANATION;
+      break;
+    end;
   end;
 end;
 

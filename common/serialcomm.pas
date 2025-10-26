@@ -113,8 +113,6 @@ const
   CR     = #13;
   LF     = #10;
   CRLF   = CR+LF;
-  TERDT  = ':>';
-  CSS    = '$';
 
 type
   TLazSerial = class;
