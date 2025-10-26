@@ -3461,7 +3461,7 @@ begin
   begin
     DR182.Raw:=BinaryStringToDecimal(CD.DATA);
     SetInfoPanel(panelInPosition,(DR182.Data.EndPosition=1));
-    SetInfoPanel(panelStandstill,(DR182.Data.AHQ=1));
+    SetInfoPanel(panelStandstill,(DR182.Data.Velocity=1));
     SetInfoPanel(panelTargetPosition,(DR182.Data.InTargetPosition=1));
   end;
 end;
@@ -4269,10 +4269,10 @@ begin
     with DRIVE_CONTROLLERTYPE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))      then ProcessControllerType(LocalCD);
     with DRIVE_MOTORSERIAL do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))         then ProcessMotorSerial(LocalCD);
 
-    with DRIVE_POSITIONCOMMAND do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))             then ProcessRealtimeData(LocalCD);
+    with DRIVE_POSITIONCOMMAND do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))     then ProcessRealtimeData(LocalCD);
     with DRIVE_TARGET do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))              then ProcessRealtimeData(LocalCD);
     with DRIVE_DISTANCE do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))            then ProcessRealtimeData(LocalCD);
-    with DRIVE_POSITIONFEEDBACK do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))            then ProcessRealtimeData(LocalCD);
+    with DRIVE_POSITIONFEEDBACK do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))    then ProcessRealtimeData(LocalCD);
     with DRIVE_ACTUAL_SPEED do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))        then ProcessRealtimeData(LocalCD);
     with DRIVE_SET_SPEED do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))           then ProcessRealtimeData(LocalCD);
 

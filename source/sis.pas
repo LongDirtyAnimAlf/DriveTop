@@ -42,7 +42,6 @@ type
 
 procedure BuildSISCommand(SISService,SISSubService,Address:byte; Data:dword; out telegram: SISByteArray; out len: Integer);
 procedure BuildSISTelegram(const CD: TPARAMETERDATA; out telegram: SISByteArray; out len: Integer);overload;
-function  ParseSISTelegram(const SourceCD: TPARAMETERDATA; const telegram: SISByteArray; const len: Integer):TPARAMETERDATA; overload;
 function  ParseSISTelegram(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA; overload;
 
 implementation
@@ -154,39 +153,30 @@ type
              Status             : byte;
              Control            : TSISDataControl;
              UnitAdddress       : byte;
+             Reserved           : byte;
           end
-           );
+          );
         2 : (
-          Bytes            : packed array[0..2] of byte;
+          SIS : packed record
+             Status             : byte;
+             Address            : byte;
+             SubService         : byte;
+             Error              : byte;
+          end
+          );
+        3 : (
+            Error : packed record
+               Reserved           : word;
+               ErrorCode          : word;
+            end
+           );
+        4 : (
+          Bytes            : packed array[0..3] of byte;
+            );
+        5 : (
+          Raw              : dword;
             );
   end;
-
-
-function CalculateCS(Telegram: array of Byte): Byte;
-var
-  Sum, i: Integer;
-begin
-  Sum := 0;
-  for i := 0 to High(Telegram) do
-    if i <> 1 then Sum := Sum + Telegram[i];
-  Result := Byte(not Sum);
-end;
-
-procedure SendByte(b: Byte);
-begin
-end;
-
-function ReceiveByte(var b: Byte): Boolean;
-begin
-end;
-
-procedure SendTelegram(const telegram: SISByteArray; const len: Integer);
-var
-  i: Integer;
-begin
-  for i := 1 to len do
-    SendByte(telegram[i]);
-end;
 
 function ParseIDN(const IDN: ansistring; out paramType: Byte; out paramNum: Word): Boolean;
 var
@@ -278,7 +268,6 @@ const
   USERDATAOFFSET = USERHEADEROFFSET+5;
 var
   Header         : TSISTelegramHeader;
-  Ctrl           : TSISHeaderControl;
   UserHeader     : TSISUserDataHeader;
   SISService     : byte;
   DataSize       : byte;
@@ -460,56 +449,138 @@ begin
 end;
 *)
 
-function ParseSISTelegram(const SourceCD: TPARAMETERDATA; const telegram: SISByteArray; const len: Integer):TPARAMETERDATA;
-begin
-  result:=SourceCD;
-end;
-
 function ParseSISTelegram(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA;
 var
   Header         : TSISTelegramHeader;
   UserHeader     : TSISUserDataResponseHeader;
   SISData        : SISByteArray;
-
-  datas:ansistring;
-  Success:boolean;
-  i:integer;
+  datas          : ansistring;
+  Success        : boolean;
+  i              : integer;
 begin
-  result.ERROR:='Unknown error';
+  Success:=false;
   datas:=s;
   result:=SourceCD;
+
+  // Init
+  for i:=0 to 7 do Header.Bytes[i]:=0;
+  UserHeader.Raw:=0;
+  FillChar({%H-}SISData,SizeOf(SISData),0);
+  result.DATA:='';
+  result.ERROR:='Unknown error';
+
   // Look at the SIS header
   if Length(datas)>=8 then
   begin
     for i:=0 to 7 do Header.Bytes[i]:=Ord(datas[1+i]);
     Delete(datas,1,8);
+    Success:=true;
   end;
-  // Look at the user header
-  if Length(datas)>=3 then
+
+  // Now look at the user header
+  if Success then
   begin
-    for i:=0 to 2 do UserHeader.Bytes[i]:=Ord(datas[1+i]);
-    case UserHeader.Data.Status of
-      $00 : result.ERROR:='';
-      $01 : result.ERROR:='During the execution of the requested service an error occured. The service-specific error code is contained in the useful data of the reaction telegram.';
-      $02 : result.ERROR:='An error occurred while accessing the (internal) transmission channel. The specific error code is in the user data of the response telegram.';
-      $F0 : result.ERROR:='The requested service is not supported by the addressed slave.';
-      $F1 : result.ERROR:='The telegram cannot be evaluated because, for example, a slave received a response telegram from the master or the start character was not found.';
-      $F2 : result.ERROR:='The two length entries in the telegram do not match.';
-      $F4 : result.ERROR:='The transmitted checksum does not match the one calculated internally.';
-      $F8 : result.ERROR:='In the sequential telegram, data in the useful data header, the transmitter address or the service have changed.';
-      $F9 : result.ERROR:='The command telegram contains subaddresses.The routing of telegrams is not supported by the slave.';
-      $FA : result.ERROR:='Useful data are missing in the command telegram. The telegram cannot be executed.';
-      $FB : result.ERROR:='The requested subservice is not supported by the addressed slave.';
-      $FC : result.ERROR:='The requested component is not available in the addressed slave. The component address is invalid.';
+    Success:=false;
+    i:=0;
+    while (i<Length(datas)) do
+    begin
+      UserHeader.Bytes[i]:=Ord(datas[i+1]);
+      Inc(i);
+      if i=3 then
+      begin
+        // We might receive a 4th byte, in case of a special error
+        if (NOT ((UserHeader.Data.Status=$01) OR (UserHeader.Data.Status=$02))) then break;
+      end;
+      // Max 4 bytes in user header
+      if i=4 then break;
     end;
-    Delete(datas,1,3);
+    Delete(datas,1,i);
+    Success:=(Length(datas)>=1);
   end;
-  // Look at the user data
-  FillChar({%H-}SISData,SizeOf(SISData),0);
-  if ((Length(datas)>=1) AND (Length(datas)<SizeOf(SISData))) then
+
+  case UserHeader.Data.Status of
+    $00 : result.ERROR:=''; // All ok !!
+    // Execution errors
+    $01 : result.ERROR:='Error while executing the telegram. During the execution of the requested service an error occured. The service-specific error code is contained in the useful data of the reaction telegram.';
+    $02 : result.ERROR:='Error in the (internal) transmission channel. An error occurred while accessing the (internal) transmission channel. The specific error code is in the user data of the response telegram.';
+    // Protocol/telegram errors
+    $F0 : result.ERROR:='Invalid service. The requested service is not supported by the addressed slave.';
+    $F1 : result.ERROR:='Invalid telegram. The telegram cannot be evaluated because, for example, a slave received a response telegram from the master or the start character was not found.';
+    $F2 : result.ERROR:='Telegram length error. The two length entries in the telegram do not match.';
+    $F4 : result.ERROR:='Checksum error. The transmitted checksum does not match the one calculated internally.';
+    $F8 : result.ERROR:='Invalid sequential telegram. In the sequential telegram, data in the useful data header, the transmitter address or the service have changed.';
+    $F9 : result.ERROR:='The command telegram contains subaddresses.The routing of telegrams is not supported by the slave.';
+    $FA : result.ERROR:='Useful data are missing in the command telegram. The telegram cannot be executed.';
+    $FB : result.ERROR:='The requested subservice is not supported by the addressed slave.';
+    $FC : result.ERROR:='The requested component is not available in the addressed slave. The component address is invalid.';
+  end;
+
+  if ((UserHeader.Data.Status=$01) OR (UserHeader.Data.Status=$02)) then
   begin
-    result.DATA:=datas;
-    for i:=0 to Pred(Length(datas)) do SISData[i]:=Ord(datas[1+i]);
+    // Report extended error code !!
+    case UserHeader.Error.ErrorCode of
+      $0001 : result.ERROR:='service channel not open';
+      $0009 : result.ERROR:='incorrect access to element 0';
+      $0700 : result.ERROR:='Baud rate not supported';
+      $0800 : result.ERROR:='Baud rate not supported';
+      $0801 : result.ERROR:='Internal timer value for the test duration is too large';
+      $1001 : result.ERROR:='no IDN available';
+      $1009 : result.ERROR:='incorrect access to element 1';
+      $2001 : result.ERROR:='no name available';
+      $2002 : result.ERROR:='name transmission too short';
+      $2003 : result.ERROR:='name transmission too long';
+      $2004 : result.ERROR:='name cannot be changed';
+      $2005 : result.ERROR:='name presently write-protected';
+      $3002 : result.ERROR:='attribute transmission too short';
+      $3003 : result.ERROR:='attribute transmission too long';
+      $3004 : result.ERROR:='attribute cannot be changed';
+      $3005 : result.ERROR:='attribute presently write-protected';
+      $4001 : result.ERROR:='no unit available';
+      $4002 : result.ERROR:='unit transmission too short';
+      $4003 : result.ERROR:='unit transmission too long';
+      $4004 : result.ERROR:='unit cannot be changed';
+      $4005 : result.ERROR:='unit presently write-protected';
+      $5001 : result.ERROR:='no minimum input value available';
+      $5002 : result.ERROR:='minimum input value transmission too short';
+      $5003 : result.ERROR:='minimum input value transmission too long';
+      $5004 : result.ERROR:='minimum input value cannot be changed';
+      $5005 : result.ERROR:='minimum input value presently write-protected';
+      $6001 : result.ERROR:='no maximum input value available';
+      $6002 : result.ERROR:='maximum input value transmission too short';
+      $6003 : result.ERROR:='maximum input value transmission too long';
+      $6004 : result.ERROR:='maximum input value cannot be changed';
+      $6005 : result.ERROR:='maximum input value presently write-protected';
+      $7002 : result.ERROR:='data transmission too short';
+      $7003 : result.ERROR:='data transmission too long';
+      $7004 : result.ERROR:='data cannot be changed';
+      $7005 : result.ERROR:='data presently write-protected';
+      $7006 : result.ERROR:='data smaller than minimum input value';
+      $7007 : result.ERROR:='data greater than maximum input value';
+      $7008 : result.ERROR:='data not correct';
+      $700C : result.ERROR:='"data exceeds numeric range". The transmitted value is smaller than zero or greater than the "modulo value" (S-0-0103) in the case of a modulo axis.';
+      $700D : result.ERROR:='"data length cannot presently be changed". The data length in current mode cannot be changed.';
+      $700E : result.ERROR:='"data length cannot be changed". The length of the data is permanently write protected.';
+      $700F : result.ERROR:='"list element not available“. List offset set in SIS services 0x91 or 0x9E exceeds range of list or does not show the start address of a list element.';
+      // SERCOS errors
+      $8001 : result.ERROR:='Transmission channel currently busy (BUSY). The desired access is currently not possible, because the transmission channel is busy processing the request. The command telegram is repeated until the transmission channel is available again.';
+      $8002 : result.ERROR:='Transmission Channel Error. The request cannot be forwarded to the desired user. Possibly repeat the command telegram, to test for a longterm transmission channel problem.';
+      $8004 : result.ERROR:='Incorrect phase specified via serial protocol';
+      $800B : result.ERROR:='Transmission aborted (because of the higher priority of another request). Repeat the command telegram until it is executed without being aborted.';
+      $800C : result.ERROR:='Access denied (transmission channel is currently active). A new request was started, before the last transmission was completed. Repeat the command telegram until the active request is completed.';
+      $D005 : result.ERROR:='"Phase switching still active". A phase switching presently not possible as one is still active';
+      $D006 : result.ERROR:='"Phase switching with drive enable not possible". Set for at least one drive - "AF"';
+      $D007 : result.ERROR:='"Phase switching with rotating master axis not permitted"';
+    end;
+  end;
+
+  // Now look at the user data
+  if Success then
+  begin
+    if ((Length(datas)>=1) AND (Length(datas)<SizeOf(SISData))) then
+    begin
+      result.DATA:=datas;
+      for i:=0 to Pred(Length(datas)) do SISData[i]:=Ord(datas[1+i]);
+    end;
   end;
 
 end;
