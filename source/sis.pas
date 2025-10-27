@@ -43,6 +43,7 @@ type
 procedure BuildSISCommand(SISService,SISSubService,Address:byte; Data:dword; out telegram: SISTelegram; out len: Integer);
 procedure BuildSISTelegram(const CD: TPARAMETERDATA; out telegram: SISTelegram; out len: Integer);overload;
 function  ParseSISResponse(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA; overload;
+function  ParseSISResponse(const SourceCD: TPARAMETERDATA; const telegram: SISTelegram; const len: Integer):TPARAMETERDATA; overload;
 function  ParseSISResponse(const telegram: SISTelegram; const len: Integer):TPARAMETERDATA; overload;
 
 implementation
@@ -453,106 +454,51 @@ begin
 end;
 *)
 
+
 function ParseSISResponse(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA;
 var
-  Header         : TSISTelegramHeader;
-  UserHeader     : TSISUserDataResponseHeader;
-  //SISData        : SISTelegram;
-  datas          : ansistring;
-  Success        : boolean;
-  i              : integer;
+  telegram: SISTelegram;
+  i:integer;
 begin
-  Success:=false;
-  datas:=s;
-  result:=SourceCD;
-
   // Init
-  for i:=0 to 7 do Header.Bytes[i]:=0;
-  UserHeader.Raw:=0;
-  //FillChar({%H-}SISData,SizeOf(SISData),0);
-  result.DATA:='';
-  result.ERROR:='Unknown error';
-
-  // Look at the SIS header
-  if Length(datas)>=8 then
-  begin
-    for i:=0 to 7 do Header.Bytes[i]:=Ord(datas[1+i]);
-    Delete(datas,1,8);
-    Success:=true;
-  end;
-
-  // Now look at the user header
-  if Success then
-  begin
-    Success:=false;
-    i:=0;
-    while (i<Length(datas)) do
-    begin
-      UserHeader.Bytes[i]:=Ord(datas[i+1]);
-      Inc(i);
-      if i=3 then
-      begin
-        // We might receive a 4th byte, in case of a special error
-        if (NOT ((UserHeader.Data.Status=$01) OR (UserHeader.Data.Status=$02))) then break;
-      end;
-      // Max 4 bytes in user header
-      if i=4 then break;
-    end;
-    Delete(datas,1,i);
-    Success:=(Length(datas)>=1);
-  end;
-
-  case UserHeader.Data.Status of
-    $00 : result.ERROR:=''; // All ok !!
-    // Execution errors
-    $01 : result.ERROR:='Error while executing the telegram. During the execution of the requested service an error occured. The service-specific error code is contained in the useful data of the reaction telegram.';
-    $02 : result.ERROR:='Error in the (internal) transmission channel. An error occurred while accessing the (internal) transmission channel. The specific error code is in the user data of the response telegram.';
-    // Protocol/telegram errors
-    $F0 : result.ERROR:='Invalid service. The requested service is not supported by the addressed slave.';
-    $F1 : result.ERROR:='Invalid telegram. The telegram cannot be evaluated because, for example, a slave received a response telegram from the master or the start character was not found.';
-    $F2 : result.ERROR:='Telegram length error. The two length entries in the telegram do not match.';
-    $F4 : result.ERROR:='Checksum error. The transmitted checksum does not match the one calculated internally.';
-    $F8 : result.ERROR:='Invalid sequential telegram. In the sequential telegram, data in the useful data header, the transmitter address or the service have changed.';
-    $F9 : result.ERROR:='The command telegram contains subaddresses.The routing of telegrams is not supported by the slave.';
-    $FA : result.ERROR:='Useful data are missing in the command telegram. The telegram cannot be executed.';
-    $FB : result.ERROR:='The requested subservice is not supported by the addressed slave.';
-    $FC : result.ERROR:='The requested component is not available in the addressed slave. The component address is invalid.';
-  end;
-
-  if ((UserHeader.Data.Status=$01) OR (UserHeader.Data.Status=$02)) then
-  begin
-    // Report extended error code !!
-    result.ERROR:=GetDriveErrorDescription(UserHeader.Error.ErrorCode);
-  end;
-
-  // Now look at the user data
-  if Success then
-  begin
-    //if ((Length(datas)>=1) AND (Length(datas)<SizeOf(SISData))) then
-    begin
-      result.DATA:=datas;
-      //for i:=0 to Pred(Length(datas)) do SISData[i]:=Ord(datas[1+i]);
-    end;
-  end;
-
+  FillChar({%H-}telegram,SizeOf(telegram),0);
+  for i:=1 to Length(s) do telegram[i]:=Ord(s[i]);
+  result:=ParseSISResponse(SourceCD,telegram,Length(s));
 end;
 
-function ParseSISResponse(const telegram: SISTelegram; const len: Integer):TPARAMETERDATA;
+function ParseSISResponse(const SourceCD: TPARAMETERDATA; const telegram: SISTelegram; const len: Integer):TPARAMETERDATA;
 var
   Header           : TSISTelegramHeader;
   UserHeader       : TSISUserDataResponseHeader;
   Success          : boolean;
   i                : integer;
   Remaining,Index  : integer;
+  sum              : byte;
+  DW               : DATAWORD;
+  DDW              : DATADWORD;
+  DA               : dword;
+  LocalCD          : TPARAMETERDATA;
+  DataSize         : byte;
 begin
   Success:=false;
 
   // Init
+  result:=SourceCD;
+
   for i:=0 to 7 do Header.Bytes[i]:=0;
   UserHeader.Raw:=0;
   //FillChar({%H-}SISData,SizeOf(SISData),0);
   result.DATA:='';
   result.ERROR:='Unknown error';
+
+  // Check the checksum
+  sum:=0;
+  for i := 1 to len do
+    sum := (sum + telegram[i]) and $FF;
+
+  if (sum<>0) then
+    raise EArgumentException.CreateFmt ('CDC checksum error : %d !',[sum]);
+
 
   Remaining:=len;
   Index:=1;
@@ -614,13 +560,85 @@ begin
   // Now look at the user data
   if Success then
   begin
-    //SetLength(result.DATA,Remaining);
-    //for i:=1 to Remaining do result.DATA[i]:=telegram[Index+i-1];
+    if IsParameterClass(SourceCD.CCLASS) then
+    begin
+      DA:=GetDriveAttribute(SourceCD);
+      if DA=0 then
+      begin
+        // We have no atribute data [yet]
+        // Get the data from the default values [drive #0]!
+        LocalCD:=SourceCD;
+        LocalCD.SETID:=0;
+        DA:=GetDriveAttribute(LocalCD);
+      end;
+      if ParameterIsUInt(DA) OR ParameterIsInt(DA) then
+      begin
+        DDW.Raw:=0;
+        for i:=0 to Pred(Remaining) do DDW.Bytes[i]:=telegram[Index+i];
+        result.DATA:=InttoStr(DDW.Raw);
+      end
+      else
+      if ParameterIsChar(DA) then
+      begin
+        // Byte 0 means something
+        // Byte 1 is zero
+        Dec(Remaining,2);
+        Inc(Index,2);
+        SetLength(result.DATA,Remaining);
+        for i:=0 to Pred(Remaining) do
+        begin
+          if ((telegram[Index+i]<32) or (telegram[Index+i]>128)) then break;
+          result.DATA[i+1]:=Chr(telegram[Index+i]);
+        end;
+      end
+      else
+      if ParameterIsBinary(DA) then
+      begin
+        DataSize:=ParameterSizeOf(DA);
+        if DataSize=1 then
+        begin
+          result.DATA:=DecimalToBinaryString(telegram[Index]);
+        end
+        else
+        if DataSize=2 then
+        begin
+          DW.Raw:=0;
+          for i:=0 to 1 do DW.Bytes[i]:=telegram[Index+i];
+          result.DATA:=DecimalToBinaryString(DW.Raw);
+        end
+        else
+        if DataSize=4 then
+        begin
+          DDW.Raw:=0;
+          for i:=0 to 3 do DDW.Bytes[i]:=telegram[Index+i];
+          result.DATA:=DecimalToBinaryString(DDW.Raw);
+        end;
+      end
+      else
+      begin
+        i:=0;
+      end;
+
+    end
+    else
+    begin
+      i:=0;
+    end;
+  end
+  else
+  begin
+    i:=0;
   end;
 
 end;
 
-
+function ParseSISResponse(const telegram: SISTelegram; const len: Integer):TPARAMETERDATA;
+var
+  SourceCD : TPARAMETERDATA;
+begin
+  SourceCD:=Default(TPARAMETERDATA);
+  result:=ParseSISResponse(SourceCD,telegram,len);
+end;
 
 end.
 

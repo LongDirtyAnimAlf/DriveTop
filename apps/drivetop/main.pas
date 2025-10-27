@@ -70,6 +70,7 @@ type
     btnStop: TButton;
     btnGetDriveData: TButton;
     btnStoreBlockDrive: TButton;
+    Button1: TButton;
     Button2: TButton;
     Button3: TButton;
     chkAutoLoadDriveData: TCheckBox;
@@ -191,6 +192,7 @@ type
     procedure btnManualAxisClick({%H-}Sender: TObject);
     procedure btnDriveInfoClick({%H-}Sender: TObject);
     procedure btnGetDriveDataClick(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure cmboSerialPortsSelect(Sender: TObject);
@@ -309,6 +311,7 @@ type
     procedure OnCommData(const s:ansistring);
   public
     { public declarations }
+    function  ProcessResonse(const CD:TPARAMETERDATA;DD:boolean;Data:RawByteString):TPARAMETERDATA;
     function  ProcessParameter(const CD:TPARAMETERDATA;out response:RawByteString; prio:boolean=false; blocking:boolean=false; verbose:boolean=false):boolean;
     function  JogAxis(aDir:TAXISDIRECTION;Engage:boolean):boolean;
   end;
@@ -782,7 +785,7 @@ begin
     begin
       success:=ProcessParameter(CD,s,false,true);
     end;
-    CDStatus:=ProcessNormalResponse(CD,DirectDrive,s);
+    CDStatus:=ProcessResonse(CD,DirectDrive,s);
 
     sleep(150);
 
@@ -1079,7 +1082,7 @@ begin
     CD.DATA:='';
     // Get current register value
     success:=ProcessParameter(CD,s,false,true);
-    StatusCD:=ProcessNormalResponse(CD,DirectDrive,s);
+    StatusCD:=ProcessResonse(CD,DirectDrive,s);
     SC346.Raw:=BinaryStringToDecimal(StatusCD.DATA);
 
     // Engage drive by toggling strobe bit
@@ -1097,7 +1100,7 @@ begin
       sleep(100);
       Inc(i);
       success:=ProcessParameter(CD,s,false,true);
-      StatusCD:=ProcessNormalResponse(CD,DirectDrive,s);
+      StatusCD:=ProcessResonse(CD,DirectDrive,s);
       Memo1.Lines.Append(StatusCD.DATA);
       DR182.Raw:=BinaryStringToDecimal(StatusCD.DATA);
     until ((DR182.Data.InTargetPosition=1) OR (i>1));
@@ -1632,7 +1635,7 @@ begin
       //if BLOCK then OnCommData(s);
       if BLOCK then
       begin
-        CDResult:=ProcessNormalResponse(CD,DirectDrive,s);
+        CDResult:=ProcessResonse(CD,DirectDrive,s);
         ProcessCommResult(CDResult);
       end;
     end;
@@ -1949,7 +1952,7 @@ begin
       CD.DATA:='';
       // Get current register value
       success:=ProcessParameter(CD,s,false,true);
-      StatusCD:=ProcessNormalResponse(CD,DirectDrive,s);
+      StatusCD:=ProcessResonse(CD,DirectDrive,s);
       SC346.Raw:=BinaryStringToDecimal(StatusCD.DATA);
       // Engage drive by toggling strobe bit
       SC346.Data.AcceptPositionToggle:=1-SC346.Data.AcceptPositionToggle; // toggle strobe bit
@@ -2239,6 +2242,59 @@ end;
 procedure TForm1.btnGetDriveDataClick(Sender: TObject);
 begin
   GetDriveData;
+end;
+
+procedure TForm1.Button1Click(Sender: TObject);
+var
+  m          : string;
+  axis       : word;
+  CD         : TPARAMETERDATA;
+  success    : boolean;
+  DP14       : TDRIVEPARAMETER_0014;
+  DP154      : TDRIVEPARAMETER_0154;
+  s          : rawbytestring;
+begin
+  if CheckComms then exit;
+
+  if CheckAxis(axis) then exit;
+
+  CD:=Default(TPARAMETERDATA);
+  CD.SETID:=GetDriveAddress(ActiveDriveNumber);
+  CD.STEPID:=0;
+
+  CD:=SetCommand(DRIVE_POSITIONSPEED);
+  CD.DATA:=editSpeed.Text;
+  success:=ProcessParameter(CD,s,false,true);
+
+  CD:=SetCommand(DRIVE_POSITIONACCEL);
+  CD.DATA:=editAccel.Text;
+  success:=ProcessParameter(CD,s,false,true);
+
+  CD:=SetCommand(DRIVE_POSITIONJERK);
+  CD.DATA:=editAccel.Text;
+  success:=ProcessParameter(CD,s,false,true);
+
+  CD:=SetCommand(DRIVE_POSITIONOFFSET);
+  CD.DATA:=editDist.Text;
+  success:=ProcessParameter(CD,s,false,true);
+
+  CD:=SetCommand(DRIVE_POSITIONPARAMETER);
+  DP154.Raw:=0;
+  //DP154.Data.Movement:=0; // turn CW
+  DP154.Data.Movement:=1; // turn CCW
+  //DP154.Data.Movement:=2; // shortest
+  DP154.Data.Relative:=1;
+  CD.DATA:=DecimalToBinaryString(DP154.Raw,DirectDrive);
+  success:=ProcessParameter(CD,s,false,true);
+
+  CD:=Default(TPARAMETERDATA);
+  CD:=SetCommand(DRIVE_POSITIONSPINDLE);
+
+  success:=CommandExecuteAndWait(CD);
+  if success then
+  begin
+    //Memo1.Lines.Append(s);
+  end;
 end;
 
 procedure TForm1.Button2Click(Sender: TObject);
@@ -3054,6 +3110,19 @@ begin
   {$endif UNIX}
 end;
 
+
+function TForm1.ProcessResonse(const CD:TPARAMETERDATA;DD:boolean;Data:RawByteString):TPARAMETERDATA;
+begin
+  if SISDrive then
+  begin
+    result:=ParseSISResponse(CD,Data);
+  end
+  else
+  begin
+    result:=ProcessNormalResponse(CD,DirectDrive,Data);
+  end;
+end;
+
 function TForm1.ProcessParameter(const CD:TPARAMETERDATA;out response:RawByteString; prio:boolean=false; blocking:boolean=false; verbose:boolean=false):boolean;
 var
   s,c      : RawByteString;
@@ -3136,6 +3205,7 @@ begin
     else
     if SISDrive then
     begin
+      FillChar({%H-}SISData,SizeOf(SISData),0);
       BuildSISTelegram(LocalCD,SISData,l);
       (ComDevice AS TLazSerial).ProcessSIS(@SISData,l);
       s:='';
@@ -3578,8 +3648,8 @@ begin
     with DRIVE_DISTANCE do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then DistanceDisplay.Value:=StrToFloatDef(CD.DATA,0,DataFormatSettings);
 
 
-    SetInfoPanel(panelStandstill,(SetVelocityDisplay.Value<10));
-    SetInfoPanel(panelInPosition,((Abs(PositionDisplay.Value-TargetDisplay.Value)<1)));
+    //SetInfoPanel(panelStandstill,(SetVelocityDisplay.Value<10));
+    //SetInfoPanel(panelInPosition,((Abs(PositionDisplay.Value-TargetDisplay.Value)<1)));
     //SetInfoPanel(panelTargetPosition,(DR182.Data.InTargetPosition=1));
 
   end;
@@ -3898,7 +3968,7 @@ var
 begin
   Memo1.Lines.Append('Received: '+s);
   CD:=Default(TPARAMETERDATA);
-  CDResult:=ProcessNormalResponse(CD,DirectDrive,s);
+  CDResult:=ProcessResonse(CD,DirectDrive,s);
   ProcessCommResult(CDResult);
 end;
 
@@ -3918,7 +3988,7 @@ begin
   if ((LocalCD.CCLASS=ccNone) OR (Length(LocalCD.ERROR)>0)) then
   begin
     s:=LocalCD.DATA;
-    //if (Length(s)=0) then
+    if (LocalCD.ERROR<>'unknown') then
     begin
       i:=HexStringToDecimal(LocalCD.ERROR);
       s:=GetDriveErrorDescription(i);
@@ -4300,7 +4370,8 @@ begin
         FillChar({%H-}SISData,SizeOf(SISData),0);
         // Init/activate SIS serial bus for comms
         // Might be superfluous after the first time
-        BuildSISCommand(SISServiceInitSISCommunications,SISSubServiceSettingBaud,GetDriveAddress(ActiveDriveNumber),1,SISData,l);
+        // Done by setting the default baudrate to 9600
+        BuildSISCommand(SISServiceInitSISCommunications,SISSubServiceSettingBaud,GetDriveAddress(ActiveDriveNumber),0,SISData,l);
         s:='';
         if l>0 then
         begin
@@ -4311,13 +4382,6 @@ begin
         end;
         (ComDevice AS TLazSerial).ProcessSIS(@SISData,l);
         CD:=ParseSISResponse(SISData,l);
-        s:='';
-        if l>0 then
-        begin
-          SetLength(s,l);
-          for i:=1 to l do s[i]:=Chr(SISData[i]);
-        end;
-        Memo1.Lines.Append('Select drive SIS response: '+s);
       end;
 
       if SISDrive OR DirectDrive then
@@ -4374,7 +4438,9 @@ begin
         CD.DATA:='';
         s:='';
         success:=ProcessParameter(CD,s,false,true);
-        StatusCD:=ProcessNormalResponse(CD,DirectDrive,s);
+
+
+        StatusCD:=ProcessResonse(CD,DirectDrive,s);
         SC0393.Raw:=BinaryStringToDecimal(StatusCD.DATA);
         if (SC0393.Data.TargetPosAfter=0) then
         begin

@@ -227,6 +227,22 @@ type
 
   end;
 
+  TDRIVEPARAMETER_0154 = bitpacked record
+      case integer of
+          1 : (  Data : record
+                   Movement                 : T2BITS; // 0 0: turning right (CW) ; 0 1: turning left (CCW) ; 1 0: shortest way
+                   Relative                 : T1BITS; //
+                   Reserved1                : T13BITS;
+                 end
+              );
+          2 : (
+               Bits            : bitpacked array[0..15] of T1BITS;
+              );
+          3 : (
+               Raw             : Word;
+              );
+  end;
+
   //S-0-0182, Manufacturer Class 3 Diagnostics
   TDRIVEPARAMETER_0182 = bitpacked record
       case integer of
@@ -414,6 +430,13 @@ const
   DRIVE_PHASE3                 : TPARAMETER = (CCLASS: ccDrive; CSUBCLASS: mscNone; NUMID: 127);
   DRIVE_PHASE4                 : TPARAMETER = (CCLASS: ccDrive; CSUBCLASS: mscNone; NUMID: 128);
 
+  DRIVE_POSITIONSPINDLE        : TPARAMETER = (CCLASS: ccDrive; CSUBCLASS: mscNone; NUMID: 152);
+  DRIVE_POSITIONPARAMETER      : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 154);
+  DRIVE_POSITIONOFFSET         : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 180);
+  DRIVE_POSITIONSPEED          : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 222);
+  DRIVE_POSITIONACCEL          : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 138);
+  DRIVE_POSITIONJERK           : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 349);
+
   DRIVE_MOTORSERIAL            : TPARAMETER = (CCLASS: ccDriveSpecific; CSUBCLASS: mscParameterData; NUMID: 4088);
 
   DRIVE_CONTROLWORD            : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 134);
@@ -483,6 +506,7 @@ const
 var
   DriveOperationModes         : TOMD;
   DriveOperationModesLagLess  : TOMD;
+  //BASICDRIVEDATA              : array[0..0] of TPARAMETER;
   BASICDRIVEDATA              : array[0..5] of TPARAMETER;
   REALTIMEDRIVEDATA           : array[0..10] of TPARAMETER;
 
@@ -820,10 +844,10 @@ begin
   // Init driveinfo to unknown
   for i:=Low(DriveList) to High(DriveList) do GetDriveInfo(i);
 
-  BASICDRIVEDATA[0]:=DRIVE_FIRMWARE;
-  BASICDRIVEDATA[1]:=DRIVE_CONTROLLERTYPE;
-  BASICDRIVEDATA[2]:=DRIVE_MOTORTYPE;
-  BASICDRIVEDATA[3]:=DRIVE_APPTYPE;
+  BASICDRIVEDATA[0]:=DRIVE_APPTYPE;
+  BASICDRIVEDATA[1]:=DRIVE_FIRMWARE;
+  BASICDRIVEDATA[2]:=DRIVE_CONTROLLERTYPE;
+  BASICDRIVEDATA[3]:=DRIVE_MOTORTYPE;
   BASICDRIVEDATA[4]:=DRIVE_MOTORSERIAL;
   BASICDRIVEDATA[5]:=DRIVE_PRIMARYMODE;
 
