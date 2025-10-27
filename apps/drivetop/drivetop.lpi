@@ -108,7 +108,7 @@
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir);..\..\source;..\..\common;..\..\common\jvcl\jvcl\common"/>
       <OtherUnitFiles Value="..\..\source;..\..\common;..\..\common\jvcl\jvcl\run;..\..\common\serial"/>
-      <UnitOutputDirectory Value=".\libs\$NameOnly($(ProjFile))\$(TargetCPU)-$(TargetOS)"/>
+      <UnitOutputDirectory Value="libs\$NameOnly($(ProjFile))\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>
       <SyntaxOptions>

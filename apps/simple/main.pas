@@ -878,21 +878,21 @@ end;
 
 procedure TForm1.Button3Click(Sender: TObject);
 var
-  Data:SISByteArray;
+  Data:SISTelegram;
   l:Integer;
   CD:TPARAMETERDATA;
 begin
   // Get supported baudrates
-  FillChar({%H-}Data,SizeOf(SISByteArray),0);
+  FillChar({%H-}Data,SizeOf(SISTelegram),0);
   BuildSISCommand(SISServiceUserIdentification,SISSubServiceReadOutSupportedBaudRates,GetDriveAddress(ActiveDriveNumber),0,Data,l);
   // Set the baudrate
-  FillChar({%H-}Data,SizeOf(SISByteArray),0);
+  FillChar({%H-}Data,SizeOf(SISTelegram),0);
   BuildSISCommand(SISServiceInitSISCommunications,SISSubServiceSettingBaud,GetDriveAddress(ActiveDriveNumber),0,Data,l);
-  FillChar({%H-}Data,SizeOf(SISByteArray),0);
+  FillChar({%H-}Data,SizeOf(SISTelegram),0);
   CD:=Default(TPARAMETERDATA);
   CD:=SetCommand(DRIVE_TARGET);
   CD.SETID:=GetDriveAddress(ActiveDriveNumber);
-  FillChar({%H-}Data,SizeOf(SISByteArray),0);
+  FillChar({%H-}Data,SizeOf(SISTelegram),0);
   BuildSISTelegram(CD,Data,l);
 end;
 
@@ -1416,7 +1416,7 @@ var
   LocalCD  : TPARAMETERDATA;
   StoreCD  : TPARAMETERDATA;
   wp,wb    : boolean;
-  SISData  : SISByteArray;
+  SISData  : SISTelegram;
   l,i      : Integer;
 begin
   result:=false;
@@ -2008,7 +2008,7 @@ var
   c,s          : RawByteString;
   CD,StatusCD  : TPARAMETERDATA;
   SC0393       : TDRIVEPARAMETER_0393;
-  SISData      : SISByteArray;
+  SISData      : SISTelegram;
   l,i          : integer;
 begin
   if (value<>FActiveDriveNumber) then

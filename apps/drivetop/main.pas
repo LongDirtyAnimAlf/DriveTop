@@ -955,6 +955,7 @@ begin
       begin
         Device:=cmboSerialPorts.Text;
         BaudRate:=br__9600;
+        //BaudRate:=br_19200;
         FlowControl:=fcNone;
         Parity:=pNone;
         DataBits:=db8bits;
@@ -2277,21 +2278,21 @@ end;
 
 procedure TForm1.Button3Click(Sender: TObject);
 var
-  Data:SISByteArray;
+  Data:SISTelegram;
   l:Integer;
   CD:TPARAMETERDATA;
 begin
   // Get supported baudrates
-  FillChar({%H-}Data,SizeOf(SISByteArray),0);
+  FillChar({%H-}Data,SizeOf(SISTelegram),0);
   BuildSISCommand(SISServiceUserIdentification,SISSubServiceReadOutSupportedBaudRates,GetDriveAddress(ActiveDriveNumber),0,Data,l);
   // Set the baudrate
-  FillChar({%H-}Data,SizeOf(SISByteArray),0);
+  FillChar({%H-}Data,SizeOf(SISTelegram),0);
   BuildSISCommand(SISServiceInitSISCommunications,SISSubServiceSettingBaud,GetDriveAddress(ActiveDriveNumber),0,Data,l);
-  FillChar({%H-}Data,SizeOf(SISByteArray),0);
+  FillChar({%H-}Data,SizeOf(SISTelegram),0);
   CD:=Default(TPARAMETERDATA);
   CD:=SetCommand(DRIVE_TARGET);
   CD.SETID:=GetDriveAddress(ActiveDriveNumber);
-  FillChar({%H-}Data,SizeOf(SISByteArray),0);
+  FillChar({%H-}Data,SizeOf(SISTelegram),0);
   BuildSISTelegram(CD,Data,l);
 end;
 
@@ -3061,7 +3062,7 @@ var
   LocalCD  : TPARAMETERDATA;
   StoreCD  : TPARAMETERDATA;
   wp,wb    : boolean;
-  SISData  : SISByteArray;
+  SISData  : SISTelegram;
   l,i      : Integer;
 begin
   result:=false;
@@ -4271,7 +4272,7 @@ var
   c,s          : RawByteString;
   CD,StatusCD  : TPARAMETERDATA;
   SC0393       : TDRIVEPARAMETER_0393;
-  SISData      : SISByteArray;
+  SISData      : SISTelegram;
   l,i          : integer;
 begin
   if (value<>FActiveDriveNumber) then
@@ -4299,7 +4300,7 @@ begin
         FillChar({%H-}SISData,SizeOf(SISData),0);
         // Init/activate SIS serial bus for comms
         // Might be superfluous after the first time
-        BuildSISCommand(SISServiceInitSISCommunications,SISSubServiceSettingBaud,GetDriveAddress(ActiveDriveNumber),0,SISData,l);
+        BuildSISCommand(SISServiceInitSISCommunications,SISSubServiceSettingBaud,GetDriveAddress(ActiveDriveNumber),1,SISData,l);
         s:='';
         if l>0 then
         begin
@@ -4309,6 +4310,7 @@ begin
           end;
         end;
         (ComDevice AS TLazSerial).ProcessSIS(@SISData,l);
+        CD:=ParseSISResponse(SISData,l);
         s:='';
         if l>0 then
         begin

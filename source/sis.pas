@@ -38,11 +38,12 @@ const
   SISSubServiceSettingAccept             = $FF; // Only SISCommunications ; Accepting the determined values activates the values initialized with the subservices 0x01, 0x02 and 0x07
 
 type
-  SISByteArray = array[1..256] of Byte;
+  SISTelegram = array[1..256] of Byte;
 
-procedure BuildSISCommand(SISService,SISSubService,Address:byte; Data:dword; out telegram: SISByteArray; out len: Integer);
-procedure BuildSISTelegram(const CD: TPARAMETERDATA; out telegram: SISByteArray; out len: Integer);overload;
+procedure BuildSISCommand(SISService,SISSubService,Address:byte; Data:dword; out telegram: SISTelegram; out len: Integer);
+procedure BuildSISTelegram(const CD: TPARAMETERDATA; out telegram: SISTelegram; out len: Integer);overload;
 function  ParseSISResponse(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA; overload;
+function  ParseSISResponse(const telegram: SISTelegram; const len: Integer):TPARAMETERDATA; overload;
 
 implementation
 
@@ -193,7 +194,7 @@ begin
   result:=True;
 end;
 
-procedure BuildSISCommand(SISService,SISSubService,Address:byte; Data:dword; out telegram: SISByteArray; out len: Integer);
+procedure BuildSISCommand(SISService,SISSubService,Address:byte; Data:dword; out telegram: SISTelegram; out len: Integer);
 const
   HEADEROFFSET = 1;
   USERDATAOFFSET = HEADEROFFSET+8;
@@ -222,13 +223,16 @@ begin
   telegram[USERDATAOFFSET]  := Address;
   telegram[USERDATAOFFSET+1] := SISSubService;
   i:=0;
-  case SISSubService of
-    SISSubServiceSettingTrS      : i:=2;
-    SISSubServiceSettingTzA      : i:=2;
-    SISSubServiceSettingTmas     : i:=2;
-    SISSubServiceSettingBaud     : i:=1;
-    SISSubServiceSettingBaudTest : i:=3;
-    SISSubServiceSettingAccept   : i:=0;
+  if (SISService=SISServiceInitSISCommunications) then
+  begin
+    case SISSubService of
+      SISSubServiceSettingTrS      : i:=2;
+      SISSubServiceSettingTzA      : i:=2;
+      SISSubServiceSettingTmas     : i:=2;
+      SISSubServiceSettingBaud     : i:=1;
+      SISSubServiceSettingBaudTest : i:=3;
+      SISSubServiceSettingAccept   : i:=0;
+    end;
   end;
   Inc(len,i);
 
@@ -261,7 +265,7 @@ begin
 end;
 
 // This is the real one !!
-procedure BuildSISTelegram(const CD:TPARAMETERDATA; out telegram: SISByteArray; out len: Integer);
+procedure BuildSISTelegram(const CD:TPARAMETERDATA; out telegram: SISTelegram; out len: Integer);
 const
   HEADEROFFSET = 1;
   USERHEADEROFFSET = HEADEROFFSET+8;
@@ -411,7 +415,7 @@ end;
 (*
 procedure SendSISParameterWrite(const destAddr: Byte; const sParam: string; value: Word);
 var
-  telegram   : SISByteArray;
+  telegram   : SISTelegram;
   len        : Integer;
 begin
   BuildSISTelegram(destAddr, sParam, value, SISServiceParamWrite, telegram, len);
@@ -420,10 +424,10 @@ end;
 
 function ReadSISParameter(const destAddr: Byte; const idn: string; out value: Word): Boolean;
 var
-  telegram   : SISByteArray;
+  telegram   : SISTelegram;
   len, i     : Integer;
   b          : Byte;
-  response   : SISByteArray;
+  response   : SISTelegram;
 begin
   BuildSISTelegram(destAddr, idn, 0, SISServiceParamRead, telegram, len);
   SendTelegram(telegram, len);
@@ -453,7 +457,7 @@ function ParseSISResponse(const SourceCD: TPARAMETERDATA; const s: RawByteString
 var
   Header         : TSISTelegramHeader;
   UserHeader     : TSISUserDataResponseHeader;
-  SISData        : SISByteArray;
+  //SISData        : SISTelegram;
   datas          : ansistring;
   Success        : boolean;
   i              : integer;
@@ -465,7 +469,7 @@ begin
   // Init
   for i:=0 to 7 do Header.Bytes[i]:=0;
   UserHeader.Raw:=0;
-  FillChar({%H-}SISData,SizeOf(SISData),0);
+  //FillChar({%H-}SISData,SizeOf(SISData),0);
   result.DATA:='';
   result.ERROR:='Unknown error';
 
@@ -524,14 +528,98 @@ begin
   // Now look at the user data
   if Success then
   begin
-    if ((Length(datas)>=1) AND (Length(datas)<SizeOf(SISData))) then
+    //if ((Length(datas)>=1) AND (Length(datas)<SizeOf(SISData))) then
     begin
       result.DATA:=datas;
-      for i:=0 to Pred(Length(datas)) do SISData[i]:=Ord(datas[1+i]);
+      //for i:=0 to Pred(Length(datas)) do SISData[i]:=Ord(datas[1+i]);
     end;
   end;
 
 end;
+
+function ParseSISResponse(const telegram: SISTelegram; const len: Integer):TPARAMETERDATA;
+var
+  Header           : TSISTelegramHeader;
+  UserHeader       : TSISUserDataResponseHeader;
+  Success          : boolean;
+  i                : integer;
+  Remaining,Index  : integer;
+begin
+  Success:=false;
+
+  // Init
+  for i:=0 to 7 do Header.Bytes[i]:=0;
+  UserHeader.Raw:=0;
+  //FillChar({%H-}SISData,SizeOf(SISData),0);
+  result.DATA:='';
+  result.ERROR:='Unknown error';
+
+  Remaining:=len;
+  Index:=1;
+
+  // Look at the SIS header
+  if Remaining>=8 then
+  begin
+    for i:=0 to 7 do Header.Bytes[i]:=telegram[Index+i];
+    Inc(Index,8);
+    Dec(Remaining,8);
+    Success:=(Remaining>=1);
+  end;
+
+  // Now look at the user header
+  if Success then
+  begin
+    Success:=false;
+    i:=0;
+    while (i<Remaining) do
+    begin
+      UserHeader.Bytes[i]:=telegram[Index+i];
+      Inc(i);
+      Inc(Index);
+      if i=3 then
+      begin
+        // We might receive a 4th byte, in case of a special error
+        if (NOT ((UserHeader.Data.Status=$01) OR (UserHeader.Data.Status=$02))) then break;
+      end;
+      // Max 4 bytes in user header
+      if i=4 then break;
+    end;
+    Dec(Remaining,i);
+    Success:=(Remaining>=1);
+  end;
+
+  case UserHeader.Data.Status of
+    $00 : result.ERROR:=''; // All ok !!
+    // Execution errors
+    $01 : result.ERROR:='Error while executing the telegram. During the execution of the requested service an error occured. The service-specific error code is contained in the useful data of the reaction telegram.';
+    $02 : result.ERROR:='Error in the (internal) transmission channel. An error occurred while accessing the (internal) transmission channel. The specific error code is in the user data of the response telegram.';
+    // Protocol/telegram errors
+    $F0 : result.ERROR:='Invalid service. The requested service is not supported by the addressed slave.';
+    $F1 : result.ERROR:='Invalid telegram. The telegram cannot be evaluated because, for example, a slave received a response telegram from the master or the start character was not found.';
+    $F2 : result.ERROR:='Telegram length error. The two length entries in the telegram do not match.';
+    $F4 : result.ERROR:='Checksum error. The transmitted checksum does not match the one calculated internally.';
+    $F8 : result.ERROR:='Invalid sequential telegram. In the sequential telegram, data in the useful data header, the transmitter address or the service have changed.';
+    $F9 : result.ERROR:='The command telegram contains subaddresses.The routing of telegrams is not supported by the slave.';
+    $FA : result.ERROR:='Useful data are missing in the command telegram. The telegram cannot be executed.';
+    $FB : result.ERROR:='The requested subservice is not supported by the addressed slave.';
+    $FC : result.ERROR:='The requested component is not available in the addressed slave. The component address is invalid.';
+  end;
+
+  if ((UserHeader.Data.Status=$01) OR (UserHeader.Data.Status=$02)) then
+  begin
+    // Report extended error code !!
+    result.ERROR:=GetDriveErrorDescription(UserHeader.Error.ErrorCode);
+  end;
+
+  // Now look at the user data
+  if Success then
+  begin
+    //SetLength(result.DATA,Remaining);
+    //for i:=1 to Remaining do result.DATA[i]:=telegram[Index+i-1];
+  end;
+
+end;
+
 
 
 end.

@@ -442,26 +442,29 @@ begin
 end;
 
 procedure TLazSerial.ProcessSIS(buffer: pointer; var len:Integer);
+var
+  userdatalength:byte;
+  userdatastatus:byte;
 begin
   FSynSer.SendBuffer(buffer,len);
+  FillChar({%H-}buffer^,len,0);
   len:=0;
   if (FSynSer.LastError=0) then
   begin
     // The SIS slave always sends:
     // 8 header bytes
-    // 3 user data bytes
-    // So, receive at least 8+3 = 11 bytes
-    FSynSer.RecvBufferEx(buffer,11,1000);
-    if (FSynSer.LastError=0) then
+    len:=FSynSer.RecvBufferEx(buffer,8,1000);
+    if ((FSynSer.LastError=0) AND (len>0)) then
     begin
-      // The header contains the length at position 2 [=1]
-      len:=PByteArray(buffer)^[1];
+      // The header contains the length at position 3 (and 4) [=2 (and 3)]
+      userdatalength:=PByteArray(buffer)^[2];
       // Receive rest of userdata, if any
-      if len>0 then
+      if userdatalength>0 then
       begin
-        FSynSer.RecvBufferEx(@PByteArray(buffer)^[11],len,1000);
+        FSynSer.RecvBufferEx(@PByteArray(buffer)^[8],userdatalength,1000);
+        Inc(len,userdatalength);
+        //userdatastatus:=PByteArray(buffer)^[8];
       end;
-      Inc(len,11);
     end;
   end;
 end;
