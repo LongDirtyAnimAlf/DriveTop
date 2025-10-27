@@ -1,4 +1,4 @@
-program DriveTop;
+program move;
 
 {$mode objfpc}{$H+}
 
@@ -13,7 +13,6 @@ uses
 {$R *.res}
 
 begin
-  Application.Title:='DriveTop';
   RequireDerivedFormResource:=True;
   Application.Initialize;
   Application.CreateForm(TForm1, Form1);

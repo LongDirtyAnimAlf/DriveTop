@@ -2278,7 +2278,7 @@ end;
 procedure TForm1.Button3Click(Sender: TObject);
 var
   Data:SISByteArray;
-  l,i:Integer;
+  l:Integer;
   CD:TPARAMETERDATA;
 begin
   // Get supported baudrates
@@ -2293,7 +2293,6 @@ begin
   CD.SETID:=GetDriveAddress(ActiveDriveNumber);
   FillChar({%H-}Data,SizeOf(SISByteArray),0);
   BuildSISTelegram(CD,Data,l);
-  i:=0;
 end;
 
 function TForm1.CheckComms:boolean;
@@ -3230,7 +3229,7 @@ end;
 procedure TForm1.vleParamDetailsDrawCell(Sender: TObject; aCol, aRow: Integer;
   aRect: TRect; aState: TGridDrawState);
 var
-  aTextStyle   : TTextStyle;
+  //aTextStyle   : TTextStyle;
   s            : ansistring;
   pw           : dword;
   ro           : boolean;

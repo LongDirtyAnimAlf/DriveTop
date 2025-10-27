@@ -1,0 +1,922 @@
+object Form1: TForm1
+  Left = 315
+  Height = 651
+  Top = 129
+  Width = 924
+  BorderIcons = [biSystemMenu, biMinimize]
+  Caption = 'DriveTop'
+  ClientHeight = 651
+  ClientWidth = 924
+  LCLVersion = '4.2.0.0'
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  object Memo1: TMemo
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = TabControl1
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = TabControl1
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = editStatus
+    Left = 8
+    Height = 84
+    Top = 536
+    Width = 456
+    Anchors = [akTop, akLeft, akBottom]
+    BorderSpacing.Left = 8
+    BorderSpacing.Bottom = 4
+    ScrollBars = ssAutoVertical
+    TabOrder = 3
+  end
+  object btnConnectDriveRS485: TButton
+    AnchorSideLeft.Control = btnConnectDriveRS232
+    AnchorSideTop.Control = btnConnectDriveRS232
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = btnConnectDriveRS232
+    AnchorSideRight.Side = asrBottom
+    Left = 8
+    Height = 25
+    Top = 33
+    Width = 204
+    Anchors = [akTop, akLeft, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 4
+    Caption = 'Connect as  DriveTop ASCII RS485'
+    TabOrder = 1
+    OnClick = btnConnectSerialClick
+  end
+  object cmboSerialPorts: TComboBox
+    AnchorSideLeft.Control = btnConnectDriveRS485
+    AnchorSideTop.Control = btnConnectDriveRS485
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = btnConnectDriveRS485
+    AnchorSideRight.Side = asrBottom
+    Left = 8
+    Height = 23
+    Top = 66
+    Width = 204
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 8
+    ItemHeight = 15
+    TabOrder = 2
+    OnSelect = cmboSerialPortsSelect
+  end
+  object PageControl2: TPageControl
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 470
+    Height = 635
+    Top = 8
+    Width = 446
+    ActivePage = tabMove
+    Anchors = [akTop, akRight, akBottom]
+    BorderSpacing.Top = 8
+    BorderSpacing.Right = 8
+    BorderSpacing.Bottom = 8
+    TabIndex = 0
+    TabOrder = 4
+    object tabMove: TTabSheet
+      Caption = 'Movement'
+      ClientHeight = 607
+      ClientWidth = 438
+      object MovementPanel1: TPanel
+        AnchorSideLeft.Control = tabMove
+        AnchorSideTop.Control = tabMove
+        AnchorSideRight.Control = tabMove
+        AnchorSideRight.Side = asrBottom
+        Left = 0
+        Height = 497
+        Top = 0
+        Width = 438
+        Anchors = [akTop, akLeft, akRight]
+        BevelOuter = bvNone
+        ClientHeight = 497
+        ClientWidth = 438
+        TabOrder = 0
+        object shapeBase: TShape
+          AnchorSideLeft.Control = MovementPanel1
+          AnchorSideTop.Control = MovementPanel1
+          AnchorSideBottom.Control = MovementPanel1
+          AnchorSideBottom.Side = asrBottom
+          Left = 12
+          Height = 430
+          Top = 12
+          Width = 235
+          BorderSpacing.Left = 12
+          BorderSpacing.Top = 12
+          BorderSpacing.Bottom = 12
+          Pen.Width = 10
+        end
+        object shapeWork: TShape
+          AnchorSideLeft.Control = shapeBase
+          AnchorSideTop.Control = shapeBase
+          AnchorSideRight.Control = shapeBase
+          AnchorSideRight.Side = asrBottom
+          AnchorSideBottom.Control = shapeBase
+          AnchorSideBottom.Side = asrBottom
+          Left = 32
+          Height = 330
+          Top = 32
+          Width = 195
+          Anchors = [akTop, akLeft, akRight, akBottom]
+          BorderSpacing.Bottom = 60
+          BorderSpacing.Around = 20
+          Pen.Width = 10
+        end
+        object shapeStar: TShape
+          Left = 110
+          Height = 52
+          Top = 154
+          Width = 44
+          Brush.Color = clRed
+          Pen.Width = 4
+          Shape = stStar
+        end
+        object shapeArrowUp: TShape
+          AnchorSideLeft.Control = shapeStar
+          AnchorSideLeft.Side = asrCenter
+          AnchorSideTop.Side = asrBottom
+          AnchorSideBottom.Control = shapeStar
+          Left = 119
+          Height = 26
+          Hint = 'Move up'
+          Top = 120
+          Width = 26
+          Anchors = [akLeft, akBottom]
+          BorderSpacing.Bottom = 8
+          Brush.Color = clLime
+          Pen.Width = 2
+          Shape = stTriangle
+          OnMouseDown = ArrowMouseDown
+          OnMouseUp = ArrowMouseUp
+        end
+        object shapeArrowDown: TShape
+          AnchorSideLeft.Control = shapeStar
+          AnchorSideLeft.Side = asrCenter
+          AnchorSideTop.Control = shapeStar
+          AnchorSideTop.Side = asrBottom
+          Left = 119
+          Height = 26
+          Hint = 'Move down'
+          Top = 214
+          Width = 26
+          BorderSpacing.Top = 8
+          Brush.Color = clLime
+          Pen.Width = 2
+          Shape = stTriangleDown
+          OnMouseDown = ArrowMouseDown
+          OnMouseUp = ArrowMouseUp
+        end
+        object shapeArrowRight: TShape
+          AnchorSideLeft.Control = shapeStar
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = shapeStar
+          AnchorSideTop.Side = asrCenter
+          Left = 166
+          Height = 26
+          Hint = 'Move right'
+          Top = 167
+          Width = 26
+          BorderSpacing.Left = 12
+          Brush.Color = clLime
+          Pen.Width = 2
+          Shape = stTriangleRight
+          OnMouseDown = ArrowMouseDown
+          OnMouseUp = ArrowMouseUp
+        end
+        object shapeArrowLeft: TShape
+          AnchorSideTop.Control = shapeStar
+          AnchorSideTop.Side = asrCenter
+          AnchorSideRight.Control = shapeStar
+          Left = 72
+          Height = 26
+          Hint = 'Move left'
+          Top = 167
+          Width = 26
+          Anchors = [akTop, akRight]
+          BorderSpacing.Right = 12
+          Brush.Color = clLime
+          Pen.Width = 2
+          Shape = stTriangleLeft
+          OnMouseDown = ArrowMouseDown
+          OnMouseUp = ArrowMouseUp
+        end
+        object labelReps: TLabel
+          AnchorSideLeft.Control = editReps
+          AnchorSideTop.Control = editReps
+          AnchorSideTop.Side = asrBottom
+          AnchorSideBottom.Control = editReps
+          Left = 255
+          Height = 15
+          Top = 374
+          Width = 59
+          Caption = 'Repetitions'
+        end
+        object editReps: TEdit
+          AnchorSideLeft.Control = grpSettings
+          AnchorSideTop.Control = grpSettings
+          AnchorSideTop.Side = asrBottom
+          Left = 255
+          Height = 38
+          Top = 336
+          Width = 64
+          BorderSpacing.Top = 16
+          Font.CharSet = ANSI_CHARSET
+          Font.Height = -21
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          NumbersOnly = True
+          ParentFont = False
+          TabOrder = 0
+          Text = '100'
+        end
+        object grpSettings: TGroupBox
+          AnchorSideTop.Control = MovementPanel1
+          AnchorSideRight.Control = MovementPanel1
+          AnchorSideRight.Side = asrBottom
+          Left = 255
+          Height = 316
+          Top = 4
+          Width = 183
+          Anchors = [akTop, akRight]
+          BorderSpacing.Top = 4
+          Caption = 'Movement settings'
+          ClientHeight = 296
+          ClientWidth = 179
+          TabOrder = 1
+          object selectDirection: TRadioGroup
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = grpSettings
+            AnchorSideRight.Control = grpSettings
+            AnchorSideRight.Side = asrBottom
+            Left = 8
+            Height = 96
+            Top = 8
+            Width = 163
+            Anchors = [akTop, akLeft, akRight]
+            AutoFill = True
+            BorderSpacing.Around = 8
+            Caption = 'Direction'
+            ChildSizing.LeftRightSpacing = 6
+            ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+            ChildSizing.EnlargeVertical = crsHomogenousChildResize
+            ChildSizing.ShrinkHorizontal = crsScaleChilds
+            ChildSizing.ShrinkVertical = crsScaleChilds
+            ChildSizing.Layout = cclLeftToRightThenTopToBottom
+            ChildSizing.ControlsPerLine = 1
+            ClientHeight = 76
+            ClientWidth = 159
+            Items.Strings = (
+              'Up/down'
+              'Left/right'
+              'Jog'
+            )
+            TabOrder = 0
+            OnClick = selectDirectionClick
+            OnSelectionChanged = selectDirectionSelectionChanged
+          end
+          object labelDist: TLabel
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = selectDirection
+            AnchorSideTop.Side = asrBottom
+            Left = 8
+            Height = 15
+            Top = 117
+            Width = 78
+            BorderSpacing.Top = 5
+            BorderSpacing.Around = 8
+            Caption = 'Distance [mm]'
+          end
+          object editDist: TEdit
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = labelDist
+            AnchorSideTop.Side = asrBottom
+            AnchorSideRight.Control = grpSettings
+            AnchorSideRight.Side = asrBottom
+            Left = 8
+            Height = 23
+            Top = 140
+            Width = 163
+            Anchors = [akTop, akLeft, akRight]
+            BorderSpacing.Around = 8
+            TabOrder = 1
+            Text = '100'
+            OnKeyPress = editDistKeyPress
+          end
+          object btnMove: TButton
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = editFeed
+            AnchorSideTop.Side = asrBottom
+            AnchorSideRight.Control = grpSettings
+            AnchorSideRight.Side = asrBottom
+            AnchorSideBottom.Control = grpSettings
+            AnchorSideBottom.Side = asrBottom
+            Left = 8
+            Height = 47
+            Top = 241
+            Width = 75
+            Anchors = [akTop, akLeft, akBottom]
+            BorderSpacing.Top = 8
+            BorderSpacing.Around = 8
+            Caption = 'Move'
+            TabOrder = 2
+            OnClick = btnMoveClick
+          end
+          object editFeed: TEdit
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = labelFeed
+            AnchorSideTop.Side = asrBottom
+            AnchorSideRight.Control = grpSettings
+            AnchorSideRight.Side = asrBottom
+            Left = 8
+            Height = 23
+            Top = 202
+            Width = 163
+            Anchors = [akTop, akLeft, akRight]
+            BorderSpacing.Around = 8
+            NumbersOnly = True
+            TabOrder = 3
+            Text = '25'
+          end
+          object labelFeed: TLabel
+            AnchorSideLeft.Control = grpSettings
+            AnchorSideTop.Control = editDist
+            AnchorSideTop.Side = asrBottom
+            AnchorSideRight.Control = grpSettings
+            AnchorSideRight.Side = asrBottom
+            Left = 8
+            Height = 15
+            Top = 179
+            Width = 163
+            Anchors = [akTop, akLeft, akRight]
+            BorderSpacing.Top = 8
+            BorderSpacing.Around = 8
+            Caption = 'Speed [1..100%]'
+          end
+        end
+      end
+      object Panel1: TPanel
+        AnchorSideLeft.Control = tabMove
+        AnchorSideRight.Control = tabMove
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = tabMove
+        AnchorSideBottom.Side = asrBottom
+        Left = 0
+        Height = 103
+        Top = 504
+        Width = 438
+        Anchors = [akTop, akLeft, akRight, akBottom]
+        ClientHeight = 103
+        ClientWidth = 438
+        TabOrder = 1
+        object EditPos: TEdit
+          Left = 4
+          Height = 23
+          Top = 130
+          Width = 93
+          TabOrder = 0
+        end
+        object Button2: TButton
+          Left = 56
+          Height = 35
+          Top = 184
+          Width = 165
+          Caption = 'Button2'
+          TabOrder = 1
+        end
+      end
+    end
+  end
+  object btnConnectDriveRS232: TButton
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    Left = 8
+    Height = 25
+    Top = 4
+    Width = 204
+    AutoSize = True
+    BorderSpacing.Left = 8
+    BorderSpacing.Top = 4
+    Caption = 'Connect as  DriveTop ASCII RS232'
+    TabOrder = 0
+    OnClick = btnConnectSerialClick
+  end
+  object TabControl1: TTabControl
+    AnchorSideLeft.Control = Owner
+    Left = 8
+    Height = 432
+    Top = 104
+    Width = 456
+    TabIndex = 0
+    Tabs.Strings = (
+      'Drive 1'
+      'Drive 2'
+    )
+    BorderSpacing.Left = 8
+    TabOrder = 5
+    object grpDriveDashBoard: TGroupBox
+      Left = 8
+      Height = 312
+      Top = 32
+      Width = 432
+      Caption = 'Drive Dashboard'
+      ClientHeight = 292
+      ClientWidth = 428
+      Constraints.MinWidth = 244
+      TabOrder = 1
+      object panelDriveStatus: TPanel
+        AnchorSideLeft.Control = grpDriveDashBoard
+        AnchorSideTop.Control = grpDriveDashBoard
+        AnchorSideRight.Control = grpDriveDashBoard
+        AnchorSideRight.Side = asrBottom
+        Left = 4
+        Height = 40
+        Top = 4
+        Width = 420
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Around = 4
+        ChildSizing.LeftRightSpacing = 2
+        ChildSizing.TopBottomSpacing = 2
+        ChildSizing.HorizontalSpacing = 6
+        ChildSizing.VerticalSpacing = 4
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 4
+        ClientHeight = 40
+        ClientWidth = 420
+        TabOrder = 0
+        object PanelControl: TPanel
+          Left = 3
+          Height = 36
+          Hint = 'Control voltage applied'
+          Top = 3
+          Width = 99
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Control'
+          Color = 16384
+          Constraints.MinHeight = 36
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clGray
+          Font.Height = -16
+          Font.Name = 'Arial'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 0
+        end
+        object PanelPower: TPanel
+          Left = 108
+          Height = 36
+          Hint = 'Drive power applied'
+          Top = 3
+          Width = 99
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Power'
+          Color = 16384
+          Constraints.MinHeight = 36
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clGray
+          Font.Height = -16
+          Font.Name = 'Arial'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 1
+        end
+        object PanelHalt: TPanel
+          Left = 213
+          Height = 36
+          Hint = 'Feed hold/pause. Click panel to set HOLD state'
+          Top = 3
+          Width = 99
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Halt'
+          Color = 64
+          Constraints.MinHeight = 36
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clGray
+          Font.Height = -16
+          Font.Name = 'Arial'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 2
+        end
+        object PanelEnable: TPanel
+          Left = 318
+          Height = 36
+          Hint = 'Busy/Running'
+          Top = 3
+          Width = 99
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Enable'
+          Color = 16384
+          Constraints.MinHeight = 36
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clGray
+          Font.Height = -16
+          Font.Name = 'Arial'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 3
+        end
+      end
+      object panelDriveDistance: TPanel
+        AnchorSideLeft.Control = grpDriveDashBoard
+        AnchorSideTop.Side = asrBottom
+        AnchorSideBottom.Control = panelDriveTarget
+        Left = 4
+        Height = 80
+        Top = 124
+        Width = 206
+        Anchors = [akLeft, akBottom]
+        BorderSpacing.Left = 4
+        BorderSpacing.Bottom = 4
+        ClientHeight = 80
+        ClientWidth = 206
+        Constraints.MinHeight = 60
+        TabOrder = 1
+        object TextDistance: TStaticText
+          Left = 1
+          Height = 16
+          Top = 63
+          Width = 204
+          Align = alBottom
+          Alignment = taCenter
+          Caption = 'Distance (S-0-0282)'
+          TabOrder = 0
+        end
+      end
+      object panelDrivePhase: TPanel
+        AnchorSideLeft.Control = panelDriveStatus
+        AnchorSideTop.Control = panelDriveStatus
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = panelDriveStatus
+        AnchorSideRight.Side = asrBottom
+        Left = 4
+        Height = 32
+        Top = 48
+        Width = 420
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Top = 4
+        ChildSizing.LeftRightSpacing = 2
+        ChildSizing.TopBottomSpacing = 2
+        ChildSizing.HorizontalSpacing = 24
+        ChildSizing.VerticalSpacing = 4
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 3
+        ClientHeight = 32
+        ClientWidth = 420
+        TabOrder = 2
+        object PanelPhase2: TPanel
+          Left = 3
+          Height = 28
+          Top = 3
+          Width = 122
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Phase2'
+          Color = 4194304
+          Constraints.MinHeight = 28
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 0
+        end
+        object PanelPhase3: TPanel
+          Left = 149
+          Height = 28
+          Top = 3
+          Width = 122
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Phase3'
+          Color = 4194304
+          Constraints.MinHeight = 28
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 1
+        end
+        object PanelPhase4: TPanel
+          Left = 295
+          Height = 28
+          Top = 3
+          Width = 122
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Phase4'
+          Color = 4194304
+          Constraints.MinHeight = 28
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 2
+        end
+      end
+      object panelDriveDiags: TPanel
+        AnchorSideLeft.Control = panelDriveStatus
+        AnchorSideTop.Control = panelDrivePhase
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = panelDriveStatus
+        AnchorSideRight.Side = asrBottom
+        Left = 4
+        Height = 32
+        Top = 84
+        Width = 420
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Top = 4
+        ChildSizing.LeftRightSpacing = 2
+        ChildSizing.TopBottomSpacing = 2
+        ChildSizing.HorizontalSpacing = 6
+        ChildSizing.VerticalSpacing = 4
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 4
+        ClientHeight = 32
+        ClientWidth = 420
+        TabOrder = 3
+        object panelInReference: TPanel
+          Left = 3
+          Height = 28
+          Top = 3
+          Width = 99
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'In Reference'
+          Color = 16384
+          Constraints.MinHeight = 28
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 3
+        end
+        object panelInPosition: TPanel
+          Left = 108
+          Height = 28
+          Top = 3
+          Width = 99
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'In Position'
+          Color = 16384
+          Constraints.MinHeight = 28
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 0
+        end
+        object panelStandstill: TPanel
+          AnchorSideRight.Side = asrCenter
+          Left = 213
+          Height = 28
+          Top = 3
+          Width = 99
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Standstill'
+          Color = 16384
+          Constraints.MinHeight = 28
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 1
+        end
+        object panelTargetPosition: TPanel
+          AnchorSideRight.Side = asrBottom
+          Left = 318
+          Height = 28
+          Top = 3
+          Width = 99
+          BevelOuter = bvLowered
+          BevelWidth = 2
+          Caption = 'Target Position'
+          Color = 16384
+          Constraints.MinHeight = 28
+          Font.Color = clGray
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          ParentBackground = False
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 2
+        end
+      end
+      object panelDrivePosition: TPanel
+        AnchorSideRight.Control = grpDriveDashBoard
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = panelDriveFeedback
+        Left = 218
+        Height = 80
+        Top = 124
+        Width = 206
+        Anchors = [akRight, akBottom]
+        BorderSpacing.Right = 4
+        BorderSpacing.Bottom = 4
+        ClientHeight = 80
+        ClientWidth = 206
+        TabOrder = 4
+        object TextPosition: TStaticText
+          Left = 1
+          Height = 16
+          Top = 63
+          Width = 204
+          Align = alBottom
+          Alignment = taCenter
+          Caption = 'Position (S-0-0047)'
+          TabOrder = 0
+        end
+      end
+      object panelDriveTarget: TPanel
+        AnchorSideLeft.Control = grpDriveDashBoard
+        AnchorSideBottom.Control = grpDriveDashBoard
+        AnchorSideBottom.Side = asrBottom
+        Left = 4
+        Height = 80
+        Top = 208
+        Width = 206
+        Anchors = [akLeft, akBottom]
+        BorderSpacing.Left = 4
+        BorderSpacing.Bottom = 4
+        ClientHeight = 80
+        ClientWidth = 206
+        TabOrder = 5
+        object TextTarget: TStaticText
+          Left = 1
+          Height = 16
+          Top = 63
+          Width = 204
+          Align = alBottom
+          Alignment = taCenter
+          Caption = 'Target  (S-0-0258)'
+          TabOrder = 0
+        end
+      end
+      object panelDriveFeedback: TPanel
+        AnchorSideLeft.Control = grpDriveDashBoard
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = grpDriveDashBoard
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = grpDriveDashBoard
+        AnchorSideBottom.Side = asrBottom
+        Left = 218
+        Height = 80
+        Top = 208
+        Width = 206
+        Anchors = [akRight, akBottom]
+        BorderSpacing.Right = 4
+        BorderSpacing.Bottom = 4
+        ClientHeight = 80
+        ClientWidth = 206
+        Constraints.MinHeight = 60
+        TabOrder = 6
+        object TextFeedback: TStaticText
+          Left = 1
+          Height = 16
+          Top = 63
+          Width = 204
+          Align = alBottom
+          Alignment = taCenter
+          Caption = 'Feedback (S-0-0051)'
+          TabOrder = 0
+        end
+      end
+    end
+    object panelDriveVelocity: TPanel
+      AnchorSideLeft.Control = TabControl1
+      AnchorSideTop.Side = asrBottom
+      AnchorSideBottom.Control = TabControl1
+      AnchorSideBottom.Side = asrBottom
+      Left = 10
+      Height = 70
+      Top = 352
+      Width = 310
+      Anchors = [akLeft, akBottom]
+      BorderSpacing.Around = 8
+      ClientHeight = 70
+      ClientWidth = 310
+      TabOrder = 2
+      OnResize = panelDriveVelocityResize
+      object StaticText1: TStaticText
+        Left = 1
+        Height = 16
+        Top = 53
+        Width = 308
+        Align = alBottom
+        Alignment = taCenter
+        Caption = 'Actual                Velocity                Set    '
+        TabOrder = 0
+      end
+    end
+  end
+  object editStatus: TEdit
+    AnchorSideLeft.Control = Owner
+    AnchorSideRight.Control = Memo1
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 8
+    Height = 23
+    Top = 624
+    Width = 456
+    Anchors = [akLeft, akRight, akBottom]
+    BorderSpacing.Left = 8
+    BorderSpacing.Bottom = 4
+    Color = clBlack
+    Font.Color = clAqua
+    ParentFont = False
+    ReadOnly = True
+    TabOrder = 6
+  end
+  object btnConnectDriveSISRS486: TButton
+    AnchorSideLeft.Control = btnConnectDriveSISRS232
+    AnchorSideTop.Control = btnConnectDriveSISRS232
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = btnConnectDriveSISRS232
+    AnchorSideRight.Side = asrBottom
+    Left = 224
+    Height = 25
+    Top = 34
+    Width = 191
+    Anchors = [akTop, akLeft, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 4
+    Caption = 'Connect as  DriveTop SIS RS485'
+    TabOrder = 7
+    OnClick = btnConnectSerialClick
+  end
+  object Button3: TButton
+    Left = 216
+    Height = 21
+    Top = 66
+    Width = 74
+    Caption = 'Button3'
+    TabOrder = 8
+    OnClick = Button3Click
+  end
+  object btnConnectDriveSISRS232: TButton
+    AnchorSideLeft.Control = btnConnectDriveRS232
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = btnConnectDriveRS232
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = btnConnectDriveRS232
+    AnchorSideRight.Side = asrBottom
+    Left = 224
+    Height = 25
+    Top = 5
+    Width = 191
+    Anchors = [akLeft]
+    AutoSize = True
+    BorderSpacing.Left = 12
+    BorderSpacing.Top = 4
+    Caption = 'Connect as  DriveTop SIS RS232'
+    TabOrder = 9
+    OnClick = btnConnectSerialClick
+  end
+  object OpenDialog1: TOpenDialog
+    Left = 48
+    Top = 528
+  end
+end
