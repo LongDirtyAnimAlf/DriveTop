@@ -329,7 +329,7 @@ type
   TDRIVEPARAMETER_0403 = bitpacked record  // Position feedback value status
       case integer of
           1 : (  Data : record
-                   PositionFeedbackValues   : T1BITS;
+                   InReference              : T1BITS;
                    StatusMotorFeedback      : T1BITS;
                    StatusFeedback2          : T1BITS;
                    Reserved1                : T13BITS;
@@ -426,9 +426,6 @@ const
   DRIVE_MOTORTYPE              : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 141);
   DRIVE_APPTYPE                : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 142);
 
-  DRIVE_PHASE2                 : TPARAMETER = (CCLASS: ccDriveSpecific; CSUBCLASS: mscNone; NUMID: 4023);
-  DRIVE_PHASE3                 : TPARAMETER = (CCLASS: ccDrive; CSUBCLASS: mscNone; NUMID: 127);
-  DRIVE_PHASE4                 : TPARAMETER = (CCLASS: ccDrive; CSUBCLASS: mscNone; NUMID: 128);
 
   DRIVE_POSITIONSPINDLE        : TPARAMETER = (CCLASS: ccDrive; CSUBCLASS: mscNone; NUMID: 152);
   DRIVE_POSITIONPARAMETER      : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 154);
@@ -451,6 +448,11 @@ const
   DRIVE_SPEED                  : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 259);
   DRIVE_ACCEL                  : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 260);
   DRIVE_DISTANCE               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 282);
+  DRIVE_POSITIONFEEDBACKSTATUS : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 403);
+
+
+  DRIVE_MAXSPEED               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 91);
+  DRIVE_MAXACCEL               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 138);
 
   DRIVE_SETUPRELATIVECOMMAND   : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 346);
   DRIVE_COMMANDMODE            : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 393);
@@ -471,6 +473,19 @@ const
   DRIVE_DIAGNOSTIC_CLASS2      : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 12);
   DRIVE_DIAGNOSTIC_CLASS3      : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 13);
   DRIVE_INTERFACE              : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 14);
+
+  DRIVE_330                    : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 330);
+  DRIVE_331                    : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 331);
+  DRIVE_332                    : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 332);
+  DRIVE_336                    : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 336);
+  DRIVE_342                    : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 342);
+
+  DRIVE_COMMAND_ABSOLUTE    : TPARAMETER = (CCLASS: ccDriveSpecific; CSUBCLASS: mscNone; NUMID: 12);
+  DRIVE_COMMAND_PHASE2      : TPARAMETER = (CCLASS: ccDriveSpecific; CSUBCLASS: mscNone; NUMID: 4023);
+  DRIVE_COMMAND_PHASE3      : TPARAMETER = (CCLASS: ccDrive; CSUBCLASS: mscNone; NUMID: 127);
+  DRIVE_COMMAND_PHASE4      : TPARAMETER = (CCLASS: ccDrive; CSUBCLASS: mscNone; NUMID: 128);
+  DRIVE_COMMAND_CLEARERRORS : TPARAMETER = (CCLASS: ccDrive; CSUBCLASS: mscNone; NUMID: 99);
+
 
   DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3      : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 182);
 
@@ -508,7 +523,7 @@ var
   DriveOperationModesLagLess  : TOMD;
   //BASICDRIVEDATA              : array[0..0] of TPARAMETER;
   BASICDRIVEDATA              : array[0..5] of TPARAMETER;
-  REALTIMEDRIVEDATA           : array[0..10] of TPARAMETER;
+  REALTIMEDRIVEDATA           : array[0..12] of TPARAMETER;
 
 implementation
 
@@ -865,6 +880,15 @@ begin
 
   REALTIMEDRIVEDATA[9]:=DRIVE_SET_SPEED;
   REALTIMEDRIVEDATA[10]:=DRIVE_ACTUAL_SPEED;
+
+  REALTIMEDRIVEDATA[11]:=DRIVE_POSITIONFEEDBACKSTATUS;
+  REALTIMEDRIVEDATA[12]:=DRIVE_332;
+
+  //REALTIMEDRIVEDATA[13]:=DRIVE_331;
+  //REALTIMEDRIVEDATA[14]:=DRIVE_336;
+  //REALTIMEDRIVEDATA[15]:=DRIVE_342;
+
+
 
   //REALTIMEDRIVEDATA[x]:=DRIVE_DIAGNOSTIC_CLASS1;
   //REALTIMEDRIVEDATA[x]:=DRIVE_DIAGNOSTIC_CLASS2;

@@ -65,8 +65,10 @@ type
 
   TDRIVE = record
     DRIVEADDRESS   : byte;
-    PHASE          : byte;
-    MODE           : word;
+    DRIVEPHASE     : byte;
+    DRIVEMODE      : word;
+    INREFERENCE    : boolean;
+    STANDSTILL     : boolean;
     NAME           : ansistring;
     FIRMWARE       : ansistring;
     CONTROLLER     : ansistring;

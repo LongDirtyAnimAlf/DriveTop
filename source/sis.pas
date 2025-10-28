@@ -63,7 +63,9 @@ type
              NumberOfSubaddress          : T3BITS;
              ContainsPackageNumber       : T1BITS;
              TelegramType                : T1BITS; // command=0 ; reaction = 1;
-             Status                      : T3BITS;
+             Reserved                    : T1BITS;
+             SlaveSystemWarning          : T1BITS;
+             SlaveSystemError            : T1BITS;
           end
            );
         2 : (
