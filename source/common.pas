@@ -452,6 +452,7 @@ begin
   Result.CSUBCLASS:=C.CSUBCLASS;
   Result.NUMID:=C.NUMID;
   Result.SETID:=DriveAddress;
+  //Result.SETID:=0;
 end;
 
 function IsParameterClass(aClass:TVMCOMMANDCLASS):boolean;

@@ -1,7 +1,7 @@
 object Form1: TForm1
-  Left = 339
+  Left = 277
   Height = 631
-  Top = 126
+  Top = 159
   Width = 1366
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'DriveTop'
@@ -1004,10 +1004,10 @@ object Form1: TForm1
             Left = 8
             Height = 15
             Top = 117
-            Width = 78
+            Width = 73
             BorderSpacing.Top = 5
             BorderSpacing.Around = 8
-            Caption = 'Distance [mm]'
+            Caption = 'Distance [cm]'
           end
           object editDist: TEdit
             AnchorSideLeft.Control = grpSettings
@@ -2408,16 +2408,124 @@ object Form1: TForm1
         Text = 'Empty'
       end
     end
-    object Memo2: TMemo
-      Left = 697
-      Height = 130
-      Top = 266
-      Width = 186
-      Lines.Strings = (
-        'Memo2'
-      )
-      ScrollBars = ssVertical
+    object grpScaling: TGroupBox
+      Left = 702
+      Height = 137
+      Top = 257
+      Width = 174
+      Caption = 'Drive Scaling'
+      ClientHeight = 117
+      ClientWidth = 170
       TabOrder = 7
+      object stDriveScalingMode: TStaticText
+        AnchorSideLeft.Control = grpScaling
+        AnchorSideTop.Control = grpScaling
+        AnchorSideRight.Control = grpScaling
+        AnchorSideRight.Side = asrBottom
+        Left = 42
+        Height = 20
+        Hint = 'Drive operating mode'
+        Top = 2
+        Width = 126
+        Alignment = taCenter
+        Anchors = [akTop, akLeft, akRight]
+        AutoSize = True
+        BorderSpacing.Left = 40
+        BorderSpacing.Around = 2
+        BorderStyle = sbsSingle
+        Caption = 'Unknown'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 0
+      end
+      object stScalingSelection: TStaticText
+        AnchorSideLeft.Control = grpScaling
+        AnchorSideTop.Control = stDriveScalingMode
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = grpScaling
+        AnchorSideRight.Side = asrBottom
+        Left = 42
+        Height = 20
+        Hint = 'Drive operating mode'
+        Top = 24
+        Width = 126
+        Alignment = taCenter
+        Anchors = [akTop, akLeft, akRight]
+        AutoSize = True
+        BorderSpacing.Left = 40
+        BorderSpacing.Around = 2
+        BorderStyle = sbsSingle
+        Caption = 'Unknown'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 1
+      end
+      object stScalingUnit: TStaticText
+        AnchorSideLeft.Control = grpScaling
+        AnchorSideTop.Control = stScalingSelection
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = grpScaling
+        AnchorSideRight.Side = asrBottom
+        Left = 42
+        Height = 20
+        Hint = 'Drive operating mode'
+        Top = 46
+        Width = 126
+        Alignment = taCenter
+        Anchors = [akTop, akLeft, akRight]
+        AutoSize = True
+        BorderSpacing.Left = 40
+        BorderSpacing.Around = 2
+        BorderStyle = sbsSingle
+        Caption = 'Unknown'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 2
+      end
+      object stScalingReference: TStaticText
+        AnchorSideLeft.Control = grpScaling
+        AnchorSideTop.Control = stScalingUnit
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = grpScaling
+        AnchorSideRight.Side = asrBottom
+        Left = 42
+        Height = 20
+        Hint = 'Drive operating mode'
+        Top = 68
+        Width = 126
+        Alignment = taCenter
+        Anchors = [akTop, akLeft, akRight]
+        AutoSize = True
+        BorderSpacing.Left = 40
+        BorderSpacing.Around = 2
+        BorderStyle = sbsSingle
+        Caption = 'Unknown'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 3
+      end
+      object stScalingFormat: TStaticText
+        AnchorSideLeft.Control = grpScaling
+        AnchorSideTop.Control = stScalingReference
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = grpScaling
+        AnchorSideRight.Side = asrBottom
+        Left = 42
+        Height = 20
+        Hint = 'Drive operating mode'
+        Top = 90
+        Width = 126
+        Alignment = taCenter
+        Anchors = [akTop, akLeft, akRight]
+        AutoSize = True
+        BorderSpacing.Left = 40
+        BorderSpacing.Around = 2
+        BorderStyle = sbsSingle
+        Caption = 'Unknown'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 4
+      end
     end
   end
   object lblTime: TLabel

@@ -450,6 +450,8 @@ const
   DRIVE_DISTANCE               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 282);
   DRIVE_POSITIONFEEDBACKSTATUS : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 403);
 
+  DRIVE_SCALING                : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 76);
+
 
   DRIVE_MAXSPEED               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 91);
   DRIVE_MAXACCEL               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 138);
@@ -480,11 +482,16 @@ const
   DRIVE_336                    : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 336);
   DRIVE_342                    : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 342);
 
+  DRIVE_JOG                    : TPARAMETER = (CCLASS: ccDriveSpecific; CSUBCLASS: mscParameterData; NUMID: 4056);
+
+
   DRIVE_COMMAND_ABSOLUTE    : TPARAMETER = (CCLASS: ccDriveSpecific; CSUBCLASS: mscNone; NUMID: 12);
   DRIVE_COMMAND_PHASE2      : TPARAMETER = (CCLASS: ccDriveSpecific; CSUBCLASS: mscNone; NUMID: 4023);
   DRIVE_COMMAND_PHASE3      : TPARAMETER = (CCLASS: ccDrive; CSUBCLASS: mscNone; NUMID: 127);
   DRIVE_COMMAND_PHASE4      : TPARAMETER = (CCLASS: ccDrive; CSUBCLASS: mscNone; NUMID: 128);
   DRIVE_COMMAND_CLEARERRORS : TPARAMETER = (CCLASS: ccDrive; CSUBCLASS: mscNone; NUMID: 99);
+
+
 
 
   DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3      : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 182);
@@ -515,14 +522,12 @@ const
   function  GetPDriveInfo(const Drive:word):PDRIVE;
   function  GetDriveAddress(const Drive:word):byte;
 
-  function  SetCommand(aValue:TPARAMETER):TPARAMETERDATA;
-
   function  ProcessNormalResponse(const CD:TPARAMETERDATA; const DirectDrive:boolean; const s:RawByteString):TPARAMETERDATA;
 var
   DriveOperationModes         : TOMD;
   DriveOperationModesLagLess  : TOMD;
   //BASICDRIVEDATA              : array[0..0] of TPARAMETER;
-  BASICDRIVEDATA              : array[0..5] of TPARAMETER;
+  BASICDRIVEDATA              : array[0..6] of TPARAMETER;
   REALTIMEDRIVEDATA           : array[0..12] of TPARAMETER;
 
 implementation
@@ -539,14 +544,6 @@ var
   IDNDriveList                : array[0..MAXDRIVES] of TMySortedMap;
   DriveList                   : array[1..MAXDRIVES] of TDRIVE;
 
-
-function SetCommand(aValue:TPARAMETER):TPARAMETERDATA;
-begin
-  result:=Default(TPARAMETERDATA);
-  result.CCLASS:=aValue.CCLASS;
-  result.CSUBCLASS:=aValue.CSUBCLASS;
-  result.NUMID:=aValue.NUMID;
-end;
 
 function GetDriveInfo(const Drive:word):TDRIVE;
 begin
@@ -865,6 +862,8 @@ begin
   BASICDRIVEDATA[3]:=DRIVE_MOTORTYPE;
   BASICDRIVEDATA[4]:=DRIVE_MOTORSERIAL;
   BASICDRIVEDATA[5]:=DRIVE_PRIMARYMODE;
+  BASICDRIVEDATA[6]:=DRIVE_SCALING;
+
 
   REALTIMEDRIVEDATA[0]:=DRIVE_TARGET;
   REALTIMEDRIVEDATA[1]:=DRIVE_POSITIONCOMMAND;
