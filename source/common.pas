@@ -365,8 +365,8 @@ end;
 function DecimalToHexStringBase(const b:int64; const Size: byte; const dd:boolean):string;
 begin
   result:=hexstr(b,Size);
-  if dd then result:='0x'+result;
-  //if dd then result:=result+'h';
+  //if dd then result:='0x'+result;
+  if dd then result:=result+'h';
 end;
 
 function DecimalToHexString(b:byte; const dd:boolean):string;

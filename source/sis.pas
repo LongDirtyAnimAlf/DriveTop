@@ -843,7 +843,7 @@ begin
           begin
             if DataSize=1 then
             begin
-              result.DATA:=result.DATA+DecimalToBinaryString(Ord(s[Index]));
+              result.DATA:=result.DATA+DecimalToBinaryString(Ord(s[Index]),true);
               Dec(Remaining,1);
               Inc(Index,1);
             end
@@ -852,7 +852,7 @@ begin
             begin
               DW.Raw:=0;
               for j:=0 to 1 do DW.Bytes[j]:=Ord(s[Index+j]);
-              result.DATA:=result.DATA+DecimalToBinaryString(DW.Raw)+',';
+              result.DATA:=result.DATA+DecimalToBinaryString(DW.Raw,true)+',';
               Dec(Remaining,2);
               Inc(Index,2);
             end
@@ -861,7 +861,7 @@ begin
             begin
               DDW.Raw:=0;
               for j:=0 to 3 do DDW.Bytes[j]:=Ord(s[Index+j]);
-              result.DATA:=result.DATA+DecimalToBinaryString(DDW.Raw)+',';
+              result.DATA:=result.DATA+DecimalToBinaryString(DDW.Raw,true)+',';
               Dec(Remaining,4);
               Inc(Index,4);
             end;
@@ -902,13 +902,18 @@ begin
           DataLength.Raw:=DataLength.Raw DIV DataSize;
           for i:=1 to DataLength.Raw do
           begin
-            DW.Raw:=0;
-            DW.Bytes[0]:=Ord(s[Index]);
-            DW.Bytes[1]:=Ord(s[Index+1]);
-            Dec(Remaining,2);
-            Inc(Index,2);
+            DB.Raw:=Ord(s[Index]);
+            Dec(Remaining);
+            Inc(Index);
+            DW.Raw:=DB.Raw;
+            if DataSize>=2 then
+            begin
+              DW.Bytes[1]:=Ord(s[Index]);
+              Dec(Remaining);
+              Inc(Index);
+            end;
             DDW.Raw:=DW.Raw;
-            if DataSize=4 then
+            if DataSize>=4 then
             begin
               DDW.Bytes[2]:=Ord(s[Index]);
               DDW.Bytes[3]:=Ord(s[Index+1]);
@@ -917,6 +922,7 @@ begin
             end;
             if ParameterIsHex(DA) then
             begin
+              if DataSize=1 then result.DATA:=result.DATA+DecimalToHexString(DB.Raw,true)+',';
               if DataSize=2 then result.DATA:=result.DATA+DecimalToHexString(DW.Raw,true)+',';
               if DataSize=4 then result.DATA:=result.DATA+DecimalToHexString(DDW.Raw,true)+',';
             end
