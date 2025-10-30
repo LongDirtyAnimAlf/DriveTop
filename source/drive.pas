@@ -410,12 +410,12 @@ type
 const
   MAXDRIVES                    = 255;
 
-  SCALINGMODE                  : array [0..2] of string = ('not scaled','linear scaling','rotary scaling');
-  SCALINGSELECTION             : array [0..1] of string = ('preferred scaling','parameter scaling');
-  SCALINGUNIT                  : array [0..1] of string = ('meter','inch');
-  SCALINGRELATION              : array [0..1] of string = ('to the motor cam','to the load');
-  SCALINGFORMAT                : array [0..1] of string = ('absolute','modulo');
-  MODULOCOMMANDMODE            : array [0..2] of string = ('shortest path','positive direction','negative direction');
+  SCALINGMODE                  : array [0..2] of string = ('None','Linear','Rotary');
+  SCALINGSELECTION             : array [0..1] of string = ('Preferred scaling','Parameter scaling');
+  SCALINGUNIT                  : array [0..1] of string = ('Meter','Inch');
+  SCALINGRELATION              : array [0..1] of string = ('Motor cam','Load');
+  SCALINGFORMAT                : array [0..1] of string = ('Absolute','Modulo');
+  MODULOCOMMANDMODE            : array [0..2] of string = ('Shortest path','Positive direction','Negative direction');
 
   DRIVE_FIRMWARE               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 30);
   DRIVE_PRIMARYMODE            : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 32);
@@ -450,8 +450,9 @@ const
   DRIVE_DISTANCE               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 282);
   DRIVE_POSITIONFEEDBACKSTATUS : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 403);
 
-  DRIVE_SCALING                : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 76);
-
+  DRIVE_POSITIONSCALING        : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 76);
+  DRIVE_VELOCITYSCALING        : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 44);
+  DRIVE_ACCELSCALING           : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 106);
 
   DRIVE_MAXSPEED               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 91);
   DRIVE_MAXACCEL               : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 138);
@@ -513,11 +514,10 @@ const
   function  GetDirectDriveCommand(const CD:TPARAMETERDATA):string;
   function  GetDriveAttribute(const CD:TPARAMETERDATA):dword;
 
+  function  DriveParameterIsDriveMode(const CD:TPARAMETERDATA):boolean;
   function  GetDriveModeDescription(const mw:word):string; overload;
   function  GetDriveModeDescription(const ms:string):string; overload;
   function  GetDriveMode(const mw:word):TOPERATIONMODE;
-
-  function  DriveParameterIsDriveMode(const IDN:TIDN):boolean;
 
   function  GetPDriveInfo(const Drive:word):PDRIVE;
   function  GetDriveAddress(const Drive:word):byte;
@@ -526,8 +526,7 @@ const
 var
   DriveOperationModes         : TOMD;
   DriveOperationModesLagLess  : TOMD;
-  //BASICDRIVEDATA              : array[0..0] of TPARAMETER;
-  BASICDRIVEDATA              : array[0..6] of TPARAMETER;
+  BASICDRIVEDATA              : array[0..9] of TPARAMETER;
   REALTIMEDRIVEDATA           : array[0..12] of TPARAMETER;
 
 implementation
@@ -541,7 +540,7 @@ const
   {$I driveconstants.inc}
 
 var
-  IDNDriveList                : array[0..MAXDRIVES] of TMySortedMap;
+  IDNDriveList                : array[0..MAXDRIVES] of TMySortedMap; // 0 = default values
   DriveList                   : array[1..MAXDRIVES] of TDRIVE;
 
 
@@ -567,12 +566,12 @@ end;
 
 function GetDriveAddress(const Drive:word):byte;
 begin
+  if (Drive=0) then
+    raise EArgumentException.CreateFmt ('Wrong drive address : %d !',[Drive]);
   if Drive>0 then
     result:=DriveList[Drive].DRIVEADDRESS
   else
     result:=$FF;
-  if (Drive=0) then
-    raise EArgumentException.CreateFmt ('Wrong drive address : %d !',[Drive]);
 end;
 
 function GetDirectDriveCommand(const CD:TPARAMETERDATA):string;
@@ -598,6 +597,30 @@ begin
   result:=GetAttribute(IDNDriveList[CD.SETID],CD);
 end;
 
+function GetDriveMode(const mw:word):TOPERATIONMODE;
+var
+  DW       : DATAWORD;
+  OM       : TOPERATIONMODE;
+begin
+  Result:=TOPERATIONMODE.omNone;
+  DW.Raw:=mw;
+  for OM in TOPERATIONMODE do
+  begin
+    DW.Bits[3]:=0; //  Position control with lag distance
+    if DW.Raw=TOPERATIONMODES[OM].BitMask then
+    begin
+      Result:=OM;
+      break;
+    end;
+    DW.Bits[3]:=1; //  Lagless position control
+    if DW.Raw=TOPERATIONMODES[OM].BitMask then
+    begin
+      Result:=OM;
+      break;
+    end;
+  end;
+end;
+
 function GetDriveModeDescription(const mw:word):string;
 var
   DW        : DATAWORD;
@@ -608,17 +631,10 @@ begin
   Result:='';
   DW.Raw:=mw;
   Lagless:=(DW.Bits[3]=1);
-  DW.Bits[3]:=0;
-  for OM in TOPERATIONMODE do
-  begin
-    OMD:=TOPERATIONMODES[OM];
-    if DW.Raw=OMD.BitMask then
-    begin
-      Result:=OMD.Name;
-      if (OM=omJM) then Lagless:=False;
-      break;
-    end;
-  end;
+  OM:=GetDriveMode(DW.Raw);
+  OMD:=TOPERATIONMODES[OM];
+  Result:=OMD.Name;
+  if (OM=omJM) then Lagless:=False;
   if (Lagless AND (Length(Result)>0))then Result:=Result+' (lagless)';
 end;
 
@@ -630,50 +646,13 @@ begin
   result:=GetDriveModeDescription(mw);
 end;
 
-function GetDriveMode(const mw:word):TOPERATIONMODE;
-var
-  DW       : DATAWORD;
-  OM       : TOPERATIONMODE;
-begin
-  Result:=TOPERATIONMODE.omNone;
-  DW.Raw:=mw;
-  DW.Bits[3]:=0;
-  for OM in TOPERATIONMODE do
-  begin
-    if DW.Raw=TOPERATIONMODES[OM].BitMask then
-    begin
-      Result:=OM;
-      break;
-    end;
-  end;
-end;
-
-function DriveParameterIsDriveMode(const IDN:TIDN):boolean;
-var
-  LocalIDN:TIDN;
+function DriveParameterIsDriveMode(const CD:TPARAMETERDATA):boolean;
 begin
   result:=false;
-
-  if NOT result then
-  begin
-    LocalIDN:=GetIDN(DRIVE_PRIMARYMODE);
-    result:=(LocalIDN=IDN);
-  end;
-  if NOT result then
-  begin
-    LocalIDN:=GetIDN(DRIVE_SECONDARYMODE1);
-    result:=(LocalIDN=IDN);
-  end;
-  if NOT result then
-  begin
-    LocalIDN:=GetIDN(DRIVE_SECONDARYMODE2);
-    result:=(LocalIDN=IDN);
-  end;
-  if NOT result then
-  begin
-    LocalIDN:=GetIDN(DRIVE_SECONDARYMODE3);
-    result:=(LocalIDN=IDN);
-  end;
+  with DRIVE_PRIMARYMODE do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then result:=true;
+  with DRIVE_SECONDARYMODE1 do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then result:=true;
+  with DRIVE_SECONDARYMODE2 do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then result:=true;
+  with DRIVE_SECONDARYMODE3 do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then result:=true;
 end;
 
 function SaveDriveRegisterData(const CD:TPARAMETERDATA):boolean;
@@ -862,7 +841,10 @@ begin
   BASICDRIVEDATA[3]:=DRIVE_MOTORTYPE;
   BASICDRIVEDATA[4]:=DRIVE_MOTORSERIAL;
   BASICDRIVEDATA[5]:=DRIVE_PRIMARYMODE;
-  BASICDRIVEDATA[6]:=DRIVE_SCALING;
+  BASICDRIVEDATA[6]:=DRIVE_POSITIONSCALING;
+  BASICDRIVEDATA[7]:=DRIVE_VELOCITYSCALING;
+  BASICDRIVEDATA[8]:=DRIVE_ACCELSCALING;
+  BASICDRIVEDATA[9]:=DRIVE_MODELIST;
 
 
   REALTIMEDRIVEDATA[0]:=DRIVE_TARGET;

@@ -183,7 +183,11 @@ type
     destructor Destroy; override;
 
     procedure WriteList(const IDN: RawByteString; listdata:array of RawByteString);
-    procedure ProcessSIS(buffer: pointer; var len:Integer);
+
+    function  SendSIS(buffer: pointer; const len:Integer):integer;
+    function  RetrieveSISHeader(buffer: pointer):boolean;
+    function  RetrieveSISUserData(buffer: pointer; const len: integer):integer;
+
     procedure WriteString(const cmd: RawByteString; var dat: RawByteString);
     procedure WriteStringPrio(const cmd: RawByteString; var dat: RawByteString);
     procedure WriteStringBlocking(const cmd: RawByteString; var dat: RawByteString);
@@ -288,6 +292,7 @@ begin
   ReadThread:=nil;
   FOnRxData:=nil;
   FSynSer:=TBlockSerial.Create;
+  FSynSer.Purge;
   FSynSer.LinuxLock:=false;
   FHardflow:=false;
   FSoftflow:=false;
@@ -321,6 +326,8 @@ begin
                  ConstsParity[FParity],
                  ConstsStopBits[FStopBits],
                  FSoftflow, FHardflow);
+
+  FSynSer.Purge;
 
   if Assigned(OnStatus) then SynSer.OnStatus := OnStatus;
 
@@ -441,31 +448,30 @@ begin
   end;
 end;
 
-procedure TLazSerial.ProcessSIS(buffer: pointer; var len:Integer);
-var
-  userdatalength:byte;
-  userdatastatus:byte;
+function TLazSerial.SendSIS(buffer: pointer; const len:Integer):integer;
 begin
-  FSynSer.SendBuffer(buffer,len);
-  FillChar({%H-}buffer^,len,0);
-  len:=0;
+  result:=FSynSer.SendBuffer(buffer,len);
+end;
+
+function TLazSerial.RetrieveSISHeader(buffer: pointer):boolean;
+begin
+  result:=false;
   if (FSynSer.LastError=0) then
   begin
     // The SIS slave always sends:
     // 8 header bytes
-    len:=FSynSer.RecvBufferEx(buffer,8,1000);
-    if ((FSynSer.LastError=0) AND (len>0)) then
-    begin
-      // The header contains the length at position 3 (and 4) [=2 (and 3)]
-      userdatalength:=PByteArray(buffer)^[2];
-      // Receive rest of userdata, if any
-      if userdatalength>0 then
-      begin
-        FSynSer.RecvBufferEx(@PByteArray(buffer)^[8],userdatalength,1000);
-        Inc(len,userdatalength);
-        //userdatastatus:=PByteArray(buffer)^[8];
-      end;
-    end;
+    result:=(FSynSer.RecvBufferEx(buffer,8,1000)=8);
+  end;
+end;
+
+function TLazSerial.RetrieveSISUserData(buffer: pointer; const len: integer):integer;
+var
+  userdatalength:byte;
+begin
+  result:=0;
+  if (FSynSer.LastError=0) then
+  begin
+    result:=FSynSer.RecvBufferEx(buffer,len,1000);
   end;
 end;
 

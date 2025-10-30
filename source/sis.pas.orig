@@ -11,8 +11,8 @@ uses
 const
   STX                                    = $02;  // SIS header pre-amble
 
-  //SISServiceUserIdentification           = $00;  // Needs address and subservice in userdata
-  //SISServiceTerminationDataTransmission  = $01;  // Enter the service to be cancelled in the useful data.
+  SISServiceUserIdentification           = $00;  // Needs address and subservice in userdata
+  SISServiceTerminationDataTransmission  = $01;  // Enter the service to be cancelled in the useful data.
   SISServiceFlashOperation               = $02;
   SISServiceInitSISCommunications        = $03;  // Needs address and subservice in userdata
   SISServiceExecutingListSISServices     = $04;
@@ -22,25 +22,23 @@ const
   SISServiceListWrite                    = $1E; // segment information in byte
   SISServiceParamWrite                   = $1F; // 0x1F = 0x8F
 
-  SERCOSServiceParamRead                 = $80; // 0x80 = 0x10
-  //SERCOSServiceParamRead                 = SISServiceParamRead;
+  //SERCOSServiceParamRead                 = $80; // 0x80 = 0x10
+  SERCOSServiceParamRead                 = SISServiceParamRead;
   SERCOSServiceListRead                  = $81; // segment information in word
   //SERCOSServiceListRead                  = SISServiceListRead;
 
   SERCOSServicePhaseRead                 = $82;
   SERCOSServicePhaseWrite                = $8D;
-
   SERCOSServiceListWrite                 = $8E; // segment information in word
   //SERCOSServiceListWrite                 = SISServiceListWrite;
-  SERCOSServiceParamWrite                = $8F; // 0x8F = 0x1F
-  //SERCOSServiceParamWrite                = SISServiceParamWrite;
+  //SERCOSServiceParamWrite                = $8F; // 0x8F = 0x1F
+  SERCOSServiceParamWrite                = SISServiceParamWrite;
 
   SISSubServiceReadOutSISVersion         = $01; // Only for UserIdentification  ; subservice is implemented but not active
   SISSubServiceReadOutFWANumber          = $02; // Only for UserIdentification  ; supplies content of S-0-0030
   SISSubServiceReadOutUnitTypecode       = $03; // Only for UserIdentification  ; supplies content of S-0-0140
   SISSubServiceReadOutSupportedBaudRates = $04; // Only for UserIdentification  ; read baud for serial comms
 
-  SISSubServiceNone                      = $00;
   SISSubServiceSettingTrS                = $01; // Only SISCommunications ; Sets the slave response period
   SISSubServiceSettingTzA                = $02; // Only SISCommunications ; Specifies the separation period between characters
   SISSubServiceSettingTmas               = $03; // Only SISCommunications ; Sets the cycle period for the master control word (MSW)
@@ -53,12 +51,9 @@ type
 
 procedure BuildSISCommand(SISService,SISSubService,Address:byte; Data:dword; out telegram: SISTelegram; out len: Integer);
 procedure BuildSISTelegram(const CD: TPARAMETERDATA; out telegram: SISTelegram; out len: Integer);overload;
-function  ParseSISHeaderUserDataLength(const telegram: SISTelegram):integer;
-function  ParseSISUserDataReady(const telegram: SISTelegram):boolean;
 function  ParseSISResponse(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA; overload;
 function  ParseSISResponse(const SourceCD: TPARAMETERDATA; const telegram: SISTelegram; const len: Integer):TPARAMETERDATA; overload;
 function  ParseSISResponse(const telegram: SISTelegram; const len: Integer):TPARAMETERDATA; overload;
-function  NewParseSISResponse(const SourceCD: TPARAMETERDATA;  const s: RawByteString):TPARAMETERDATA;
 
 implementation
 
@@ -67,7 +62,7 @@ uses
   Bits;
 
 const
-  MASTER_ADDR   = $00;
+  MASTER_ADDR   = $10;
 
 type
   TSISHeaderControl = bitpacked record
@@ -225,39 +220,28 @@ begin
     AddrRecv     := Address;
   end;
 
-  if (false) then
-  //if ((SISService=SISServiceTerminationDataTransmission) AND (SISSubService=SISSubServiceNone) AND (Address=0)) then
+  // Unitaddress
+  telegram[USERDATAOFFSET]  := Address;
+  telegram[USERDATAOFFSET+1] := SISSubService;
+  i:=0;
+  if (SISService=SISServiceInitSISCommunications) then
   begin
-    // We are already finished.
-    // Send header only !!
-    len:=8;
-  end
-  else
-  begin
-    // Unitaddress
-    telegram[USERDATAOFFSET]  := Address;
-    telegram[USERDATAOFFSET+1] := SISSubService;
-    i:=0;
-    if (SISService=SISServiceInitSISCommunications) then
-    begin
-      case SISSubService of
-        SISSubServiceNone            : i:=0;
-        SISSubServiceSettingTrS      : i:=2;
-        SISSubServiceSettingTzA      : i:=2;
-        SISSubServiceSettingTmas     : i:=2;
-        SISSubServiceSettingBaud     : i:=1;
-        SISSubServiceSettingBaudTest : i:=3;
-        SISSubServiceSettingAccept   : i:=0;
-      end;
+    case SISSubService of
+      SISSubServiceSettingTrS      : i:=2;
+      SISSubServiceSettingTzA      : i:=2;
+      SISSubServiceSettingTmas     : i:=2;
+      SISSubServiceSettingBaud     : i:=1;
+      SISSubServiceSettingBaudTest : i:=3;
+      SISSubServiceSettingAccept   : i:=0;
     end;
-    Inc(len,i);
-
-    DDW.Raw:=Data;
-    if i>=1 then telegram[USERDATAOFFSET+2] := DDW.Bytes[0];
-    if i>=2 then telegram[USERDATAOFFSET+3] := DDW.Bytes[1];
-    if i>=3 then telegram[USERDATAOFFSET+4] := DDW.Bytes[2];
-    if i>=4 then telegram[USERDATAOFFSET+5] := DDW.Bytes[3];
   end;
+  Inc(len,i);
+
+  DDW.Raw:=Data;
+  if i>=1 then telegram[USERDATAOFFSET+2] := DDW.Bytes[0];
+  if i>=2 then telegram[USERDATAOFFSET+3] := DDW.Bytes[1];
+  if i>=3 then telegram[USERDATAOFFSET+4] := DDW.Bytes[2];
+  if i>=4 then telegram[USERDATAOFFSET+5] := DDW.Bytes[3];
 
   // Set datalength
   Header.Data.DataLen:=len - 8;
@@ -350,14 +334,8 @@ begin
       DataLen      := 0;
       DataLenRep   := 0;
       Control.Raw  := 0;
-      Control.Data.TelegramType:=0;
-      // This is a hack !!
-      case SISService of
-        SERCOSServiceListRead  : Service:=SERCOSServiceParamRead;
-        SERCOSServiceListWrite : Service:=SERCOSServiceParamWrite;
-      else
-        Service      := SISService;
-      end;
+      Control.Data.TelegramType:=0;   // Create command telegram
+      Service      := SISService;
       AddrSender   := MASTER_ADDR;
       AddrRecv     := CD.SETID;
     end;
@@ -376,7 +354,7 @@ begin
     // Fill telegram with userdata header
     for i:=0 to 4 do telegram[USERHEADEROFFSET+i] := UserHeader.Bytes[i];
 
-    // Send param userdata, if any
+    // Fill telegram with userdata itself, if any
     if ((SISService=SERCOSServiceParamWrite) AND (DataSize>0)) then
     begin
       len:=len+DataSize;
@@ -385,15 +363,15 @@ begin
       for i:=0 to Pred(DataSize) do telegram[USERDATAOFFSET+i] := DDW.Bytes[i];
     end;
 
-    // Send list userdata, if any
+    // Send userdats, if any
     if ((SISService=SERCOSServiceListRead) OR (SISService=SERCOSServiceListWrite)) then
     begin
       len:=len+4;
+
       DW.Raw:=0;                   // List offset ... e.g. read first item
       telegram[USERHEADEROFFSET+5] := DW.Lo;            // List offset LSB
       telegram[USERHEADEROFFSET+6] := DW.Hi;            // List offset MSB
-      DW.Raw:=6*DataSize;                   // List length ... e.g. read 20 items
-      //DW.Raw:=232;                   // List length ... e.g. read 20 items
+      DW.Raw:=5*DataSize;                   // List length ... e.g. read 20 items
       //DW.Raw:=0;
       telegram[USERHEADEROFFSET+7] := DW.Lo;            // List length LSB
       telegram[USERHEADEROFFSET+8] := DW.Hi;            // List length MSB
@@ -425,9 +403,7 @@ begin
       sum := (sum + telegram[i]) and $FF;
 
     if (sum<>0) then
-    begin
       raise EArgumentException.CreateFmt ('CDC checksum error : %d !',[sum]);
-    end;
 
   end;
 end;
@@ -474,25 +450,6 @@ end;
 *)
 
 
-function ParseSISHeaderUserDataLength(const telegram: SISTelegram):integer;
-var
-  Header           : TSISTelegramHeader;
-  i:integer;
-begin
-  for i:=1 to 8 do Header.Bytes[i-1]:=telegram[i];
-  result:=(Header.Data.DataLen);
-end;
-
-function ParseSISUserDataReady(const telegram: SISTelegram):boolean;
-var
-  UserHeader       : TSISUserDataResponseHeader;
-  i:integer;
-begin
-  for i:=1 to 3 do UserHeader.Bytes[i-1]:=telegram[i];
-  result:=(UserHeader.Data.Control.Data.LastTransmission=1);
-end;
-
-
 function ParseSISResponse(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA;
 var
   telegram: SISTelegram;
@@ -517,8 +474,6 @@ var
   DA               : dword;
   LocalCD          : TPARAMETERDATA;
   DataSize         : byte;
-  DataLength       : DATAWORD;
-  SomeThing        : DATAWORD;
 begin
   Success:=false;
 
@@ -631,108 +586,50 @@ begin
       end;
       if ParameterIsList(DA) then
       begin
-        // Retrieve the datalength in bytes !!!!
-        if Remaining>=2 then
+        // Handle lists !!
+        if ParameterIsChar(DA) then
         begin
-          DataLength.Bytes[0]:=telegram[Index];
-          DataLength.Bytes[1]:=telegram[Index+1];
-        end;
-        Dec(Remaining,2);
-        Inc(Index,2);
-        // Retrieve something else !!??
-        if Remaining>=2 then
-        begin
-          SomeThing.Bytes[0]:=telegram[Index];
-          SomeThing.Bytes[1]:=telegram[Index+1];
-        end;
-        Dec(Remaining,2);
-        Inc(Index,2);
-      end
-      else
-        DataLength.Raw:=ParameterSizeOf(DA);
-      if true then
-      begin
-        // Handle all data !!
-        if (ParameterIsChar(DA) OR ParameterIsByteList(DA)) then
-        begin
-          SetLength(result.DATA,DataLength.Raw);
-          for i:=1 to DataLength.Raw do
+          // First 2 bytes means something, but it is no data !
+          Dec(Remaining,2);
+          Inc(Index,2);
+          SetLength(result.DATA,Remaining);
+          for i:=0 to Pred(Remaining) do
           begin
-            result.DATA[i]:=Chr(telegram[Index]);
-            ////if ParameterIsBinary(DA) then result.DATA:=result.DATA+DecimalToBinaryString(DW.Raw);
-            Dec(Remaining);
-            Inc(Index);
+            if ((telegram[Index+i]<32) or (telegram[Index+i]>128)) then break;
+            result.DATA[i+1]:=Chr(telegram[Index+i]);
           end;
         end
         else
-        if (ParameterIsUInt(DA) OR ParameterIsInt(DA) OR ParameterIsWordList(DA)) then
+        if ParameterIsWordList(DA) then
         begin
-          // Receive words !!
-          DataLength.Raw:=DataLength.Raw DIV 2;
-          for i:=1 to DataLength.Raw do
+          // First 4 bytes means something, but it is no data !
+          Dec(Remaining,4);
+          Inc(Index,4);
+          i:=0;
+          while i<Remaining do
           begin
-            DW.Bytes[0]:=telegram[Index];
-            DW.Bytes[1]:=telegram[Index+1];
-            Dec(Remaining,2);
-            Inc(Index,2);
+            DW.Bytes[0]:=telegram[Index+i];
+            Inc(i);
+            DW.Bytes[1]:=telegram[Index+i];
+            Inc(i);
             if ParameterIsHex(DA) then result.DATA:=result.DATA+DecimalToHexString(DW.Raw,true)+',';
             if (ParameterIsUInt(DA) OR ParameterIsInt(DA)) then result.DATA:=result.DATA+InttoStr(DW.Raw)+',';
-            if ParameterIsBinary(DA) then result.DATA:=result.DATA+DecimalToBinaryString(DW.Raw);
           end;
           if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
         end
         else
         if ParameterIsDWordList(DA) then
         begin
-          // Receive dwords !!
-          DataLength.Raw:=DataLength.Raw DIV 4;
-          for i:=1 to DataLength.Raw do
-          begin
-            DDW.Bytes[0]:=telegram[Index];
-            DDW.Bytes[1]:=telegram[Index+1];
-            DDW.Bytes[2]:=telegram[Index+2];
-            DDW.Bytes[3]:=telegram[Index+3];
-            Dec(Remaining,4);
-            Inc(Index,4);
-            if ParameterIsHex(DA) then result.DATA:=result.DATA+DecimalToHexString(DDW.Raw,true)+',';
-            if (ParameterIsUInt(DA) OR ParameterIsInt(DA)) then result.DATA:=result.DATA+InttoStr(DDW.Raw)+',';
-            if ParameterIsBinary(DA) then result.DATA:=result.DATA+DecimalToBinaryString(DDW.Raw);
-          end;
-          if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
-        end
-        (*
-        else
-        if ParameterIsBinary(DA) then
-        begin
-          if DataSize=1 then
-          begin
-            result.DATA:=DecimalToBinaryString(telegram[Index]);
-          end
-          else
-          if DataSize=2 then
-          begin
-            DW.Raw:=0;
-            for i:=0 to 1 do DW.Bytes[i]:=telegram[Index+i];
-            result.DATA:=DecimalToBinaryString(DW.Raw);
-          end
-          else
-          if DataSize=4 then
-          begin
-            DDW.Raw:=0;
-            for i:=0 to 3 do DDW.Bytes[i]:=telegram[Index+i];
-            result.DATA:=DecimalToBinaryString(DDW.Raw);
-          end;
-        end
-        *)
-        else
-        if ParameterIsDWordList(DA) then
-        begin
-          i:=0;
+          // First 8 bytes means something, but it is no data !
+          Dec(Remaining,8);
+          Inc(Index,8);
         end
         else
         if ParameterIsByteList(DA) then
         begin
-          i:=0;
+          // First 1 bytes means something, but it is no data !
+          Dec(Remaining,1);
+          Inc(Index,1);
         end
         else
         begin
@@ -782,168 +679,8 @@ begin
   begin
     i:=0;
   end;
+
 end;
-
-function NewParseSISResponse(const SourceCD: TPARAMETERDATA;  const s: RawByteString):TPARAMETERDATA;
-var
-  Header           : TSISTelegramHeader;
-  UserHeader       : TSISUserDataResponseHeader;
-  Success          : boolean;
-  i,j              : integer;
-  Remaining,Index  : integer;
-  sum              : byte;
-  DW               : DATAWORD;
-  DDW              : DATADWORD;
-  DA               : dword;
-  LocalCD          : TPARAMETERDATA;
-  DataSize         : byte;
-  DataLength       : DATAWORD;
-  SomeThing        : DATAWORD;
-begin
-  Success:=true;
-
-  // Init
-  result:=SourceCD;
-
-  Index:=1;
-  Remaining:=Length(s);
-
-  // Now look at the user data
-  if Success then
-  begin
-    if IsParameterClass(SourceCD.CCLASS) then
-    begin
-      DA:=GetDriveAttribute(SourceCD);
-      if DA=0 then
-      begin
-        // We have no atribute data [yet]
-        // Get the data from the default values [drive #0]!
-        LocalCD:=SourceCD;
-        LocalCD.SETID:=0;
-        DA:=GetDriveAttribute(LocalCD);
-      end;
-      DataSize:=ParameterSizeOf(DA);
-
-      if ParameterIsList(DA) then
-      begin
-        // Retrieve the datalength in bytes !!!!
-        if Remaining>=2 then
-        begin
-          DataLength.Bytes[0]:=Ord(s[Index]);
-          DataLength.Bytes[1]:=Ord(s[Index+1]);
-        end;
-        Dec(Remaining,2);
-        Inc(Index,2);
-        // Retrieve something else !!??
-        if Remaining>=2 then
-        begin
-          SomeThing.Bytes[0]:=Ord(s[Index]);
-          SomeThing.Bytes[1]:=Ord(s[Index+1]);
-        end;
-        Dec(Remaining,2);
-        Inc(Index,2);
-      end
-      else
-        DataLength.Raw:=ParameterSizeOf(DA);
-      if true then
-      begin
-        // Handle all data !!
-        if ParameterIsBinary(DA) then
-        begin
-          DataLength.Raw:=DataLength.Raw DIV DataSize;
-          for i:=1 to DataLength.Raw do
-          begin
-            if DataSize=1 then
-            begin
-              result.DATA:=result.DATA+DecimalToBinaryString(Ord(s[Index]));
-              Dec(Remaining,1);
-              Inc(Index,1);
-            end
-            else
-            if DataSize=2 then
-            begin
-              DW.Raw:=0;
-              for j:=0 to 1 do DW.Bytes[j]:=Ord(s[Index+j]);
-              result.DATA:=result.DATA+DecimalToBinaryString(DW.Raw)+',';
-              Dec(Remaining,2);
-              Inc(Index,2);
-            end
-            else
-            if DataSize=4 then
-            begin
-              DDW.Raw:=0;
-              for j:=0 to 3 do DDW.Bytes[j]:=Ord(s[Index+j]);
-              result.DATA:=result.DATA+DecimalToBinaryString(DDW.Raw)+',';
-              Dec(Remaining,4);
-              Inc(Index,4);
-            end;
-          end;
-          if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
-        end
-        else
-        if (ParameterIsChar(DA) OR ParameterIsByteList(DA)) then
-        begin
-          SetLength(result.DATA,DataLength.Raw);
-          for i:=1 to DataLength.Raw do
-          begin
-            result.DATA[i]:=s[Index];
-            Dec(Remaining);
-            Inc(Index);
-          end;
-        end
-        else
-        if (ParameterIsUInt(DA) OR ParameterIsInt(DA) OR ParameterIsWordList(DA)) then
-        begin
-          // Receive words !!
-          DataLength.Raw:=DataLength.Raw DIV 2;
-          for i:=1 to DataLength.Raw do
-          begin
-            DW.Bytes[0]:=Ord(s[Index]);
-            DW.Bytes[1]:=Ord(s[Index+1]);
-            Dec(Remaining,2);
-            Inc(Index,2);
-            if ParameterIsHex(DA) then result.DATA:=result.DATA+DecimalToHexString(DW.Raw,true)+',';
-            if (ParameterIsUInt(DA) OR ParameterIsInt(DA)) then result.DATA:=result.DATA+InttoStr(DW.Raw)+',';
-            if ParameterIsBinary(DA) then result.DATA:=result.DATA+DecimalToBinaryString(DW.Raw)+',';
-          end;
-          if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
-        end
-        else
-        if ParameterIsDWordList(DA) then
-        begin
-          // Receive dwords !!
-          DataLength.Raw:=DataLength.Raw DIV 4;
-          for i:=1 to DataLength.Raw do
-          begin
-            DDW.Bytes[0]:=Ord(s[Index]);
-            DDW.Bytes[1]:=Ord(s[Index+1]);
-            DDW.Bytes[2]:=Ord(s[Index+2]);
-            DDW.Bytes[3]:=Ord(s[Index+3]);
-            Dec(Remaining,4);
-            Inc(Index,4);
-            if ParameterIsHex(DA) then result.DATA:=result.DATA+DecimalToHexString(DDW.Raw,true)+',';
-            if (ParameterIsUInt(DA) OR ParameterIsInt(DA)) then result.DATA:=result.DATA+InttoStr(DDW.Raw)+',';
-            if ParameterIsBinary(DA) then result.DATA:=result.DATA+DecimalToBinaryString(DDW.Raw)+',';
-          end;
-          if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
-        end
-        else
-        begin
-          i:=0;
-        end;
-      end;
-    end
-    else
-    begin
-      i:=0;
-    end;
-  end
-  else
-  begin
-    i:=0;
-  end;
-end;
-
 
 function ParseSISResponse(const telegram: SISTelegram; const len: Integer):TPARAMETERDATA;
 var
