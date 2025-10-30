@@ -55,9 +55,9 @@ procedure BuildSISCommand(SISService,SISSubService,Address:byte; Data:dword; out
 procedure BuildSISTelegram(const CD: TPARAMETERDATA; out telegram: SISTelegram; out len: Integer);overload;
 function  ParseSISHeaderUserDataLength(const telegram: SISTelegram):integer;
 function  ParseSISUserDataReady(const telegram: SISTelegram):boolean;
-function  ParseSISResponse(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA; overload;
-function  ParseSISResponse(const SourceCD: TPARAMETERDATA; const telegram: SISTelegram; const len: Integer):TPARAMETERDATA; overload;
-function  ParseSISResponse(const telegram: SISTelegram; const len: Integer):TPARAMETERDATA; overload;
+//function  ParseSISResponse(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA; overload;
+//function  ParseSISResponse(const SourceCD: TPARAMETERDATA; const telegram: SISTelegram; const len: Integer):TPARAMETERDATA; overload;
+//function  ParseSISResponse(const telegram: SISTelegram; const len: Integer):TPARAMETERDATA; overload;
 function  NewParseSISResponse(const SourceCD: TPARAMETERDATA;  const s: RawByteString):TPARAMETERDATA;
 
 implementation
@@ -501,7 +501,7 @@ begin
   // Init
   FillChar({%H-}telegram,SizeOf(telegram),0);
   for i:=1 to Length(s) do telegram[i]:=Ord(s[i]);
-  result:=ParseSISResponse(SourceCD,telegram,Length(s));
+  //result:=ParseSISResponse(SourceCD,telegram,Length(s));
 end;
 
 function ParseSISResponse(const SourceCD: TPARAMETERDATA; const telegram: SISTelegram; const len: Integer):TPARAMETERDATA;
@@ -650,127 +650,91 @@ begin
       end
       else
         DataLength.Raw:=ParameterSizeOf(DA);
-      if true then
+      // Handle all data !!
+      if (ParameterIsChar(DA) OR ParameterIsByteList(DA)) then
       begin
-        // Handle all data !!
-        if (ParameterIsChar(DA) OR ParameterIsByteList(DA)) then
+        SetLength(result.DATA,DataLength.Raw);
+        for i:=1 to DataLength.Raw do
         begin
-          SetLength(result.DATA,DataLength.Raw);
-          for i:=1 to DataLength.Raw do
-          begin
-            result.DATA[i]:=Chr(telegram[Index]);
-            ////if ParameterIsBinary(DA) then result.DATA:=result.DATA+DecimalToBinaryString(DW.Raw);
-            Dec(Remaining);
-            Inc(Index);
-          end;
-        end
-        else
-        if (ParameterIsUInt(DA) OR ParameterIsInt(DA) OR ParameterIsWordList(DA)) then
-        begin
-          // Receive words !!
-          DataLength.Raw:=DataLength.Raw DIV 2;
-          for i:=1 to DataLength.Raw do
-          begin
-            DW.Bytes[0]:=telegram[Index];
-            DW.Bytes[1]:=telegram[Index+1];
-            Dec(Remaining,2);
-            Inc(Index,2);
-            if ParameterIsHex(DA) then result.DATA:=result.DATA+DecimalToHexString(DW.Raw,true)+',';
-            if (ParameterIsUInt(DA) OR ParameterIsInt(DA)) then result.DATA:=result.DATA+InttoStr(DW.Raw)+',';
-            if ParameterIsBinary(DA) then result.DATA:=result.DATA+DecimalToBinaryString(DW.Raw);
-          end;
-          if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
-        end
-        else
-        if ParameterIsDWordList(DA) then
-        begin
-          // Receive dwords !!
-          DataLength.Raw:=DataLength.Raw DIV 4;
-          for i:=1 to DataLength.Raw do
-          begin
-            DDW.Bytes[0]:=telegram[Index];
-            DDW.Bytes[1]:=telegram[Index+1];
-            DDW.Bytes[2]:=telegram[Index+2];
-            DDW.Bytes[3]:=telegram[Index+3];
-            Dec(Remaining,4);
-            Inc(Index,4);
-            if ParameterIsHex(DA) then result.DATA:=result.DATA+DecimalToHexString(DDW.Raw,true)+',';
-            if (ParameterIsUInt(DA) OR ParameterIsInt(DA)) then result.DATA:=result.DATA+InttoStr(DDW.Raw)+',';
-            if ParameterIsBinary(DA) then result.DATA:=result.DATA+DecimalToBinaryString(DDW.Raw);
-          end;
-          if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
-        end
-        (*
-        else
-        if ParameterIsBinary(DA) then
-        begin
-          if DataSize=1 then
-          begin
-            result.DATA:=DecimalToBinaryString(telegram[Index]);
-          end
-          else
-          if DataSize=2 then
-          begin
-            DW.Raw:=0;
-            for i:=0 to 1 do DW.Bytes[i]:=telegram[Index+i];
-            result.DATA:=DecimalToBinaryString(DW.Raw);
-          end
-          else
-          if DataSize=4 then
-          begin
-            DDW.Raw:=0;
-            for i:=0 to 3 do DDW.Bytes[i]:=telegram[Index+i];
-            result.DATA:=DecimalToBinaryString(DDW.Raw);
-          end;
-        end
-        *)
-        else
-        if ParameterIsDWordList(DA) then
-        begin
-          i:=0;
-        end
-        else
-        if ParameterIsByteList(DA) then
-        begin
-          i:=0;
-        end
-        else
-        begin
-          i:=0;
+          result.DATA[i]:=Chr(telegram[Index]);
+          ////if ParameterIsBinary(DA) then result.DATA:=result.DATA+DecimalToBinaryString(DW.Raw);
+          Dec(Remaining);
+          Inc(Index);
         end;
       end
       else
+      if (ParameterIsUInt(DA) OR ParameterIsInt(DA) OR ParameterIsWordList(DA)) then
       begin
-        // non-list parameters
-        if ParameterIsUInt(DA) OR ParameterIsInt(DA) then
+        // Receive words !!
+        DataLength.Raw:=DataLength.Raw DIV 2;
+        for i:=1 to DataLength.Raw do
         begin
-          DDW.Raw:=0;
-          for i:=0 to Pred(Remaining) do DDW.Bytes[i]:=telegram[Index+i];
-          result.DATA:=InttoStr(DDW.Raw);
+          DW.Bytes[0]:=telegram[Index];
+          DW.Bytes[1]:=telegram[Index+1];
+          Dec(Remaining,2);
+          Inc(Index,2);
+          if ParameterIsHex(DA) then result.DATA:=result.DATA+DecimalToHexString(DW.Raw,true)+',';
+          if (ParameterIsUInt(DA) OR ParameterIsInt(DA)) then result.DATA:=result.DATA+InttoStr(DW.Raw)+',';
+          if ParameterIsBinary(DA) then result.DATA:=result.DATA+DecimalToBinaryString(DW.Raw);
+        end;
+        if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
+      end
+      else
+      if ParameterIsDWordList(DA) then
+      begin
+        // Receive dwords !!
+        DataLength.Raw:=DataLength.Raw DIV 4;
+        for i:=1 to DataLength.Raw do
+        begin
+          DDW.Bytes[0]:=telegram[Index];
+          DDW.Bytes[1]:=telegram[Index+1];
+          DDW.Bytes[2]:=telegram[Index+2];
+          DDW.Bytes[3]:=telegram[Index+3];
+          Dec(Remaining,4);
+          Inc(Index,4);
+          if ParameterIsHex(DA) then result.DATA:=result.DATA+DecimalToHexString(DDW.Raw,true)+',';
+          if (ParameterIsUInt(DA) OR ParameterIsInt(DA)) then result.DATA:=result.DATA+InttoStr(DDW.Raw)+',';
+          if ParameterIsBinary(DA) then result.DATA:=result.DATA+DecimalToBinaryString(DDW.Raw);
+        end;
+        if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
+      end
+      (*
+      else
+      if ParameterIsBinary(DA) then
+      begin
+        if DataSize=1 then
+        begin
+          result.DATA:=DecimalToBinaryString(telegram[Index]);
         end
         else
-        if ParameterIsBinary(DA) then
+        if DataSize=2 then
         begin
-          DataSize:=ParameterSizeOf(DA);
-          if DataSize=1 then
-          begin
-            result.DATA:=DecimalToBinaryString(telegram[Index]);
-          end
-          else
-          if DataSize=2 then
-          begin
-            DW.Raw:=0;
-            for i:=0 to 1 do DW.Bytes[i]:=telegram[Index+i];
-            result.DATA:=DecimalToBinaryString(DW.Raw);
-          end
-          else
-          if DataSize=4 then
-          begin
-            DDW.Raw:=0;
-            for i:=0 to 3 do DDW.Bytes[i]:=telegram[Index+i];
-            result.DATA:=DecimalToBinaryString(DDW.Raw);
-          end;
+          DW.Raw:=0;
+          for i:=0 to 1 do DW.Bytes[i]:=telegram[Index+i];
+          result.DATA:=DecimalToBinaryString(DW.Raw);
         end
+        else
+        if DataSize=4 then
+        begin
+          DDW.Raw:=0;
+          for i:=0 to 3 do DDW.Bytes[i]:=telegram[Index+i];
+          result.DATA:=DecimalToBinaryString(DDW.Raw);
+        end;
+      end
+      *)
+      else
+      if ParameterIsDWordList(DA) then
+      begin
+        i:=0;
+      end
+      else
+      if ParameterIsByteList(DA) then
+      begin
+        i:=0;
+      end
+      else
+      begin
+        i:=0;
       end;
     end
     else
@@ -786,17 +750,17 @@ end;
 
 function NewParseSISResponse(const SourceCD: TPARAMETERDATA;  const s: RawByteString):TPARAMETERDATA;
 var
-  Header           : TSISTelegramHeader;
-  UserHeader       : TSISUserDataResponseHeader;
   Success          : boolean;
   i,j              : integer;
   Remaining,Index  : integer;
-  sum              : byte;
+  DB               : DATABYTE;
   DW               : DATAWORD;
   DDW              : DATADWORD;
+  IDN              : TIDNWORD;
   DA               : dword;
   LocalCD          : TPARAMETERDATA;
   DataSize         : byte;
+  Decimals         : byte;
   DataLength       : DATAWORD;
   SomeThing        : DATAWORD;
 begin
@@ -807,6 +771,9 @@ begin
 
   Index:=1;
   Remaining:=Length(s);
+
+  DataLength.Raw:=0;
+  SomeThing.Raw:=0;
 
   // Now look at the user data
   if Success then
@@ -823,7 +790,7 @@ begin
         DA:=GetDriveAttribute(LocalCD);
       end;
       DataSize:=ParameterSizeOf(DA);
-
+      Decimals:=ParameterDecimals(DA);
       if ParameterIsList(DA) then
       begin
         // Retrieve the datalength in bytes !!!!
@@ -844,10 +811,31 @@ begin
         Inc(Index,2);
       end
       else
-        DataLength.Raw:=ParameterSizeOf(DA);
+        DataLength.Raw:=DataSize;
       if true then
       begin
         // Handle all data !!
+        if ParameterIsIDN(DA) then
+        begin
+          // DataSize always 2
+          DataLength.Raw:=DataLength.Raw DIV 2;
+          for i:=1 to DataLength.Raw do
+          begin
+            IDN.Raw:=0;
+            for j:=0 to 1 do IDN.Bytes[j]:=Ord(s[Index+j]);
+            result.DATA:=result.DATA+GetIDN(IDN)+',';
+            Dec(Remaining,2);
+            Inc(Index,2);
+          end;
+          if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
+        end
+        else
+        if ParameterIsFloat(DA) then
+        begin
+          // DataSize might be 8 !!
+          i:=0;
+        end
+        else
         if ParameterIsBinary(DA) then
         begin
           DataLength.Raw:=DataLength.Raw DIV DataSize;
@@ -881,7 +869,7 @@ begin
           if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
         end
         else
-        if (ParameterIsChar(DA) OR ParameterIsByteList(DA)) then
+        if ParameterIsChar(DA) then
         begin
           SetLength(result.DATA,DataLength.Raw);
           for i:=1 to DataLength.Raw do
@@ -892,38 +880,48 @@ begin
           end;
         end
         else
-        if (ParameterIsUInt(DA) OR ParameterIsInt(DA) OR ParameterIsWordList(DA)) then
+        if ParameterIsByteList(DA) then
         begin
-          // Receive words !!
-          DataLength.Raw:=DataLength.Raw DIV 2;
+          // Receive bytes !!
           for i:=1 to DataLength.Raw do
           begin
-            DW.Bytes[0]:=Ord(s[Index]);
-            DW.Bytes[1]:=Ord(s[Index+1]);
-            Dec(Remaining,2);
-            Inc(Index,2);
-            if ParameterIsHex(DA) then result.DATA:=result.DATA+DecimalToHexString(DW.Raw,true)+',';
-            if (ParameterIsUInt(DA) OR ParameterIsInt(DA)) then result.DATA:=result.DATA+InttoStr(DW.Raw)+',';
-            if ParameterIsBinary(DA) then result.DATA:=result.DATA+DecimalToBinaryString(DW.Raw)+',';
+            DB.Raw:=Ord(s[Index]);
+            Dec(Remaining);
+            Inc(Index);
+            if ParameterIsHex(DA) then
+              result.DATA:=result.DATA+DecimalToHexString(DB.Raw,true)+','
+            else
+              result.DATA:=result.DATA+InttoStr(DB.Raw)+',';
           end;
           if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
         end
         else
-        if ParameterIsDWordList(DA) then
+        if (ParameterIsUInt(DA) OR ParameterIsInt(DA) OR ParameterIsHex(DA) OR ParameterIsWordList(DA) OR ParameterIsDWordList(DA)) then
         begin
-          // Receive dwords !!
-          DataLength.Raw:=DataLength.Raw DIV 4;
+          // Receive words or dwords !!
+          DataLength.Raw:=DataLength.Raw DIV DataSize;
           for i:=1 to DataLength.Raw do
           begin
-            DDW.Bytes[0]:=Ord(s[Index]);
-            DDW.Bytes[1]:=Ord(s[Index+1]);
-            DDW.Bytes[2]:=Ord(s[Index+2]);
-            DDW.Bytes[3]:=Ord(s[Index+3]);
-            Dec(Remaining,4);
-            Inc(Index,4);
-            if ParameterIsHex(DA) then result.DATA:=result.DATA+DecimalToHexString(DDW.Raw,true)+',';
-            if (ParameterIsUInt(DA) OR ParameterIsInt(DA)) then result.DATA:=result.DATA+InttoStr(DDW.Raw)+',';
-            if ParameterIsBinary(DA) then result.DATA:=result.DATA+DecimalToBinaryString(DDW.Raw)+',';
+            DW.Raw:=0;
+            DW.Bytes[0]:=Ord(s[Index]);
+            DW.Bytes[1]:=Ord(s[Index+1]);
+            Dec(Remaining,2);
+            Inc(Index,2);
+            DDW.Raw:=DW.Raw;
+            if DataSize=4 then
+            begin
+              DDW.Bytes[2]:=Ord(s[Index]);
+              DDW.Bytes[3]:=Ord(s[Index+1]);
+              Dec(Remaining,2);
+              Inc(Index,2);
+            end;
+            if ParameterIsHex(DA) then
+            begin
+              if DataSize=2 then result.DATA:=result.DATA+DecimalToHexString(DW.Raw,true)+',';
+              if DataSize=4 then result.DATA:=result.DATA+DecimalToHexString(DDW.Raw,true)+',';
+            end
+            else
+              result.DATA:=result.DATA+InttoStr(DDW.Raw)+',';
           end;
           if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
         end

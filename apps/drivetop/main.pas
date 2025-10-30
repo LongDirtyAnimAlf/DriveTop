@@ -1742,7 +1742,7 @@ begin
       else
       begin
         CD.CSUBCLASS:=mscList;
-        if (NOT SISDrive) then CD.STEPID:=STEPLISTSTART;
+        CD.STEPID:=STEPLISTSTART;
         success:=ProcessParameter(CD,s);
       end;
       DCStatus:=TDATACOLLECTION.dcNone;
@@ -3392,6 +3392,7 @@ begin
       begin
         StoreCD:=NewParseSISResponse(CD,s);
         ProcessCommResult(StoreCD);
+        Application.ProcessMessages;
       end;
     end
     else
@@ -4286,7 +4287,7 @@ begin
     // While getting paramater data, we got a list according to its attribute!
     // Ask for its real data
     LocalCD.CSUBCLASS:=mscList;
-    if (NOT SISDrive) then LocalCD.STEPID:=STEPLISTSTART;
+    LocalCD.STEPID:=STEPLISTSTART;
     LocalCD.DATA:='';
     success:=ProcessParameter(LocalCD,s,true,false);
     exit;
@@ -4364,7 +4365,7 @@ begin
   begin
     list:=false;
 
-    if (NOT DirectDrive) then
+    if (NOT DirectDrive) AND (NOT SISDrive) then
     begin
       // Only store real list data
       if ((LocalCD.DATA<>sLISTFINISHED) AND (LocalCD.STEPID<>STEPLISTSTART) AND (LocalCD.STEPID>0)) then SaveDriveRegisterData(LocalCD);
@@ -4412,7 +4413,7 @@ begin
       end;
     end;
 
-    if (DirectDrive) then
+    if (DirectDrive OR SISDrive) then
     begin
       // We receive all list data at once
       // So, store it and use it !!

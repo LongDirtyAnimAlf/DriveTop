@@ -226,6 +226,7 @@ type
   function  ParameterIsFloatList(const pw:dword):boolean;
   function  ParameterConversionFactor(const pw:dword):word;
   function  ParameterSizeOf(const pw:dword):byte;
+  function  ParameterDecimals(const pw:dword):byte;
 
   function  SaveRegisterData(const CD:TPARAMETERDATA; MAP:TMySortedMap):boolean;
   function  SaveRegisterDataRaw(const RR:TRegisterRecord; MAP:TMySortedMap):boolean;overload;
@@ -245,6 +246,7 @@ type
   function  IDN2CD(const IDN:ansistring; const DriveAddress:byte):TPARAMETERDATA;
   function  COMMAND2CD(const C:TPARAMETER; const DriveAddress:byte):TPARAMETERDATA;
   function  NUM2SCLASS(const S:byte; var SC:TVMCOMMANDPARAMETERSUBCLASS):boolean;
+  function  GetIDN(const IDN:TIDNWORD):string; overload;
   function  GetIDN(const CD:TPARAMETERDATA):string; overload;
   function  GetIDN(const RR:TRegisterRecord):string; overload;
   function  GetIDN(const C:TPARAMETER):string; overload;
@@ -480,6 +482,15 @@ begin
     end;
     result:=Format('%s-%d-%.4d',[bt,bs,CD.NUMID]);
   end;
+end;
+
+function GetIDN(const IDN:TIDNWORD):string;
+var
+  bt       : char;
+begin
+  bt:='S';
+  if IDN.Data.ParamType=1 then bt:='P';
+  result:=Format('%s-%d-%.4d',[bt,IDN.Data.ParamBlock,IDN.Data.ParamNum]);
 end;
 
 function GetIDN(const RR:TRegisterRecord):string;
@@ -1094,6 +1105,18 @@ begin
     if ATT.Data.DataLength=CSMD_SERC_WORD_LEN then result:=2;
     if ATT.Data.DataLength=CSMD_SERC_LONG_LEN then result:=4;
     if ATT.Data.DataLength=CSMD_SERC_DOUBLE_LEN then result:=8;
+  end;
+end;
+
+function ParameterDecimals(const pw:dword):byte;
+var
+  ATT:ATTRIBUTEDWORD;
+begin
+  result:=0;
+  ATT.Raw:=pw;
+  if (ATT.Raw<>0) then
+  begin
+    result:=ATT.Data.DecimalPoints;
   end;
 end;
 

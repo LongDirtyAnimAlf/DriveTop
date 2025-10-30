@@ -449,7 +449,11 @@ begin
 end;
 
 function TLazSerial.SendSIS(buffer: pointer; const len:Integer):integer;
+var
+  dummybuffer:array[0..255] of byte;
 begin
+  FSynSer.Purge;
+  result:=FSynSer.RecvBufferEx(@dummybuffer[0],256,10);
   result:=FSynSer.SendBuffer(buffer,len);
 end;
 
