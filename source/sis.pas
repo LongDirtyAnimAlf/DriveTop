@@ -924,14 +924,14 @@ begin
           DB.Raw:=Ord(s[Index]);
           Dec(Remaining);
           Inc(Index);
-          DW.Raw:=DB.Raw;
+          DW.Signed:=DB.Signed;
           if DataSize>=2 then
           begin
             DW.Bytes[1]:=Ord(s[Index]);
             Dec(Remaining);
             Inc(Index);
           end;
-          DDW.Raw:=DW.Raw;
+          DDW.Signed:=DW.Signed;
           if DataSize>=4 then
           begin
             DDW.Bytes[2]:=Ord(s[Index]);
