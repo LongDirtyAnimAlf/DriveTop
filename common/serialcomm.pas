@@ -464,7 +464,7 @@ begin
   begin
     // The SIS slave always sends:
     // 8 header bytes
-    result:=(FSynSer.RecvBufferEx(buffer,8,1000)=8);
+    result:=(FSynSer.RecvBufferEx(buffer,8,10000)=8);
   end;
 end;
 
@@ -475,7 +475,7 @@ begin
   result:=0;
   if (FSynSer.LastError=0) then
   begin
-    result:=FSynSer.RecvBufferEx(buffer,len,1000);
+    result:=FSynSer.RecvBufferEx(buffer,len,10000);
   end;
 end;
 

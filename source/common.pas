@@ -123,6 +123,7 @@ type
       case integer of
           1 : (Bits            : bitpacked array[0..7] of T1BITS;);
           2 : (Raw             : byte;);
+          3 : (Signed          : Shortint;);
   end;
 
   DATAWORD = bitpacked record
@@ -135,6 +136,7 @@ type
           3:  (Hi,Lo           : Byte;);
           {$endif FPC_LITTLE_ENDIAN}
           4 : (Raw             : Word;);
+          5 : (Signed          : Smallint;);
   end;
 
   DATADWORD = bitpacked record
@@ -146,6 +148,9 @@ type
 
           3 : (
                Raw             : DWord;
+              );
+          4 : (
+               Signed          : longint;
               );
   end;
 

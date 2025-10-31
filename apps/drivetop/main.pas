@@ -693,6 +693,7 @@ var
 begin
   if CheckComms then exit;
   if DirectDrive then exit;
+  if SISDrive then exit;
 
   LB:=TListBox(Sender);
   CD:=Default(TPARAMETERDATA);
@@ -727,6 +728,11 @@ begin
   begin
     CD.CSUBCLASS:=TVMCOMMANDPARAMETERSUBCLASS(rgSubClass.ItemIndex+1);
     CommandString:=GetDirectDriveCommand(CD);
+  end
+  else
+  if SISDrive then
+  begin
+    // ToDo !!
   end
   else
   begin
@@ -833,6 +839,11 @@ begin
       success:=ProcessDirectDriveCommand(c,s,false,true);
     end
     else
+    if SISDrive then
+    begin
+      // ToDo
+    end
+    else
     begin
       success:=ProcessParameter(CD,s,false,true);
     end;
@@ -846,6 +857,9 @@ begin
     //if (NOT success) then break;
     if DirectDrive then
       SCS.Raw:=HexStringToDecimal(CDStatus.DATA)
+    else
+    if SISDrive then
+      // ToDo !!
     else
       SCS.Raw:=BinaryStringToDecimal(CDStatus.DATA);
       //i:=StringToIntSafe(CDStatus.DATA);
@@ -1585,6 +1599,11 @@ begin
         if (NOT ProcessDirectDriveCommand(c,s,false,true)) then c:='Serial error !';
       end
       else
+      if SISDrive then
+      begin
+        // ToDo !!
+      end
+      else
       begin
         if (NOT ProcessSerialCommand(c,s,false,true)) then c:='Serial error !';
       end;
@@ -1731,17 +1750,15 @@ begin
     TDATACOLLECTION.dcIDN:
     begin
       ShowDataUpdateInfo('Getting/checking parameters.');
-      CD.CCLASS:=DRIVE_PARAMLIST.CCLASS;
-      CD.NUMID:=DRIVE_PARAMLIST.NUMID;
-      CD.DATA:='';
-      if DirectDrive then
+      CD:=COMMAND2CD(DRIVE_PARAMLIST,driveaddress);
+      if (DirectDrive OR SISDrive) then
       begin
+        // Force reception of list as comma-delimited data
         CD.CSUBCLASS:=mscParameterData;
         success:=ProcessParameter(CD,s);
       end
       else
       begin
-        CD.CSUBCLASS:=mscList;
         CD.STEPID:=STEPLISTSTART;
         success:=ProcessParameter(CD,s);
       end;
@@ -2245,7 +2262,7 @@ var
   ADriveList   : TStringList;
   c            : word;
 begin
-  if (NOT DirectDrive) then
+  if ((NOT DirectDrive) AND (NOT SISDrive)) then
   begin
     CD:=Default(TPARAMETERDATA);
     CD.SETID:=GetDriveAddress(ActiveDriveNumber);
@@ -2483,7 +2500,7 @@ function TForm1.CheckAxis(out axis:word):boolean;
 begin
   axis:=0;
   result:=false;
-  if (NOT DirectDrive) then
+  if ((NOT DirectDrive) AND (NOT SISDrive)) then
   begin
     if (AxisActive=axisOne) then axis:=1;
     if (AxisActive=axisTwo) then axis:=2;
@@ -3298,7 +3315,7 @@ begin
     exit;
   end;
 
-  if verbose OR DirectDrive then
+  if verbose OR DirectDrive OR SISDrive then
   begin
     if (NOT ro) then
       Memo1.Lines.Append('Write command: '+s+'. Value: '+CD.DATA)
@@ -3344,6 +3361,7 @@ begin
     else
     if SISDrive then
     begin
+      Memo1.Lines.Append(GetIDN(LocalCD));
       FillChar({%H-}SISSendData,SizeOf(SISSendData),0);
       BuildSISTelegram(LocalCD,SISSendData,masterlength);
       s:='';
@@ -3392,7 +3410,6 @@ begin
       begin
         StoreCD:=NewParseSISResponse(CD,s);
         ProcessCommResult(StoreCD);
-        Application.ProcessMessages;
       end;
     end
     else
@@ -4282,7 +4299,7 @@ begin
   list:=false;
   ATT.Raw:=GetDriveAttribute(LocalCD);
   list:=((ATT.Data.List=1) AND (ATT.Data.DataLength<>0));
-  if (list AND (NOT DirectDrive) AND (LocalCD.CSUBCLASS=mscParameterData)) then
+  if (list AND (NOT DirectDrive)AND (NOT SISDrive) AND (LocalCD.CSUBCLASS=mscParameterData)) then
   begin
     // While getting paramater data, we got a list according to its attribute!
     // Ask for its real data
@@ -4438,6 +4455,7 @@ begin
 
   end;
 
+  if SISDrive then Application.ProcessMessages;
 end;
 
 procedure TForm1.ArrowMouseDown(Sender: TObject; Button: TMouseButton;
@@ -4637,7 +4655,6 @@ begin
         // Done by setting the default baudrate to 9600
         BuildSISCommand(SISServiceInitSISCommunications,SISSubServiceSettingBaud,GetDriveAddress(ActiveDriveNumber),0,SISData,l);
         (ComDevice AS TLazSerial).SendSIS(@SISData,l);
-        (ComDevice AS TLazSerial).RetrieveSISUserData(@SISData,255);
       end;
 
       if SISDrive OR DirectDrive then

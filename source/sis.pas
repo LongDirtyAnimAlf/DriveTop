@@ -5,7 +5,7 @@ unit sis;
 interface
 
 uses
-  Classes, SysUtils,
+  Classes, SysUtils, Math,
   common;
 
 const
@@ -351,12 +351,12 @@ begin
       DataLenRep   := 0;
       Control.Raw  := 0;
       Control.Data.TelegramType:=0;
-      // This is a hack !!
-      case SISService of
-        SERCOSServiceListRead  : Service:=SERCOSServiceParamRead;
-        SERCOSServiceListWrite : Service:=SERCOSServiceParamWrite;
-      else
-        Service      := SISService;
+      Service      := SISService;
+      if (ParameterIsList(DA) {AND (CD.CSUBCLASS=mscParameterData)}) then
+      begin
+        // We have an override to ease the reception of list data !!
+        if (SISService=SERCOSServiceListRead) then Service:=SERCOSServiceParamRead;
+        if (SISService=SERCOSServiceListWrite) then Service:=SERCOSServiceParamWrite;
       end;
       AddrSender   := MASTER_ADDR;
       AddrRecv     := CD.SETID;
@@ -385,16 +385,15 @@ begin
       for i:=0 to Pred(DataSize) do telegram[USERDATAOFFSET+i] := DDW.Bytes[i];
     end;
 
-    // Send list userdata, if any
+    // Send/receive specific list userdata
     if ((SISService=SERCOSServiceListRead) OR (SISService=SERCOSServiceListWrite)) then
     begin
+      // ToDo !!
       len:=len+4;
       DW.Raw:=0;                   // List offset ... e.g. read first item
       telegram[USERHEADEROFFSET+5] := DW.Lo;            // List offset LSB
       telegram[USERHEADEROFFSET+6] := DW.Hi;            // List offset MSB
-      DW.Raw:=6*DataSize;                   // List length ... e.g. read 20 items
-      //DW.Raw:=232;                   // List length ... e.g. read 20 items
-      //DW.Raw:=0;
+      DW.Raw:=6*DataSize;                   // List length ... e.g. read 6 items
       telegram[USERHEADEROFFSET+7] := DW.Lo;            // List length LSB
       telegram[USERHEADEROFFSET+8] := DW.Hi;            // List length MSB
 
@@ -404,7 +403,6 @@ begin
         //len:=len+DataSize;
       end;
     end;
-
 
     // Set datalength
     Header.Data.DataLen:=len - 8;
@@ -748,6 +746,24 @@ begin
   end;
 end;
 
+function IntPowerI(Base: Int64; Exponent: Cardinal): Int64;
+var
+  b: Int64;
+  e: Cardinal;
+begin
+  Result := 1;
+  b := Base;
+  e := Exponent;
+  while e > 0 do
+  begin
+    if (e and 1) = 1 then
+      Result := Result * b;
+    e := e shr 1;
+    if e > 0 then
+      b := b * b;
+  end;
+end;
+
 function NewParseSISResponse(const SourceCD: TPARAMETERDATA;  const s: RawByteString):TPARAMETERDATA;
 var
   Success          : boolean;
@@ -761,8 +777,12 @@ var
   LocalCD          : TPARAMETERDATA;
   DataSize         : byte;
   Decimals         : byte;
+  Number           : ansistring;
   DataLength       : DATAWORD;
   SomeThing        : DATAWORD;
+  IntPart,FracPart : longint;
+  Divisor          : longint;
+  SignIndicator    : string[1];
 begin
   Success:=true;
 
@@ -812,129 +832,141 @@ begin
       end
       else
         DataLength.Raw:=DataSize;
-      if true then
+
+      // Handle all data !!
+      if ParameterIsIDN(DA) then
       begin
-        // Handle all data !!
-        if ParameterIsIDN(DA) then
+        // DataSize always 2
+        DataLength.Raw:=DataLength.Raw DIV 2;
+        for i:=1 to DataLength.Raw do
         begin
-          // DataSize always 2
-          DataLength.Raw:=DataLength.Raw DIV 2;
-          for i:=1 to DataLength.Raw do
+          IDN.Raw:=0;
+          for j:=0 to 1 do IDN.Bytes[j]:=Ord(s[Index+j]);
+          result.DATA:=result.DATA+GetIDN(IDN)+',';
+          Dec(Remaining,2);
+          Inc(Index,2);
+        end;
+        if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
+      end
+      else
+      if ParameterIsFloat(DA) then
+      begin
+        // DataSize might be 8 !!
+        i:=0;
+      end
+      else
+      if ParameterIsBinary(DA) then
+      begin
+        DataLength.Raw:=DataLength.Raw DIV DataSize;
+        for i:=1 to DataLength.Raw do
+        begin
+          if DataSize=1 then
           begin
-            IDN.Raw:=0;
-            for j:=0 to 1 do IDN.Bytes[j]:=Ord(s[Index+j]);
-            result.DATA:=result.DATA+GetIDN(IDN)+',';
+            result.DATA:=result.DATA+DecimalToBinaryString(Ord(s[Index]),true);
+            Dec(Remaining,1);
+            Inc(Index,1);
+          end
+          else
+          if DataSize=2 then
+          begin
+            DW.Raw:=0;
+            for j:=0 to 1 do DW.Bytes[j]:=Ord(s[Index+j]);
+            result.DATA:=result.DATA+DecimalToBinaryString(DW.Raw,true)+',';
+            Dec(Remaining,2);
+            Inc(Index,2);
+          end
+          else
+          if DataSize=4 then
+          begin
+            DDW.Raw:=0;
+            for j:=0 to 3 do DDW.Bytes[j]:=Ord(s[Index+j]);
+            result.DATA:=result.DATA+DecimalToBinaryString(DDW.Raw,true)+',';
+            Dec(Remaining,4);
+            Inc(Index,4);
+          end;
+        end;
+        if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
+      end
+      else
+      if ParameterIsChar(DA) then
+      begin
+        SetLength(result.DATA,DataLength.Raw);
+        for i:=1 to DataLength.Raw do
+        begin
+          result.DATA[i]:=s[Index];
+          Dec(Remaining);
+          Inc(Index);
+        end;
+      end
+      else
+      if ParameterIsByteList(DA) then
+      begin
+        // Receive bytes !!
+        for i:=1 to DataLength.Raw do
+        begin
+          DB.Raw:=Ord(s[Index]);
+          Dec(Remaining);
+          Inc(Index);
+          if ParameterIsHex(DA) then
+            result.DATA:=result.DATA+DecimalToHexString(DB.Raw,true)+','
+          else
+            result.DATA:=result.DATA+InttoStr(DB.Raw)+',';
+        end;
+        if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
+      end
+      else
+      if (ParameterIsUInt(DA) OR ParameterIsInt(DA) OR ParameterIsHex(DA) OR ParameterIsWordList(DA) OR ParameterIsDWordList(DA)) then
+      begin
+        // Receive words or dwords !!
+        DataLength.Raw:=DataLength.Raw DIV DataSize;
+        for i:=1 to DataLength.Raw do
+        begin
+          DB.Raw:=Ord(s[Index]);
+          Dec(Remaining);
+          Inc(Index);
+          DW.Raw:=DB.Raw;
+          if DataSize>=2 then
+          begin
+            DW.Bytes[1]:=Ord(s[Index]);
+            Dec(Remaining);
+            Inc(Index);
+          end;
+          DDW.Raw:=DW.Raw;
+          if DataSize>=4 then
+          begin
+            DDW.Bytes[2]:=Ord(s[Index]);
+            DDW.Bytes[3]:=Ord(s[Index+1]);
             Dec(Remaining,2);
             Inc(Index,2);
           end;
-          if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
-        end
-        else
-        if ParameterIsFloat(DA) then
-        begin
-          // DataSize might be 8 !!
-          i:=0;
-        end
-        else
-        if ParameterIsBinary(DA) then
-        begin
-          DataLength.Raw:=DataLength.Raw DIV DataSize;
-          for i:=1 to DataLength.Raw do
+          if ParameterIsHex(DA) then
           begin
-            if DataSize=1 then
+            if DataSize=1 then result.DATA:=result.DATA+DecimalToHexString(DB.Raw,true)+',';
+            if DataSize=2 then result.DATA:=result.DATA+DecimalToHexString(DW.Raw,true)+',';
+            if DataSize=4 then result.DATA:=result.DATA+DecimalToHexString(DDW.Raw,true)+',';
+          end
+          else
+          begin
+            if (Decimals=0) then
             begin
-              result.DATA:=result.DATA+DecimalToBinaryString(Ord(s[Index]),true);
-              Dec(Remaining,1);
-              Inc(Index,1);
+              result.DATA:=result.DATA+InttoStr(DDW.Signed)+',';
             end
             else
-            if DataSize=2 then
             begin
-              DW.Raw:=0;
-              for j:=0 to 1 do DW.Bytes[j]:=Ord(s[Index+j]);
-              result.DATA:=result.DATA+DecimalToBinaryString(DW.Raw,true)+',';
-              Dec(Remaining,2);
-              Inc(Index,2);
-            end
-            else
-            if DataSize=4 then
-            begin
-              DDW.Raw:=0;
-              for j:=0 to 3 do DDW.Bytes[j]:=Ord(s[Index+j]);
-              result.DATA:=result.DATA+DecimalToBinaryString(DDW.Raw,true)+',';
-              Dec(Remaining,4);
-              Inc(Index,4);
+              SignIndicator:='';
+              Divisor:=IntPowerI(10,Decimals);
+              DivMod(DDW.Signed,Divisor,IntPart,FracPart);
+              if ((IntPart=0) AND (FracPart<0)) then SignIndicator:='-';
+              FracPart:=Abs(FracPart);
+              result.DATA:=result.DATA+Format('%.1s%d.%.'+InttoStr(Decimals)+'d',[SignIndicator,IntPart,FracPart])+',';
             end;
           end;
-          if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
-        end
-        else
-        if ParameterIsChar(DA) then
-        begin
-          SetLength(result.DATA,DataLength.Raw);
-          for i:=1 to DataLength.Raw do
-          begin
-            result.DATA[i]:=s[Index];
-            Dec(Remaining);
-            Inc(Index);
-          end;
-        end
-        else
-        if ParameterIsByteList(DA) then
-        begin
-          // Receive bytes !!
-          for i:=1 to DataLength.Raw do
-          begin
-            DB.Raw:=Ord(s[Index]);
-            Dec(Remaining);
-            Inc(Index);
-            if ParameterIsHex(DA) then
-              result.DATA:=result.DATA+DecimalToHexString(DB.Raw,true)+','
-            else
-              result.DATA:=result.DATA+InttoStr(DB.Raw)+',';
-          end;
-          if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
-        end
-        else
-        if (ParameterIsUInt(DA) OR ParameterIsInt(DA) OR ParameterIsHex(DA) OR ParameterIsWordList(DA) OR ParameterIsDWordList(DA)) then
-        begin
-          // Receive words or dwords !!
-          DataLength.Raw:=DataLength.Raw DIV DataSize;
-          for i:=1 to DataLength.Raw do
-          begin
-            DB.Raw:=Ord(s[Index]);
-            Dec(Remaining);
-            Inc(Index);
-            DW.Raw:=DB.Raw;
-            if DataSize>=2 then
-            begin
-              DW.Bytes[1]:=Ord(s[Index]);
-              Dec(Remaining);
-              Inc(Index);
-            end;
-            DDW.Raw:=DW.Raw;
-            if DataSize>=4 then
-            begin
-              DDW.Bytes[2]:=Ord(s[Index]);
-              DDW.Bytes[3]:=Ord(s[Index+1]);
-              Dec(Remaining,2);
-              Inc(Index,2);
-            end;
-            if ParameterIsHex(DA) then
-            begin
-              if DataSize=1 then result.DATA:=result.DATA+DecimalToHexString(DB.Raw,true)+',';
-              if DataSize=2 then result.DATA:=result.DATA+DecimalToHexString(DW.Raw,true)+',';
-              if DataSize=4 then result.DATA:=result.DATA+DecimalToHexString(DDW.Raw,true)+',';
-            end
-            else
-              result.DATA:=result.DATA+InttoStr(DDW.Raw)+',';
-          end;
-          if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
-        end
-        else
-        begin
-          i:=0;
         end;
+        if (Length(result.DATA)>0) then Delete(result.DATA,Length(result.DATA),1);
+      end
+      else
+      begin
+        i:=0;
       end;
     end
     else
