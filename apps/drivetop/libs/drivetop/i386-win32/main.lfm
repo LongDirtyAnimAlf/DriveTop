@@ -2634,7 +2634,7 @@ object Form1: TForm1
     OnClick = btnConnectSerialClick
   end
   object Button3: TButton
-    Left = 664
+    Left = 736
     Height = 21
     Top = 57
     Width = 74

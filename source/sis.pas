@@ -780,8 +780,8 @@ var
   Number           : ansistring;
   DataLength       : DATAWORD;
   SomeThing        : DATAWORD;
-  IntPart,FracPart : longint;
-  Divisor          : longint;
+  IntPart,FracPart : dword;
+  Divisor          : dword;
   SignIndicator    : string[1];
 begin
   Success:=true;
@@ -953,11 +953,13 @@ begin
             end
             else
             begin
-              SignIndicator:='';
+              if DDW.Signed<0 then
+                SignIndicator:='-'
+              else
+                SignIndicator:='';
+              DDW.Signed:=Abs(DDW.Signed);
               Divisor:=IntPowerI(10,Decimals);
-              DivMod(DDW.Signed,Divisor,IntPart,FracPart);
-              if ((IntPart=0) AND (FracPart<0)) then SignIndicator:='-';
-              FracPart:=Abs(FracPart);
+              DivMod(DDW.Raw,Divisor,IntPart,FracPart);
               result.DATA:=result.DATA+Format('%.1s%d.%.'+InttoStr(Decimals)+'d',[SignIndicator,IntPart,FracPart])+',';
             end;
           end;

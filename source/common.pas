@@ -51,6 +51,7 @@ type
     DATA           : ansistring;
     ERROR          : ansistring;
   end;
+  PPARAMETERDATA = ^TPARAMETERDATA;
 
   TPARAMETER = record
     CCLASS         : TVMPARAMETERCLASS;

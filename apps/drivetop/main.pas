@@ -21,6 +21,7 @@ uses
   Classes, SysUtils, FileUtil, SynEdit, Forms, Controls, syncobjs,
   Graphics, Dialogs, StdCtrls, ExtCtrls, ComCtrls, Menus, ValEdit,
   common, drive, visualmotion,
+  commworker,
   CommBase,
   serialcomm,
   {$ifdef MSWindows}
@@ -245,6 +246,8 @@ type
     DCStatus                    : TDATACOLLECTION;
     ComDevice                   : ICommInterface;
 
+    CommWorker                  : TWorkManager;
+
     function  GetDirectDrive:boolean;
     function  GetSISDrive:boolean;
     function  GetVisualMotion:boolean;
@@ -328,6 +331,9 @@ type
     procedure ProcessDiskDriveData(const Drive: word; StoreOnDisk:boolean);
 
     procedure OnCommData(const s:ansistring);
+
+    procedure OnWorkComplete(Sender: TObject);
+
   public
     { public declarations }
     function  ProcessResonse(const CD:TPARAMETERDATA;DD:boolean;Data:RawByteString):TPARAMETERDATA;
@@ -446,6 +452,9 @@ begin
 
   //FActiveDriveNumber:=0;
   FActiveDriveNumber:=(TabControl1.TabIndex+1);
+
+  CommWorker := TWorkManager.Create;
+  CommWorker.WorkComplete:=@OnWorkComplete;
 
   ComDevice:=nil;
   ActiveSerialConnection:=conNone;
@@ -2475,6 +2484,13 @@ var
   CD              : TPARAMETERDATA;
   driveaddress    : byte;
 begin
+  CD.DATA:='YOLO !!';
+  CommWorker.AddWork(CD,false,true);
+  //CommWorker.AddWork(CD);
+  Memo1.Lines.Append(CD.DATA);
+
+  exit;
+
   // Get supported baudrates
   driveaddress:=GetDriveAddress(ActiveDriveNumber);
   // Set the baudrate
@@ -2742,9 +2758,12 @@ begin
   //Stop dataTimer
   Timer1.Enabled:=False;
 
+
   //Stop all data threads
   if Assigned(ComDevice) then ComDevice.Active:=False;
   ComDevice:=nil;
+
+  CommWorker.Free;
 
   // Store drive data on disk
   for i:=1 to MAXDRIVES do
@@ -4255,6 +4274,21 @@ begin
   CD:=Default(TPARAMETERDATA);
   CDResult:=ProcessResonse(CD,DirectDrive,s);
   ProcessCommResult(CDResult);
+end;
+
+procedure TForm1.OnWorkComplete(Sender: TObject);
+var
+  WorkData: PPARAMETERDATA;
+  Thread: TWorkerThread;
+begin
+  Thread := Sender as TWorkerThread;
+  WorkData := Thread.CurrentWorkData;
+
+  if Assigned(WorkData) then
+  begin
+    Memo1.Lines.Append(WorkData^.DATA);
+    Dispose(WorkData);
+  end;
 end;
 
 procedure TForm1.ProcessCommResult(const CD:TPARAMETERDATA);
