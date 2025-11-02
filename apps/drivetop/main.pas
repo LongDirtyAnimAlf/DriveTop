@@ -1049,8 +1049,12 @@ begin
 
       ComDevice.Active:=True;
 
+      CommWorker.Comms:=(ComDevice AS TLazSerial);
+
       if (ComDevice.Active=True) then
       begin
+
+
         Success:=True;
         if (ActiveSerialConnection in [conSISDDRS485,conASCIIDDRS485]) then (ComDevice AS TLazSerial).RTSToggle:=True;
 
@@ -2485,7 +2489,7 @@ var
   driveaddress    : byte;
 begin
   CD.DATA:='YOLO !!';
-  CommWorker.AddWork(CD,false,true);
+  CommWorker.AddWork(CD,True);
   //CommWorker.AddWork(CD);
   Memo1.Lines.Append(CD.DATA);
 
@@ -4286,7 +4290,12 @@ begin
 
   if Assigned(WorkData) then
   begin
-    Memo1.Lines.Append(WorkData^.DATA);
+    try
+      Memo1.Lines.Append(WorkData^.DATA);
+    except
+      // Swallow exceptions !!
+      // We always need to free the workdata
+    end;
     Dispose(WorkData);
   end;
 end;
