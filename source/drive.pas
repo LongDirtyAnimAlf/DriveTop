@@ -426,7 +426,6 @@ const
   DRIVE_MOTORTYPE              : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 141);
   DRIVE_APPTYPE                : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 142);
 
-
   DRIVE_POSITIONSPINDLE        : TPARAMETER = (CCLASS: ccDrive; CSUBCLASS: mscNone; NUMID: 152);
   DRIVE_POSITIONPARAMETER      : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 154);
   DRIVE_POSITIONOFFSET         : TPARAMETER = (CCLASS: ccDrive;         CSUBCLASS: mscParameterData; NUMID: 180);

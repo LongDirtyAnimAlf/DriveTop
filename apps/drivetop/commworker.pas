@@ -22,6 +22,7 @@ type
     FCurrentWorkData: PPARAMETERDATA;
     FIsProcessing: Boolean;
     FOwner: TWorkManager;
+    function  ProcessSIS(const SISSendData:array of byte;const MasterDataLength:integer; out Data:RawByteString):boolean;
     procedure ProcessSISWork(AData: PPARAMETERDATA);
     procedure ProcessASCIIWork(AData: PPARAMETERDATA);
   protected
@@ -51,6 +52,8 @@ type
     constructor Create;
     destructor Destroy; override;
     procedure AddWork(var NewWorkData: TPARAMETERDATA; SISData:boolean; prio:boolean=false;blocking:boolean=false);
+    procedure ProcessSISRaw(var data:array of byte; var len:integer);
+    procedure ProcessRaw(data:RawByteString; SISData:boolean);
     function IsAllFinished: Boolean;
     property WorkComplete: TNotifyEvent read FWorkComplete write SetWorkComplete;
     property Comms:TLazSerial write FComms;
@@ -167,32 +170,29 @@ begin
   end;
 end;
 
-procedure TWorkerThread.ProcessSISWork(AData: PPARAMETERDATA);
+function TWorkerThread.ProcessSIS(const SISSendData:array of byte;const MasterDataLength:integer; out Data:RawByteString):boolean;
 var
-  SISSendData            : SISTelegram;
   SISRetrieveHeader      : SISTelegram;
   SISRetrieveUserData    : SISTelegram;
   DataReady              : boolean;
   SlaveDataLength        : Integer;
-  MasterDataLength       : Integer;
   crc,i,dataindex        : Integer;
   Header                 : TSISTelegramHeader;
   UserHeader             : TSISUserDataResponseHeader;
   success                : boolean;
+  SERCOS                 : boolean;
 begin
-
+  result:=false;
   if Assigned(FOwner.FComms) AND Assigned(FOwner.FComms.SynSer) then
   begin
     success:=(FOwner.FComms.SynSer.LastError=0);
-    FillChar({%H-}SISSendData,SizeOf(SISSendData),0);
-    BuildSISTelegram(AData^,SISSendData,MasterDataLength);
-    AData^.DATA:='';
+    Data:='';
     repeat
       DataReady:=true;
-      FOwner.FComms.SynSer.Purge;
+      //FOwner.FComms.SynSer.Purge;
       // Send the master header and master data
       success:=(FOwner.FComms.SynSer.SendBuffer(@SISSendData,MasterDataLength)=MasterDataLength);
-      FOwner.FComms.SynSer.Flush;
+      //FOwner.FComms.SynSer.Flush;
       if success then success:=(FOwner.FComms.SynSer.LastError=0);
       if success then
       begin
@@ -203,6 +203,7 @@ begin
         begin
           for i:=1 to 8 do Header.Bytes[i-1]:=SISRetrieveHeader[i];
           SlaveDataLength:=Header.Data.DataLen;
+          SERCOS:=(Header.Data.Service>=$80) AND (Header.Data.Service<=$80);
           if (SlaveDataLength>0) then
           begin
             FillChar({%H-}SISRetrieveUserData,SizeOf(SISRetrieveUserData),0);
@@ -222,18 +223,18 @@ begin
                 begin
                   //Process first three bytes of user data
                   for i:=1 to 3 do UserHeader.Bytes[i-1]:=SISRetrieveUserData[i];
-                  DataReady:=(UserHeader.Data.Control.Data.LastTransmission=1);
+                  if SERCOS then DataReady:=(UserHeader.Data.Control.Data.LastTransmission=1);
                   // Skip userdata header and process rest of data
                   if (SlaveDataLength>3) then
                   begin
                     Dec(SlaveDataLength,3);
-                    dataindex:=Length(AData^.DATA)+1;
+                    dataindex:=Length(Data)+1;
                     // Extend DATA to store the received bytes
-                    SetLength(AData^.DATA,Length(AData^.DATA)+SlaveDataLength);
+                    SetLength(Data,Length(Data)+SlaveDataLength);
                     // Add remaining userdata if any
                     for i:=1 to SlaveDataLength do
                     begin
-                      AData^.DATA[dataindex]:=Chr(SISRetrieveUserData[i+3]);
+                      Data[dataindex]:=Chr(SISRetrieveUserData[i+3]);
                       Inc(dataindex);
                     end;
                   end;
@@ -244,7 +245,22 @@ begin
         end;
       end;
     until DataReady;
-    NewerParseSISResponse(AData);
+  end;
+  result:=success;
+end;
+
+procedure TWorkerThread.ProcessSISWork(AData: PPARAMETERDATA);
+var
+  SISSendData            : SISTelegram;
+  MasterDataLength       : Integer;
+  success                : boolean;
+begin
+  if Assigned(FOwner.FComms) AND Assigned(FOwner.FComms.SynSer) then
+  begin
+    FillChar({%H-}SISSendData,SizeOf(SISSendData),0);
+    BuildSISTelegram(AData^,SISSendData,MasterDataLength);
+    Success:=ProcessSIS(SISSendData,MasterDataLength,AData^.DATA);
+    if Success then NewerParseSISResponse(AData);
   end
   else
   begin
@@ -415,6 +431,47 @@ destructor TWorkManager.Destroy;
 begin
   FThread.Free;
   inherited;
+end;
+
+procedure TWorkManager.ProcessRaw(data:RawByteString; SISData:boolean);
+var
+  len:integer;
+  success:boolean;
+begin
+  len:=Length(data);
+  if SISData then
+  begin
+    FThread.FLock.Acquire;
+    try
+      success:=(FComms.SynSer.SendBuffer(@data[1],len)=len);
+      if success then success:=(FComms.SynSer.LastError=0);
+      if success then
+      begin
+
+      end;
+    finally
+      FThread.FLock.Release;
+    end;
+  end;
+end;
+
+procedure TWorkManager.ProcessSISRaw(var data:array of byte; var len:integer);
+var
+  SISResult    : RawByteString;
+  success      : boolean;
+  i            : integer;
+begin
+  FThread.FLock.Acquire;
+  try
+    success:=FThread.ProcessSIS(data,len,SISResult);
+    if success then
+    begin
+      len:=Length(SISResult);
+      for i:=1 to len do data[i-1]:=Ord(SISResult[i]);
+    end;
+  finally
+    FThread.FLock.Release;
+  end;
 end;
 
 procedure TWorkManager.AddWork(var NewWorkData: TPARAMETERDATA; SISData:boolean;prio:boolean;blocking:boolean);

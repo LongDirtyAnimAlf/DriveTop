@@ -2498,6 +2498,7 @@ begin
   // Set the baudrate
   FillChar({%H-}Data,SizeOf(SISTelegram),0);
   BuildSISCommand(SISServiceInitSISCommunications,SISSubServiceSettingBaud,driveaddress,0,Data,l);
+  CommWorker.ProcessSISRaw(Data,l);
   FillChar({%H-}Data,SizeOf(SISTelegram),0);
   CD:=Default(TPARAMETERDATA);
   CD:=COMMAND2CD(DRIVE_TARGET,driveaddress);
@@ -4658,7 +4659,7 @@ begin
         // Might be superfluous after the first time
         // Done by setting the default baudrate to 9600
         BuildSISCommand(SISServiceInitSISCommunications,SISSubServiceSettingBaud,GetDriveAddress(ActiveDriveNumber),0,SISData,l);
-        (ComDevice AS TLazSerial).SendSIS(@SISData,l);
+        CommWorker.ProcessSISRaw(SISData,l);
       end;
 
       if SISDrive OR DirectDrive then
