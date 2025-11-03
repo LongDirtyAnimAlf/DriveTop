@@ -882,175 +882,36 @@ end;
 
 procedure NewProcessNormalResponse(CD:PPARAMETERDATA);
 var
-  index,j            : integer;
-  ro                 : boolean;
-  SC_IDN             : boolean;
-  cs,rcs             : byte;
-  PW                 : TIDNWORD;
-  cc                 : TVMCOMMANDCLASS;
-  csc                : TVMCOMMANDPARAMETERSUBCLASS;
-  s1,datas           : RawByteString;
-  LocalCD            : TPARAMETERDATA;
+  index,i,j          : integer;
+  s,s1,datas           : RawByteString;
 begin
   datas:=CD^.DATA;
-
+  CD^.DATA:='';
   if Length(datas)=0 then exit;
 
-  // Might be rewritten, we have the original CD !!
-
-  LocalCD:=Default(TPARAMETERDATA);
-
-  if Pos('Error',datas)=1 then
-  begin
-    // ToDo: handle error
-    LocalCD.CCLASS:=ccError;
-    LocalCD.ERROR:='We got an error !!';
-    exit;
-  end;
-
-  // We might use the supplied CD, if any !!
-  //Result:=CD;
-
-  LocalCD:=IDN2CD(datas,0);
-  //Result:=IDN2CD(datas,GetDriveAddress(ActiveDriveNumber));
-  if ((LocalCD.CCLASS=ccDrive) OR (LocalCD.CCLASS=ccDriveSpecific)) then
+  if ((CD^.CCLASS=ccDrive) OR (CD^.CCLASS=ccDriveSpecific)) then
   try
-    Delete(datas,1,9); // delete IDN and comma
-    SC_IDN:=false;
-    if (Length(datas)>0) then
+    // Check if we have an error
+    if (datas[1]='#') then CD^.ERROR:=Copy(datas,2,MaxInt) else
     begin
-      // Extract subclass
-      j:=Ord(datas[1])-48;
-      NUM2SCLASS(j,LocalCD.CSUBCLASS);
-      if j=1 then SC_IDN:=true; // This is IDN data. Must be treated special (for DirectDrive commands)
-      // Delete subclass and comma
-      Delete(datas,1,2);
-    end;
-    ro:=false;
-    if (Length(datas)>0) then
-    begin
-      // Extract read or write indicator
-      ro:=(datas[1]='r');
-      // Delete indicator itself
-      Delete(datas,1,1);
-      // Delete the comma, folowing the write command
-      // Delete all terminators following the read command
-      // Data written will be after this comma
-      // Data will be after these terminators
-      s1:=ExtractWhileConforming(datas,[',',#10,#13]);
-      Delete(datas,1,length(s1));
-    end;
-
-    if (Length(datas)>0) then
-    begin
-      if (NOT ro) then
-      begin
-        // Get the data written !
-        // Look for terminator
+      repeat
         index:=Pos(#13,datas);
         if (index=0) then index:=Pos(#10,datas);
-        if (index>0) then LocalCD.DATA:=Copy(datas,1,index-1);
-        // Delete datastring, if any
+        if index=0 then break;
+        CD^.DATA:=CD^.DATA+Copy(datas,1,index-1)+',';
+        Delete(datas,1,index-1);
+        index:=0;
+        while ((Length(datas)>index) AND (datas[1+index] in [#10,#13])) do Inc(index);
         Delete(datas,1,index);
-        // Delete all remaining terminators, if any
-        s1:=ExtractWhileConforming(datas,[#10,#13]);
-        Delete(datas,1,length(s1));
-        if SC_IDN then LocalCD.DATA:='';
-      end;
-    end;
-
-    if (Length(datas)>0) then
-    begin
-      // Check if we have an error
-      if (datas[1]='#') then
-      begin
-        // Extract error
-        // Look for terminator
-        index:=Pos(#13,datas);
-        if (index=0) then index:=Pos(#10,datas);
-        if (index>0) then LocalCD.ERROR:=Copy(datas,1,index-1);
-        // Delete datastring, if any
-        Delete(datas,1,index);
-        // Delete all remaining terminators, if any
-        s1:=ExtractWhileConforming(datas,[#10,#13]);
-        Delete(datas,1,length(s1));
-      end;
-    end;
-
-    if (Length(datas)>0) then
-    begin
-      //if (ro AND (Length(LocalCD.ERROR)=0)) then
-      //if ro then
-      begin
-        // Get all read data, if any
-        j:=0;
-        repeat
-          // Look for terminator
-          index:=Pos(#13,datas);
-          if (index=0) then index:=Pos(#10,datas);
-          if (index=0) then
-          begin
-            // We now should have something like "A01:>" in datas
-            // So, final two characters are the terminator TERDT
-            {$ifdef ALLOWCONVERRORS}
-            if (Pos(TERDT,datas)<>(Length(datas)-Length(TERDT)+1)) then
-            begin
-              raise EArgumentException.Create ('Wrong or missing terminator in data string.');
-            end;
-            {$endif}
-            // Delete leading drive character
-            Delete(datas,1,1);
-            s1:=ExtractWhileConforming(datas,['0'..'9']);
-            LocalCD.SETID:=StringToIntSafe(s1);
-            index:=Length(LocalCD.DATA);
-            if (index>0) then
-            begin
-              // Delete final comma from data, if any
-              if LocalCD.DATA[index]=',' then Delete(LocalCD.DATA,index,1);
-            end;
-            // Do we have a list of data ?
-            // Not strong: we might have a list with only one member !!
-            if (j>1) then
-            begin
-              LocalCD.CSUBCLASS:=mscList;
-              LocalCD.STEPID:=STEPLISTSTART;
-            end;
-            // We are ready, so end the loop
-            break;
-          end
-          else
-          begin
-            Inc(j); // amount of data items (important for list data !!)
-          end;
-          LocalCD.DATA:=LocalCD.DATA+Copy(datas,1,index-1)+',';
-          // Delete datastring, if any
-          Delete(datas,1,index);
-          // Delete all remaining terminators, if any
-          s1:=ExtractWhileConforming(datas,[#10,#13]);
-          Delete(datas,1,length(s1));
-          // Only parameter data can ever be a list of data
-          //if (LocalCD.CSUBCLASS<>mscParameterData) then datas:=''; // wrong: address must yet be parsed from 'E02:>'
-        until false;
-      end;
+        if (Length(datas)=0) then break;
+      until false;
+      i:=Length(CD^.DATA);
+      if (i>0) then SetLength(CD^.DATA,i-1);
     end;
   except
-    LocalCD.CCLASS:=ccNone;
-    LocalCD.SETID:=0;
+    CD^.CCLASS:=ccNone;
+    CD^.SETID:=0;
   end;
-
-  {$ifdef ALLOWCONVERRORS}
-  if (LocalCD.SETID=0) then
-  begin
-    raise EArgumentException.Create ('Could not determine drive address from raw datastring.');
-  end;
-  {$endif}
-
-  if ((CD^.NUMID=LocalCD.NUMID) AND (CD^.CCLASS=LocalCD.CCLASS) AND (CD^.CSUBCLASS=LocalCD.CSUBCLASS)) then
-  begin
-    CD^.DATA:=LocalCD.DATA;
-  end;
-
-
 end;
 
 function ProcessNormalResponse(const CD:TPARAMETERDATA; const DirectDrive:boolean; const s:RawByteString):TPARAMETERDATA;

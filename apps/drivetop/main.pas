@@ -22,16 +22,18 @@ uses
   Graphics, Dialogs, StdCtrls, ExtCtrls, ComCtrls, Menus, ValEdit,
   common, drive, visualmotion,
   commworker,
-  CommBase,
-  serialcomm,
   {$ifdef MSWindows}
   LMessages,
-  ddecomm,
   {$endif}
   dsLeds, Grids, Types;
 
 {$WARN 5023 off}
 {$WARN 5024 off}
+
+{$ifdef MSWindows}
+const
+  WM_DDEINFO = LM_USER + 2010;
+{$endif}
 
 type
   TCONNECTION                       = (conNone,conASCIIDDRS232,conASCIIDDRS485,conSISDDRS232,conSISDDRS485,conCLCDDE,conCLCRS232,conCLCRS485);
@@ -244,7 +246,6 @@ type
 
     MouseUpEvent                : TSimpleEvent;
     DCStatus                    : TDATACOLLECTION;
-    ComDevice                   : ICommInterface;
 
     CommWorker                  : TWorkManager;
 
@@ -267,10 +268,11 @@ type
     procedure InitMain({%H-}Data: PtrInt);
     procedure SetInfoPanel(aPanel:TPanel;Status:boolean);
     function  CommandExecuteAndWait(const aCD: TPARAMETERDATA):boolean;
+
     {$ifdef MSWindows}
     procedure HandleInfo(var Msg: TLMessage); message WM_DDEINFO;
-    function  ProcessDDECommand(const Command:RawByteString; var Value:RawByteString; const prio,blocking:boolean):boolean;
     {$endif}
+
     function  ProcessSerialCommand(const Command:RawByteString; var Value:RawByteString; const prio,blocking:boolean):boolean;
     function  ProcessDirectDriveCommand(const Command:RawByteString; var Value:RawByteString; const prio,blocking:boolean):boolean;
     procedure ArrowMouse(Sender: TObject; Button: TMouseButton; Shift: TShiftState; {%H-}X, {%H-}Y: Integer);
@@ -283,11 +285,6 @@ type
     property  SISDrive : boolean read GetSISDrive;
     property  ActiveSerialConnection : TCONNECTION read FActiveSerialConnection write SetActiveConnection;
     property  ActiveDriveNumber : word read FActiveDriveNumber write SetActiveDriveNumber;
-
-    procedure OnRXUSBCData({%H-}Sender: TObject);
-    {$ifdef MSWindows}
-    procedure OnRXDDEData({%H-}Sender: TObject);
-    {$endif}
 
     procedure ProcessCommResult(const CD:TPARAMETERDATA);
 
@@ -330,10 +327,7 @@ type
     procedure ProcessRealtimeData(const CD: TPARAMETERDATA);
     procedure ProcessDiskDriveData(const Drive: word; StoreOnDisk:boolean);
 
-    procedure OnCommData(const s:RawByteString);
-
     procedure OnWorkComplete(Sender: TObject);
-
   public
     { public declarations }
     function  ProcessResonse(const CD:TPARAMETERDATA;DD:boolean;Data:RawByteString):TPARAMETERDATA;
@@ -456,7 +450,6 @@ begin
   CommWorker := TWorkManager.Create;
   CommWorker.WorkComplete:=@OnWorkComplete;
 
-  ComDevice:=nil;
   ActiveSerialConnection:=conNone;
   DCStatus:=TDATACOLLECTION.dcNone;
 
@@ -582,7 +575,6 @@ begin
   end;
 
   ActiveSerialConnection:=conNone;
-  ComDevice:=nil;
 
   MouseUpEvent:=TSimpleEvent.Create;
 
@@ -966,8 +958,7 @@ begin
   CD:=COMMAND2CD(DRIVE_POSITIONFEEDBACKSTATUS,driveaddress);
   CD.DATA:='';
   success:=ProcessParameter(CD,s,false,true);
-  StatusCD:=ProcessResonse(CD,DirectDrive,s);
-  SC0403.Raw:=BinaryStringToDecimal(StatusCD.DATA);
+  SC0403.Raw:=BinaryStringToDecimal(s);
   if (SC0403.Data.InReference=1) then
   begin
     // Success !!!
@@ -981,6 +972,7 @@ begin
   ActiveSerialConnection:=conNone;
 
   {$ifdef MSWindows}
+  {$ifdef VISUALMOTION}
   ComDevice:=TDDEComm.Create(Self);
   ComDevice.Active:=False;
   with (ComDevice AS TDDEComm) do
@@ -999,6 +991,7 @@ begin
     ComDevice:=nil;
   end;
   {$endif}
+  {$endif}
 end;
 
 procedure TForm1.btnConnectSerialClick(Sender: TObject);
@@ -1006,7 +999,7 @@ var
   Success      : boolean;
   OldDN        : word;
 begin
-  if Assigned(ComDevice) then
+  if commworker.Connected then
   begin
     Success:=true;
   end
@@ -1022,51 +1015,15 @@ begin
 
     if (cmboSerialPorts.ItemIndex<>-1) then
     begin
-      ComDevice:=TLazSerial.Create(Self);
-      ComDevice.Active:=False;
-      with (ComDevice AS TLazSerial) do
+      commworker.Connect(cmboSerialPorts.Text);
+      if (commworker.Connected) then
       begin
-        Device:=cmboSerialPorts.Text;
-        BaudRate:=br__9600;
-        //BaudRate:=br_19200;
-        FlowControl:=fcNone;
-        Parity:=pNone;
-        DataBits:=db8bits;
-        StopBits:=sbOne;
-      end;
-
-      if SISDrive then
-      begin
-        ComDevice.OnRxData:=nil;
-        ComDevice.Async:=false;
-      end;
-
-      if (VisualMotion OR DirectDrive) then
-      begin
-        ComDevice.OnRxData:=@OnRXUSBCData;
-        ComDevice.Async:=true;
-      end;
-
-      ComDevice.Active:=True;
-
-      CommWorker.Comms:=(ComDevice AS TLazSerial);
-
-      if (ComDevice.Active=True) then
-      begin
-
-
         Success:=True;
-        if (ActiveSerialConnection in [conSISDDRS485,conASCIIDDRS485]) then (ComDevice AS TLazSerial).RTSToggle:=True;
-
-        if VisualMotion then (ComDevice AS TLazSerial).Terminator:=CRLF;
-        if SISDrive then (ComDevice AS TLazSerial).Terminator:='';
-        if DirectDrive then (ComDevice AS TLazSerial).Terminator:=TERDT;
-
         Memo1.Lines.Append('RS232/RS485 device connected and active: '+cmboSerialPorts.Text);
       end
       else
       begin
-        ComDevice:=nil;
+        commworker.Comms.CloseSocket;
       end;
     end;
   end;
@@ -1159,8 +1116,7 @@ begin
     CD.DATA:='';
     // Get current register value
     success:=ProcessParameter(CD,s,false,true);
-    StatusCD:=ProcessResonse(CD,DirectDrive,s);
-    SC346.Raw:=BinaryStringToDecimal(StatusCD.DATA);
+    SC346.Raw:=BinaryStringToDecimal(s);
 
     // Engage drive by toggling strobe bit
     SC346.Data.AcceptPositionToggle:=1-SC346.Data.AcceptPositionToggle; // toggle strobe bit
@@ -1177,8 +1133,7 @@ begin
       sleep(100);
       Inc(i);
       success:=ProcessParameter(CD,s,false,true);
-      StatusCD:=ProcessResonse(CD,DirectDrive,s);
-      Memo1.Lines.Append(StatusCD.DATA);
+      Memo1.Lines.Append(s);
       DR182.Raw:=BinaryStringToDecimal(StatusCD.DATA);
     until ((DR182.Data.InTargetPosition=1) OR (i>1));
 
@@ -1594,6 +1549,7 @@ begin
 
   if (ActiveSerialConnection<>TCONNECTION.conNone) then
   begin
+    {$ifdef VISUALMOTION}
     if (ActiveSerialConnection=TCONNECTION.conCLCDDE) then
     begin
       {$ifdef MSWindows}
@@ -1601,6 +1557,7 @@ begin
       {$endif}
     end
     else
+    {$endif}
     begin
       if DirectDrive then
       begin
@@ -1889,11 +1846,7 @@ end;
 
 procedure TForm1.btnStopClick(Sender: TObject);
 begin
-  if Assigned(ComDevice) then
-  begin
-    ComDevice.Active:=False;
-    ComDevice:=nil;
-  end;
+  commworker.DisConnect;
   ActiveSerialConnection:=conNone;
   cmboSerialPorts.Enabled:=true;
   btnConnectDriveRS232.Enabled:=true;
@@ -1918,6 +1871,8 @@ var
 begin
   if CheckComms then exit;
 
+
+
   // Axis or active drive !!??
   if CheckAxis(axis) then exit;
   driveaddress:=GetDriveAddress(ActiveDriveNumber);
@@ -1933,6 +1888,7 @@ begin
     CD:=Default(TPARAMETERDATA);
     CD.CCLASS:=ccDriveSpecific;
 
+    (*
     // Set positions
     CD.NUMID:=4006;
     IDN:=GetIDN(CD);
@@ -1958,6 +1914,7 @@ begin
     SC4019.Data.BlockTransitionHalt:=0; // end block
     s1:=DecimalToHexString(SC4019.Raw,DirectDrive);
     (ComDevice AS TLazSerial).WriteList(IDN,[s,s,s,s1]);
+    *)
 
     if TE then Timer1.Enabled:=true;
 
@@ -2038,7 +1995,6 @@ begin
       CD.DATA:='';
       // Get current register value
       success:=ProcessParameter(CD,s,false,true);
-      //StatusCD:=ProcessResonse(CD,DirectDrive,s);
       SC346.Raw:=BinaryStringToDecimal(s);
       // Engage drive by toggling strobe bit
       SC346.Data.AcceptPositionToggle:=1-SC346.Data.AcceptPositionToggle; // toggle strobe bit
@@ -2183,7 +2139,6 @@ begin
   CD:=COMMAND2CD(DRIVE_POSITIONFEEDBACKSTATUS,driveaddress);
   CD.DATA:='';
   success:=ProcessParameter(CD,s,false,true);
-  //StatusCD:=ProcessResonse(CD,DirectDrive,s);
   SC0403.Raw:=BinaryStringToDecimal(s);
   if (SC0403.Data.InReference=1) then
   begin
@@ -2195,7 +2150,6 @@ begin
   CD:=COMMAND2CD(DRIVE_POSITIONCOMMAND,driveaddress);
   CD.DATA:='';
   success:=ProcessParameter(CD,s,false,true);
-  //StatusCD:=ProcessResonse(CD,DirectDrive,s);
   CD:=COMMAND2CD(DRIVE_TARGET,driveaddress);
   CD.DATA:=s;
   success:=ProcessParameter(CD,s,false,true);
@@ -2508,11 +2462,7 @@ end;
 
 function TForm1.CheckComms:boolean;
 begin
-  result:=true;
-  if Assigned(ComDevice) then
-  begin
-    result:=(NOT ComDevice.Active);
-  end;
+  result:=(NOT commworker.Connected);
 end;
 
 function TForm1.CheckAxis(out axis:word):boolean;
@@ -2534,37 +2484,15 @@ end;
 
 function TForm1.ProcessDirectDriveCommand(const Command:RawByteString; var Value:RawByteString; const prio,blocking:boolean):boolean;
 var
-  c,s      : RawByteString;
+  c        : RawByteString;
   ro       : boolean;
 begin
   result:=true;
-
   c:=Command;
-  s:=Value;
-  ro:=(Length(s)=0);
-
-  if (NOT ro) then c:=c+s;
-
-  //Memo1.Lines.Append('Drive command: '+c);
-
-  c:=c+#13;
-  s:='';
-
-  if prio then
-  begin
-    ComDevice.WriteStringPrio(c,s);
-  end
-  else
-  if blocking then
-  begin
-    ComDevice.WriteStringBlocking(c,s);
-    result:=((ComDevice AS TLazSerial).SynSer.LastError=0);
-  end
-  else
-  begin
-    ComDevice.WriteString(c,s);
-  end;
-  if blocking then Value:=s;
+  ro:=(Length(Value)=0);
+  if (NOT ro) then c:=c+Value;
+  commworker.ProcessASCIIRaw(c);
+  Value:=c;
 end;
 
 {$ifdef MSWindows}
@@ -2578,35 +2506,17 @@ begin
   Memo1.Lines.Append(MsgPasStr);
   StrDispose(MsgStr);
 end;
-
-function TForm1.ProcessDDECommand(const Command:RawByteString; var Value:RawByteString; const prio,blocking:boolean):boolean;
-begin
-  result:=false;
-  if (ActiveSerialConnection=TCONNECTION.conCLCDDE) then
-  begin
-    if prio then
-    begin
-      ComDevice.WriteStringPrio(Command,Value);
-    end
-    else
-    if blocking then
-    begin
-      ComDevice.WriteStringBlocking(Command,Value);
-    end
-    else
-    begin
-      ComDevice.WriteString(Command,Value);
-    end;
-    result:=true;
-  end;
-end;
 {$endif}
+
 function TForm1.ProcessSerialCommand(const Command:RawByteString; var Value:RawByteString; const prio,blocking:boolean):boolean;
 var
   s,v,c    : RawByteString;
   cs       : byte;
   ro       : boolean;
 begin
+  //TODO
+
+  (*
   result:=false;
   c:=sERR;
   if ((ActiveSerialConnection<>TCONNECTION.conNone) AND (ActiveSerialConnection<>TCONNECTION.conCLCDDE)) then
@@ -2636,6 +2546,7 @@ begin
     end;
   end;
   if blocking then Value:=s;
+  *)
 end;
 
 procedure TForm1.cmboSerialPortsSelect(Sender: TObject);
@@ -2761,11 +2672,7 @@ begin
   //Stop dataTimer
   Timer1.Enabled:=False;
 
-
-  //Stop all data threads
-  if Assigned(ComDevice) then ComDevice.Active:=False;
-  ComDevice:=nil;
-
+  CommWorker.DisConnect;
   CommWorker.Free;
 
   // Store drive data on disk
@@ -3304,13 +3211,6 @@ var
   LocalCD                : TPARAMETERDATA;
   StoreCD                : TPARAMETERDATA;
   wp,wb                  : boolean;
-  SISSendData            : SISTelegram;
-  SISRetrieveHeader      : SISTelegram;
-  SISRetrieveUserData    : SISTelegram;
-  DataReady              : boolean;
-  slavelength            : Integer;
-  masterlength           : Integer;
-  i,index                : Integer;
 begin
   result:=false;
 
@@ -3369,7 +3269,7 @@ begin
   if (ActiveSerialConnection=TCONNECTION.conCLCDDE) then
   begin
     {$ifdef MSWindows}
-    ProcessDDECommand(c,s,wp,wb);
+    //ProcessDDECommand(c,s,wp,wb);
     success:=true;
     {$endif}
   end
@@ -4208,29 +4108,6 @@ begin
   end;
 end;
 
-procedure TForm1.OnRXUSBCData(Sender: TObject);
-begin
-  OnCommData(ComDevice.Data);
-end;
-
-{$ifdef MSWindows}
-procedure TForm1.OnRXDDEData(Sender: TObject);
-begin
-  OnCommData(ComDevice.Data);
-end;
-{$endif}
-
-procedure TForm1.OnCommData(const s:RawByteString);
-var
-  CD        : TPARAMETERDATA;
-  CDResult  : TPARAMETERDATA;
-begin
-  Memo1.Lines.Append('Received: '+s);
-  CD:=Default(TPARAMETERDATA);
-  CDResult:=ProcessResonse(CD,DirectDrive,s);
-  ProcessCommResult(CDResult);
-end;
-
 procedure TForm1.OnWorkComplete(Sender: TObject);
 var
   WorkData: PPARAMETERDATA;
@@ -4642,7 +4519,7 @@ begin
         s:='';
         Success:=ProcessDirectDriveCommand(c,s,false,true);
         Memo1.Lines.Append('Select drive ASCII response: '+s);
-        c:=Format('E%.2d:>',[GetPDriveInfo(ActiveDriveNumber)^.DRIVEADDRESS]);
+        c:=Format('E%.2d',[GetPDriveInfo(ActiveDriveNumber)^.DRIVEADDRESS]);
         if s=c then Memo1.Lines.Append('Selected drive connected !');
       end;
 
@@ -4715,7 +4592,6 @@ begin
         CD.DATA:='';
         s:='';
         success:=ProcessParameter(CD,s,false,true);
-        //StatusCD:=ProcessResonse(CD,DirectDrive,s);
         SC0393.Raw:=BinaryStringToDecimal(s);
         if (SC0393.Data.TargetPosAfter=0) then
         begin

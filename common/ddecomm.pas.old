@@ -5,14 +5,14 @@ unit ddecomm;
 interface
 
 uses
-  Windows, Classes, SysUtils,
+  Windows, Classes,
   {$ifdef LCL}
   Forms,
   LCLIntf,
   LCLType,
   LMessages,
   {$endif}
-  CommBase;
+  SysUtils;
 
 type
   TDataConnection = record

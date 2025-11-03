@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, SyncObjs,
-  serialcomm, common;
+  synaser,common;
 
 type
   TWorkManager = class;
@@ -22,6 +22,7 @@ type
     FCurrentWorkData: PPARAMETERDATA;
     FIsProcessing: Boolean;
     FOwner: TWorkManager;
+    function  ProcessASCII(const ASCIISendData:RawByteString; out Data:RawByteString):boolean;
     function  ProcessSIS(const SISSendData:array of byte;const MasterDataLength:integer; out Data:RawByteString):boolean;
     procedure ProcessSISWork(AData: PPARAMETERDATA);
     procedure ProcessASCIIWork(AData: PPARAMETERDATA);
@@ -44,7 +45,8 @@ type
 
   TWorkManager = class
   private
-    FComms:TLazSerial;
+    FComms: TBlockSerial;
+    FConnected:boolean;
     FWorkComplete: TNotifyEvent;
     FThread: TWorkerThread;
     procedure SetWorkComplete(aValue:TNotifyEvent);
@@ -53,10 +55,14 @@ type
     destructor Destroy; override;
     procedure AddWork(var NewWorkData: TPARAMETERDATA; SISData:boolean; prio:boolean=false;blocking:boolean=false);
     procedure ProcessSISRaw(var data:array of byte; var len:integer);
-    procedure ProcessRaw(data:RawByteString; SISData:boolean);
+    procedure ProcessASCIIRaw(var data: RawByteString);
     function IsAllFinished: Boolean;
+    procedure Connect(aPort:string);
+    procedure DisConnect;
     property WorkComplete: TNotifyEvent read FWorkComplete write SetWorkComplete;
-    property Comms:TLazSerial write FComms;
+    property Comms:TBlockSerial read FComms;
+    property Connected:boolean read FConnected;
+
   end;
 
 implementation
@@ -170,6 +176,53 @@ begin
   end;
 end;
 
+function TWorkerThread.ProcessASCII(const ASCIISendData:RawByteString; out Data:RawByteString):boolean;
+var
+  rcvd      : ansistring;
+  i         : integer;
+  success   : boolean;
+begin
+  result:=false;
+  if Assigned(FOwner.FComms) then
+  begin
+    FOwner.FComms.Purge;
+    FOwner.FComms.SendString(ASCIISendData+#13);
+    FOwner.FComms.Flush;
+    rcvd:=FOwner.FComms.RecvTerminated(1000,TERDT);
+
+    if ((FOwner.FComms.LastError=0) AND (Length(rcvd)>0)) then
+    begin
+      if (Pos('BCD',ASCIISendData)=1) then
+      begin
+        // We have performed a drive select command !!
+        i:=0;
+        while ((Length(rcvd)>i) AND (rcvd[1+i] in [#10,#13])) do Inc(i);
+        Data:=Copy(rcvd,i+1,MaxInt);
+        success:=True;
+      end
+      else
+      begin
+        // A normal response should always start with the command itself
+        success:=(Pos(ASCIISendData,rcvd)=1);
+        if success then
+        begin
+          // Remove header
+          i:=length(ASCIISendData);
+          Delete(rcvd,1,i);
+          i:=0;
+          while ((Length(rcvd)>i) AND (rcvd[1+i] in [#10,#13])) do Inc(i);
+          Delete(rcvd,1,i);
+          i:=Length(rcvd);
+          while ((i>0) AND (NOT (rcvd[i] in [#10,#13]))) do Dec(i);
+          //while ((i>0) AND (rcvd[i] in [#10,#13])) do Dec(i);
+          Data:=Copy(rcvd,1,i);
+        end;
+      end;
+    end;
+  end;
+  result:=success;
+end;
+
 function TWorkerThread.ProcessSIS(const SISSendData:array of byte;const MasterDataLength:integer; out Data:RawByteString):boolean;
 var
   SISRetrieveHeader      : SISTelegram;
@@ -180,35 +233,36 @@ var
   Header                 : TSISTelegramHeader;
   UserHeader             : TSISUserDataResponseHeader;
   success                : boolean;
-  SERCOS                 : boolean;
+  ECODRIVE               : boolean;
 begin
   result:=false;
-  if Assigned(FOwner.FComms) AND Assigned(FOwner.FComms.SynSer) then
+  if Assigned(FOwner.FComms) then
   begin
-    success:=(FOwner.FComms.SynSer.LastError=0);
+    success:=(FOwner.FComms.LastError=0);
     Data:='';
     repeat
       DataReady:=true;
       //FOwner.FComms.SynSer.Purge;
       // Send the master header and master data
-      success:=(FOwner.FComms.SynSer.SendBuffer(@SISSendData,MasterDataLength)=MasterDataLength);
+      success:=(FOwner.FComms.SendBuffer(@SISSendData,MasterDataLength)=MasterDataLength);
       //FOwner.FComms.SynSer.Flush;
-      if success then success:=(FOwner.FComms.SynSer.LastError=0);
+      if success then success:=(FOwner.FComms.LastError=0);
       if success then
       begin
         FillChar({%H-}SISRetrieveHeader,SizeOf(SISRetrieveHeader),0);
-        success:=(FOwner.FComms.SynSer.RecvBufferEx(@SISRetrieveHeader,8,10000)=8);
-        if success then success:=(FOwner.FComms.SynSer.LastError=0);
+        success:=(FOwner.FComms.RecvBufferEx(@SISRetrieveHeader,8,10000)=8);
+        if success then success:=(FOwner.FComms.LastError=0);
         if success then
         begin
           for i:=1 to 8 do Header.Bytes[i-1]:=SISRetrieveHeader[i];
           SlaveDataLength:=Header.Data.DataLen;
-          SERCOS:=(Header.Data.Service>=$80) AND (Header.Data.Service<=$80);
+          //ECODRIVE:=(Header.Data.Service>=$80) AND (Header.Data.Service<=$80);
+          ECODRIVE:=(Header.Data.Service>$0F);
           if (SlaveDataLength>0) then
           begin
             FillChar({%H-}SISRetrieveUserData,SizeOf(SISRetrieveUserData),0);
-            success:=(FOwner.FComms.SynSer.RecvBufferEx(@SISRetrieveUserData,SlaveDataLength,10000)=SlaveDataLength);
-            if success then success:=(FOwner.FComms.SynSer.LastError=0);
+            success:=(FOwner.FComms.RecvBufferEx(@SISRetrieveUserData,SlaveDataLength,10000)=SlaveDataLength);
+            if success then success:=(FOwner.FComms.LastError=0);
             if success then
             begin
               // Check the CRC
@@ -223,7 +277,7 @@ begin
                 begin
                   //Process first three bytes of user data
                   for i:=1 to 3 do UserHeader.Bytes[i-1]:=SISRetrieveUserData[i];
-                  if SERCOS then DataReady:=(UserHeader.Data.Control.Data.LastTransmission=1);
+                  if ECODRIVE then DataReady:=(UserHeader.Data.Control.Data.LastTransmission=1);
                   // Skip userdata header and process rest of data
                   if (SlaveDataLength>3) then
                   begin
@@ -255,7 +309,7 @@ var
   MasterDataLength       : Integer;
   success                : boolean;
 begin
-  if Assigned(FOwner.FComms) AND Assigned(FOwner.FComms.SynSer) then
+  if Assigned(FOwner.FComms) then
   begin
     FillChar({%H-}SISSendData,SizeOf(SISSendData),0);
     BuildSISTelegram(AData^,SISSendData,MasterDataLength);
@@ -273,55 +327,13 @@ end;
 procedure TWorkerThread.ProcessASCIIWork(AData: PPARAMETERDATA);
 var
   c         : RawByteString;
-  ro        : boolean;
-  rcvd      : ansistring;
-  re        : boolean;
-  datas     : ansistring;
-  i,j       : integer;
-  success   : boolean;
+  rcvd      : RawByteString;
 begin
-  if Assigned(FOwner.FComms) AND Assigned(FOwner.FComms.SynSer) then
+  if Assigned(FOwner.FComms) then
   begin
-    ro:=(Length(AData^.DATA)=0);
-
     c:=GetDirectDriveCommand(AData^);
-
-    AData^.DATA:='';
-
-    FOwner.FComms.SynSer.Purge;
-    FOwner.FComms.SynSer.SendString(c+#13);
-    FOwner.FComms.SynSer.Flush;
-
-    if (AData^.CSUBCLASS=mscList) then
-      rcvd:=FOwner.FComms.SynSer.RecvTerminated(1500,TERDT) // List might take long to receive
-    else
-      rcvd:=FOwner.FComms.SynSer.RecvTerminated(100,TERDT);
-
-    if ((FOwner.FComms.SynSer.LastError=0) AND (Length(rcvd)>0)) then
-    begin
-      // Response should always start with the command itself
-      success:=(Pos(c,rcvd)=1);
-      if success then
-      begin
-        // Remove header
-        //i:=Pos(#13,rcvd);
-        //Delete(rcvd,1,i);
-      end;
-      // remove [unneeded and unwanted and unexpected] CRLF from result
-      SetLength({%H-}datas,MAXWORD);
-      j:=1;
-      for i:=1 to Length(rcvd) do
-      begin
-        if (rcvd[i]=#10) then continue;
-        if ((i<Length(rcvd)) AND (rcvd[i]=#13) AND (rcvd[i+1]=#10)) then continue;
-        datas[j]:=rcvd[i];
-        Inc(j);
-        if (j>MAXWORD) then break; // prevent memory errors
-      end;
-      SetLength(datas,j-1);
-      // Add the terminator to the result
-      AData^.DATA:=datas+TERDT;
-    end;
+    Self.ProcessASCII(c,rcvd);
+    AData^.DATA:=rcvd;
     NewProcessNormalResponse(AData);
   end
   else
@@ -422,7 +434,8 @@ end;
 
 constructor TWorkManager.Create;
 begin
-  FComms:=nil;
+  FConnected:=false;
+  FComms:=TBlockSerial.Create;
   FThread := TWorkerThread.Create(Self);
   FThread.Start;
 end;
@@ -430,29 +443,8 @@ end;
 destructor TWorkManager.Destroy;
 begin
   FThread.Free;
+  FComms.Free;
   inherited;
-end;
-
-procedure TWorkManager.ProcessRaw(data:RawByteString; SISData:boolean);
-var
-  len:integer;
-  success:boolean;
-begin
-  len:=Length(data);
-  if SISData then
-  begin
-    FThread.FLock.Acquire;
-    try
-      success:=(FComms.SynSer.SendBuffer(@data[1],len)=len);
-      if success then success:=(FComms.SynSer.LastError=0);
-      if success then
-      begin
-
-      end;
-    finally
-      FThread.FLock.Release;
-    end;
-  end;
 end;
 
 procedure TWorkManager.ProcessSISRaw(var data:array of byte; var len:integer);
@@ -469,6 +461,20 @@ begin
       len:=Length(SISResult);
       for i:=1 to len do data[i-1]:=Ord(SISResult[i]);
     end;
+  finally
+    FThread.FLock.Release;
+  end;
+end;
+
+procedure TWorkManager.ProcessASCIIRaw(var data: RawByteString);
+var
+  ASCIIResult    : RawByteString;
+  success      : boolean;
+begin
+  FThread.FLock.Acquire;
+  try
+    success:=FThread.ProcessASCII(data,ASCIIResult);
+    if success then data:=ASCIIResult;
   finally
     FThread.FLock.Release;
   end;
@@ -525,6 +531,28 @@ function TWorkManager.IsAllFinished: Boolean;
 begin
   Result := FThread.IsAllFinished;
 end;
+
+procedure TWorkManager.Connect(aPort:string);
+begin
+  with Comms do
+  begin
+    CloseSocket;
+    Connect(aPort);
+    FConnected:=(LastError=0);
+    if FConnected then
+    begin
+      Config(9600,8,'N',SB1,false,false);
+      Purge;
+    end;
+  end;
+end;
+
+procedure TWorkManager.DisConnect;
+begin
+  Comms.CloseSocket;
+  FConnected:=false;
+end;
+
 
 end.
 
