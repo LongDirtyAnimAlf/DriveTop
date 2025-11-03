@@ -330,7 +330,7 @@ type
     procedure ProcessRealtimeData(const CD: TPARAMETERDATA);
     procedure ProcessDiskDriveData(const Drive: word; StoreOnDisk:boolean);
 
-    procedure OnCommData(const s:ansistring);
+    procedure OnCommData(const s:RawByteString);
 
     procedure OnWorkComplete(Sender: TObject);
 
@@ -1696,7 +1696,6 @@ var
   driveaddress : byte;
   CD           : TPARAMETERDATA;
   CDStorage    : TPARAMETERDATA;
-  CDResult     : TPARAMETERDATA;
   CC           : TPARAMETER;
   success      : boolean;
   i,listlength : integer;
@@ -1720,11 +1719,10 @@ begin
     begin
       CD:=COMMAND2CD(CC,driveaddress);
       success:=ProcessParameter(CD,s,(NOT BLOCK),BLOCK);
-      //if BLOCK then OnCommData(s);
       if BLOCK then
       begin
-        CDResult:=ProcessResonse(CD,DirectDrive,s);
-        ProcessCommResult(CDResult);
+        CD.DATA:=s;
+        ProcessCommResult(CD);
       end;
     end;
   end;
@@ -1909,7 +1907,7 @@ end;
 
 procedure TForm1.btnStoreBlockDriveClick(Sender: TObject);
 var
-  IDN,s,s1      : ansistring;
+  IDN,s,s1      : RawByteString;
   axis          : word;
   driveaddress  : byte;
   CD            : TPARAMETERDATA;
@@ -2040,8 +2038,8 @@ begin
       CD.DATA:='';
       // Get current register value
       success:=ProcessParameter(CD,s,false,true);
-      StatusCD:=ProcessResonse(CD,DirectDrive,s);
-      SC346.Raw:=BinaryStringToDecimal(StatusCD.DATA);
+      //StatusCD:=ProcessResonse(CD,DirectDrive,s);
+      SC346.Raw:=BinaryStringToDecimal(s);
       // Engage drive by toggling strobe bit
       SC346.Data.AcceptPositionToggle:=1-SC346.Data.AcceptPositionToggle; // toggle strobe bit
       SC346.Data.PositionType:=1;
@@ -2185,8 +2183,8 @@ begin
   CD:=COMMAND2CD(DRIVE_POSITIONFEEDBACKSTATUS,driveaddress);
   CD.DATA:='';
   success:=ProcessParameter(CD,s,false,true);
-  StatusCD:=ProcessResonse(CD,DirectDrive,s);
-  SC0403.Raw:=BinaryStringToDecimal(StatusCD.DATA);
+  //StatusCD:=ProcessResonse(CD,DirectDrive,s);
+  SC0403.Raw:=BinaryStringToDecimal(s);
   if (SC0403.Data.InReference=1) then
   begin
     // Success !!!
@@ -2197,9 +2195,9 @@ begin
   CD:=COMMAND2CD(DRIVE_POSITIONCOMMAND,driveaddress);
   CD.DATA:='';
   success:=ProcessParameter(CD,s,false,true);
-  StatusCD:=ProcessResonse(CD,DirectDrive,s);
+  //StatusCD:=ProcessResonse(CD,DirectDrive,s);
   CD:=COMMAND2CD(DRIVE_TARGET,driveaddress);
-  CD.DATA:=StatusCD.DATA;
+  CD.DATA:=s;
   success:=ProcessParameter(CD,s,false,true);
 
 
@@ -2267,7 +2265,7 @@ const
   TELEGRAMCOMMANDS  : array [0..1] of word =(16,24);
 var
   s            : RawByteString;
-  data         : ansistring;
+  data         : RawByteString;
   success      : boolean;
   CD           : TPARAMETERDATA;
   listlength   : integer;
@@ -2546,7 +2544,7 @@ begin
 
   if (NOT ro) then c:=c+s;
 
-  Memo1.Lines.Append('Drive command: '+c);
+  //Memo1.Lines.Append('Drive command: '+c);
 
   c:=c+#13;
   s:='';
@@ -2682,7 +2680,7 @@ end;
 procedure TForm1.SetParamDetails(const CD:TPARAMETERDATA);
 var
   IDN     : TIDN;
-  s       : ansistring;
+  s       : RawByteString;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
   if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
@@ -2815,7 +2813,7 @@ procedure TForm1.ProcessDiskDriveData(const Drive: word; StoreOnDisk:boolean);
 var
   IniFile               : TIniFile;
   j,m,len               : integer;
-  fn,n,s                : ansistring;
+  fn,n,s                : RawByteString;
   SN,CT                 : string;
   DD                    : TRegisterRecord;
   LocalCD               : TPARAMETERDATA;
@@ -3338,7 +3336,7 @@ begin
     exit;
   end;
 
-  if verbose OR DirectDrive OR SISDrive then
+  if verbose {OR DirectDrive OR SISDrive} then
   begin
     if (NOT ro) then
       Memo1.Lines.Append('Write command: '+s+'. Value: '+CD.DATA)
@@ -3376,64 +3374,16 @@ begin
   end
   else
   begin
+    //Memo1.Lines.Append(GetIDN(LocalCD));
+
     if DirectDrive then
     begin
-      c:=GetDirectDriveCommand(LocalCD);
-      success:=ProcessDirectDriveCommand(c,s,wp,wb);
+      CommWorker.AddWork(LocalCD,false,wp,wb);
     end
     else
     if SISDrive then
     begin
-      Memo1.Lines.Append(GetIDN(LocalCD));
-      FillChar({%H-}SISSendData,SizeOf(SISSendData),0);
-      BuildSISTelegram(LocalCD,SISSendData,masterlength);
-      s:='';
-      repeat
-        DataReady:=true;
-        if ((ComDevice AS TLazSerial).SendSIS(@SISSendData,masterlength)=masterlength) then
-        begin
-          FillChar({%H-}SISRetrieveHeader,SizeOf(SISRetrieveHeader),0);
-          if (ComDevice AS TLazSerial).RetrieveSISHeader(@SISRetrieveHeader) then
-          begin
-            // Only length for now
-            // Might also parse errors and more !
-            slavelength:=ParseSISHeaderUserDataLength(SISRetrieveHeader);
-            if (slavelength>0) then
-            begin
-              FillChar({%H-}SISRetrieveUserData,SizeOf(SISRetrieveUserData),0);
-              if ((ComDevice AS TLazSerial).RetrieveSISUserData(@SISRetrieveUserData,slavelength)=slavelength) then
-              begin
-                DataReady:=ParseSISUserDataReady(SISRetrieveUserData);
-                if NOT DataReady then
-                begin
-                  i:=0;
-                end;
-                // Skip userdata header
-                if (slavelength>3) then
-                begin
-                  Dec(slavelength,3);
-                  index:=Length(s)+1;
-                  SetLength(s,Length(s)+slavelength);
-                  // Add userdata
-                  for i:=1 to slavelength do
-                  begin
-                    s[index]:=Chr(SISRetrieveUserData[i+3]);
-                    Inc(index);
-                  end;
-                end;
-              end;
-            end;
-          end;
-        end;
-      until DataReady;
-      // We are ready with receiving SIS data
-      // Process this data !!
-      // We cannot do async reception, because the is no identification in the received data
-      if (NOT blocking) then
-      begin
-        StoreCD:=NewParseSISResponse(CD,s);
-        ProcessCommResult(StoreCD);
-      end;
+      CommWorker.AddWork(LocalCD,true,wp,wb);
     end
     else
     begin
@@ -3441,7 +3391,7 @@ begin
     end;
   end;
 
-  response:=s;
+  response:=LocalCD.DATA;
   result:=success;
 end;
 
@@ -3482,7 +3432,7 @@ end;
 procedure TForm1.ValueListEditor1DblClick(Sender: TObject);
 type
   TLookup = record
-    Name:ansistring;
+    Name:RawByteString;
     CClass:TVMCOMMANDCLASS;
   end;
 const
@@ -3499,7 +3449,7 @@ const
 var
   VLE:TValueListEditor;
   VC:TVMCOMMANDCLASS;
-  s,cc:ansistring;
+  s,cc:RawByteString;
   i:integer;
 begin
   VLE:=TValueListEditor(Sender);
@@ -3521,7 +3471,7 @@ procedure TForm1.vleParamDetailsDrawCell(Sender: TObject; aCol, aRow: Integer;
   aRect: TRect; aState: TGridDrawState);
 var
   //aTextStyle   : TTextStyle;
-  s            : ansistring;
+  s            : RawByteString;
   pw           : dword;
   ro           : boolean;
   vle          : TValueListEditor;
@@ -4101,7 +4051,7 @@ procedure TForm1.AddIDNListValue(const CD:TPARAMETERDATA);
 var
   li        : TListItem;
   IDN       : TIDN;
-  s         : ansistring;
+  s         : RawByteString;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
   if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
@@ -4269,7 +4219,7 @@ begin
 end;
 {$endif}
 
-procedure TForm1.OnCommData(const s:ansistring);
+procedure TForm1.OnCommData(const s:RawByteString);
 var
   CD        : TPARAMETERDATA;
   CDResult  : TPARAMETERDATA;
@@ -4287,16 +4237,19 @@ var
 begin
   Thread := Sender as TWorkerThread;
   WorkData := Thread.CurrentWorkData;
-
   if Assigned(WorkData) then
   begin
     try
-      Memo1.Lines.Append(WorkData^.DATA);
-    except
-      // Swallow exceptions !!
-      // We always need to free the workdata
+      try
+        Memo1.Lines.Append(WorkData^.DATA);
+        ProcessCommResult(WorkData^);
+      except
+        // Swallow exceptions !!
+        // We always need to free the workdata
+      end;
+    finally
+      Dispose(WorkData);
     end;
-    Dispose(WorkData);
   end;
 end;
 
@@ -4341,6 +4294,16 @@ begin
 
   list:=false;
   ATT.Raw:=GetDriveAttribute(LocalCD);
+  if (ATT.Raw=0) then
+  begin
+    // We have no atribute data [yet]
+    // Get the data from the default values [drive #0]!
+    i:=LocalCD.SETID;
+    LocalCD.SETID:=0;
+    ATT.Raw:=GetDriveAttribute(LocalCD);
+    LocalCD.SETID:=i;
+  end;
+
   list:=((ATT.Data.List=1) AND (ATT.Data.DataLength<>0));
   if (list AND (NOT DirectDrive)AND (NOT SISDrive) AND (LocalCD.CSUBCLASS=mscParameterData)) then
   begin
@@ -4497,8 +4460,6 @@ begin
     end;
 
   end;
-
-  if SISDrive then Application.ProcessMessages;
 end;
 
 procedure TForm1.ArrowMouseDown(Sender: TObject; Button: TMouseButton;
@@ -4753,8 +4714,8 @@ begin
         CD.DATA:='';
         s:='';
         success:=ProcessParameter(CD,s,false,true);
-        StatusCD:=ProcessResonse(CD,DirectDrive,s);
-        SC0393.Raw:=BinaryStringToDecimal(StatusCD.DATA);
+        //StatusCD:=ProcessResonse(CD,DirectDrive,s);
+        SC0393.Raw:=BinaryStringToDecimal(s);
         if (SC0393.Data.TargetPosAfter=0) then
         begin
           SC0393.Data.TargetPosAfter:=1;
@@ -4768,7 +4729,6 @@ begin
         CD.DATA:='1';
         s:='';
         success:=ProcessParameter(CD,s,false,true);
-
       end;
     end;
   end;

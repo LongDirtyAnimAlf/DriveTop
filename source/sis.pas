@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Math,
-  common;
+  common, bits;
 
 const
   STX                                    = $02;  // SIS header pre-amble
@@ -51,25 +51,6 @@ const
 type
   SISTelegram = array[1..256] of Byte;
 
-procedure BuildSISCommand(SISService,SISSubService,Address:byte; Data:dword; out telegram: SISTelegram; out len: Integer);
-procedure BuildSISTelegram(const CD: TPARAMETERDATA; out telegram: SISTelegram; out len: Integer);overload;
-function  ParseSISHeaderUserDataLength(const telegram: SISTelegram):integer;
-function  ParseSISUserDataReady(const telegram: SISTelegram):boolean;
-//function  ParseSISResponse(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA; overload;
-//function  ParseSISResponse(const SourceCD: TPARAMETERDATA; const telegram: SISTelegram; const len: Integer):TPARAMETERDATA; overload;
-//function  ParseSISResponse(const telegram: SISTelegram; const len: Integer):TPARAMETERDATA; overload;
-function  NewParseSISResponse(const SourceCD: TPARAMETERDATA;  const s: RawByteString):TPARAMETERDATA;
-
-implementation
-
-uses
-  drive,
-  Bits;
-
-const
-  MASTER_ADDR   = $00;
-
-type
   TSISHeaderControl = bitpacked record
     case integer of
         1 : (
@@ -149,7 +130,7 @@ type
   The address set at the drive controller or "0" are transmitted.
   *)
 
-  TSISUserDataHeader = packed record
+  TSISUserDataRequestHeader = packed record
     case integer of
         1 : (
           Data : packed record
@@ -185,7 +166,25 @@ type
             );
   end;
 
-function ParseIDN(const IDN: ansistring; out paramType: Byte; out paramNum: Word): Boolean;
+procedure BuildSISCommand(SISService,SISSubService,Address:byte; Data:dword; out telegram: SISTelegram; out len: Integer);
+procedure BuildSISTelegram(const CD: TPARAMETERDATA; out telegram: SISTelegram; out len: Integer);overload;
+function  ParseSISHeaderUserDataLength(const telegram: SISTelegram):integer;
+function  ParseSISUserDataReady(const telegram: SISTelegram):boolean;
+//function  ParseSISResponse(const SourceCD: TPARAMETERDATA; const s: RawByteString):TPARAMETERDATA; overload;
+//function  ParseSISResponse(const SourceCD: TPARAMETERDATA; const telegram: SISTelegram; const len: Integer):TPARAMETERDATA; overload;
+//function  ParseSISResponse(const telegram: SISTelegram; const len: Integer):TPARAMETERDATA; overload;
+function  NewParseSISResponse(const SourceCD: TPARAMETERDATA;  const s: RawByteString):TPARAMETERDATA;
+procedure  NewerParseSISResponse(SourceCD: PPARAMETERDATA);
+
+implementation
+
+uses
+  drive;
+
+const
+  MASTER_ADDR   = $00;
+
+function ParseIDN(const IDN: RawByteString; out paramType: Byte; out paramNum: Word): Boolean;
 var
   CD   : TPARAMETERDATA;
 begin
@@ -289,7 +288,7 @@ const
   USERDATAOFFSET = USERHEADEROFFSET+5;
 var
   Header         : TSISTelegramHeader;
-  UserHeader     : TSISUserDataHeader;
+  UserHeader     : TSISUserDataRequestHeader;
   SISService     : byte;
   DataSize       : byte;
   DA             : dword;
@@ -777,7 +776,6 @@ var
   LocalCD          : TPARAMETERDATA;
   DataSize         : byte;
   Decimals         : byte;
-  Number           : ansistring;
   DataLength       : DATAWORD;
   SomeThing        : DATAWORD;
   IntPart,FracPart : dword;
@@ -982,6 +980,225 @@ begin
   end;
 end;
 
+procedure  NewerParseSISResponse(SourceCD: PPARAMETERDATA);
+var
+  Success          : boolean;
+  i,j              : integer;
+  Remaining,Index  : integer;
+  DB               : DATABYTE;
+  DW               : DATAWORD;
+  DDW              : DATADWORD;
+  IDN              : TIDNWORD;
+  DA               : dword;
+  LocalCD          : TPARAMETERDATA;
+  DataSize         : byte;
+  Decimals         : byte;
+  DataLength       : DATAWORD;
+  SomeThing        : DATAWORD;
+  IntPart,FracPart : dword;
+  Divisor          : dword;
+  SignIndicator    : string[1];
+  s,r              : RawByteString;
+begin
+  Success:=true;
+  s:=SourceCD^.DATA;
+  Remaining:=Length(s);
+  if (Remaining>0) then
+  begin
+    r:='';
+    Index:=1;
+    DataLength.Raw:=0;
+    SomeThing.Raw:=0;
+
+    // Now look at the user data
+    if Success then
+    begin
+      if IsParameterClass(SourceCD^.CCLASS) then
+      begin
+        DA:=GetDriveAttribute(SourceCD^);
+        if DA=0 then
+        begin
+          // We have no atribute data [yet]
+          // Get the data from the default values [drive #0]!
+          LocalCD:=SourceCD^;
+          LocalCD.SETID:=0;
+          DA:=GetDriveAttribute(LocalCD);
+        end;
+        DataSize:=ParameterSizeOf(DA);
+        Decimals:=ParameterDecimals(DA);
+        if ParameterIsList(DA) then
+        begin
+          // Retrieve the datalength in bytes !!!!
+          if Remaining>=2 then
+          begin
+            DataLength.Bytes[0]:=Ord(s[Index]);
+            DataLength.Bytes[1]:=Ord(s[Index+1]);
+          end;
+          Dec(Remaining,2);
+          Inc(Index,2);
+          // Retrieve something else !!??
+          if Remaining>=2 then
+          begin
+            SomeThing.Bytes[0]:=Ord(s[Index]);
+            SomeThing.Bytes[1]:=Ord(s[Index+1]);
+          end;
+          Dec(Remaining,2);
+          Inc(Index,2);
+        end
+        else
+          DataLength.Raw:=DataSize;
+
+        // Handle all data !!
+        if ParameterIsIDN(DA) then
+        begin
+          // DataSize always 2
+          DataLength.Raw:=DataLength.Raw DIV 2;
+          for i:=1 to DataLength.Raw do
+          begin
+            IDN.Raw:=0;
+            for j:=0 to 1 do IDN.Bytes[j]:=Ord(s[Index+j]);
+            r:=r+GetIDN(IDN)+',';
+            Dec(Remaining,2);
+            Inc(Index,2);
+          end;
+          if (Length(r)>0) then Delete(r,Length(r),1);
+        end
+        else
+        if ParameterIsFloat(DA) then
+        begin
+          // DataSize might be 8 !!
+          i:=0;
+        end
+        else
+        if ParameterIsBinary(DA) then
+        begin
+          DataLength.Raw:=DataLength.Raw DIV DataSize;
+          for i:=1 to DataLength.Raw do
+          begin
+            if DataSize=1 then
+            begin
+              r:=r+DecimalToBinaryString(Ord(s[Index]),true);
+              Dec(Remaining,1);
+              Inc(Index,1);
+            end
+            else
+            if DataSize=2 then
+            begin
+              DW.Raw:=0;
+              for j:=0 to 1 do DW.Bytes[j]:=Ord(s[Index+j]);
+              r:=r+DecimalToBinaryString(DW.Raw,true)+',';
+              Dec(Remaining,2);
+              Inc(Index,2);
+            end
+            else
+            if DataSize=4 then
+            begin
+              DDW.Raw:=0;
+              for j:=0 to 3 do DDW.Bytes[j]:=Ord(s[Index+j]);
+              r:=r+DecimalToBinaryString(DDW.Raw,true)+',';
+              Dec(Remaining,4);
+              Inc(Index,4);
+            end;
+          end;
+          if (Length(r)>0) then Delete(r,Length(r),1);
+        end
+        else
+        if ParameterIsChar(DA) then
+        begin
+          SetLength(r,DataLength.Raw);
+          for i:=1 to DataLength.Raw do
+          begin
+            r[i]:=s[Index];
+            Dec(Remaining);
+            Inc(Index);
+          end;
+        end
+        else
+        if ParameterIsByteList(DA) then
+        begin
+          // Receive bytes !!
+          for i:=1 to DataLength.Raw do
+          begin
+            DB.Raw:=Ord(s[Index]);
+            Dec(Remaining);
+            Inc(Index);
+            if ParameterIsHex(DA) then
+              r:=r+DecimalToHexString(DB.Raw,true)+','
+            else
+              r:=r+InttoStr(DB.Raw)+',';
+          end;
+          if (Length(r)>0) then Delete(r,Length(r),1);
+        end
+        else
+        if (ParameterIsUInt(DA) OR ParameterIsInt(DA) OR ParameterIsHex(DA) OR ParameterIsWordList(DA) OR ParameterIsDWordList(DA)) then
+        begin
+          // Receive words or dwords !!
+          DataLength.Raw:=DataLength.Raw DIV DataSize;
+          for i:=1 to DataLength.Raw do
+          begin
+            DB.Raw:=Ord(s[Index]);
+            Dec(Remaining);
+            Inc(Index);
+            DW.Signed:=DB.Signed;
+            if DataSize>=2 then
+            begin
+              DW.Bytes[1]:=Ord(s[Index]);
+              Dec(Remaining);
+              Inc(Index);
+            end;
+            DDW.Signed:=DW.Signed;
+            if DataSize>=4 then
+            begin
+              DDW.Bytes[2]:=Ord(s[Index]);
+              DDW.Bytes[3]:=Ord(s[Index+1]);
+              Dec(Remaining,2);
+              Inc(Index,2);
+            end;
+            if ParameterIsHex(DA) then
+            begin
+              if DataSize=1 then r:=r+DecimalToHexString(DB.Raw,true)+',';
+              if DataSize=2 then r:=r+DecimalToHexString(DW.Raw,true)+',';
+              if DataSize=4 then r:=r+DecimalToHexString(DDW.Raw,true)+',';
+            end
+            else
+            begin
+              if (Decimals=0) then
+              begin
+                r:=r+InttoStr(DDW.Signed)+',';
+              end
+              else
+              begin
+                if DDW.Signed<0 then
+                  SignIndicator:='-'
+                else
+                  SignIndicator:='';
+                DDW.Signed:=Abs(DDW.Signed);
+                Divisor:=IntPowerI(10,Decimals);
+                DivMod(DDW.Raw,Divisor,IntPart,FracPart);
+                r:=r+Format('%.1s%d.%.'+InttoStr(Decimals)+'d',[SignIndicator,IntPart,FracPart])+',';
+              end;
+            end;
+          end;
+          if (Length(r)>0) then Delete(r,Length(r),1);
+        end
+        else
+        begin
+          i:=0;
+        end;
+      end
+      else
+      begin
+        i:=0;
+      end;
+    end
+    else
+    begin
+      i:=0;
+    end;
+  end;
+  // Finally, transport the data
+  SourceCD^.DATA:=r;
+end;
 
 function ParseSISResponse(const telegram: SISTelegram; const len: Integer):TPARAMETERDATA;
 var

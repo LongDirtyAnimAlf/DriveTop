@@ -1,7 +1,7 @@
 object Form1: TForm1
-  Left = 277
+  Left = 221
   Height = 631
-  Top = 159
+  Top = 170
   Width = 1463
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'DriveTop'
@@ -2685,7 +2685,7 @@ object Form1: TForm1
     end
   end
   object Timer1: TTimer
-    Interval = 2000
+    Interval = 5000
     OnTimer = Timer1Timer
     Left = 856
     Top = 112

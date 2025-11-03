@@ -6,8 +6,7 @@ interface
 
 uses
   Classes, SysUtils, SyncObjs,
-  serialcomm,
-  common, drive, sis;
+  serialcomm, common;
 
 type
   TWorkManager = class;
@@ -58,6 +57,13 @@ type
   end;
 
 implementation
+
+uses
+  drive,sis;
+
+
+const
+  MAXWORD = $FFFF;
 
 constructor TWorkerThread.Create(Owner:TWorkManager);
 begin
@@ -167,42 +173,70 @@ var
   SISRetrieveHeader      : SISTelegram;
   SISRetrieveUserData    : SISTelegram;
   DataReady              : boolean;
-  slavelength            : Integer;
-  masterlength           : Integer;
-  i,index                : Integer;
+  SlaveDataLength        : Integer;
+  MasterDataLength       : Integer;
+  crc,i,dataindex        : Integer;
+  Header                 : TSISTelegramHeader;
+  UserHeader             : TSISUserDataResponseHeader;
+  success                : boolean;
 begin
-  if Assigned(FOwner.FComms) then
+
+  if Assigned(FOwner.FComms) AND Assigned(FOwner.FComms.SynSer) then
   begin
+    success:=(FOwner.FComms.SynSer.LastError=0);
     FillChar({%H-}SISSendData,SizeOf(SISSendData),0);
-    BuildSISTelegram(AData^,SISSendData,masterlength);
+    BuildSISTelegram(AData^,SISSendData,MasterDataLength);
     AData^.DATA:='';
     repeat
       DataReady:=true;
-      if (FOwner.FComms.SendSIS(@SISSendData,masterlength)=masterlength) then
+      FOwner.FComms.SynSer.Purge;
+      // Send the master header and master data
+      success:=(FOwner.FComms.SynSer.SendBuffer(@SISSendData,MasterDataLength)=MasterDataLength);
+      FOwner.FComms.SynSer.Flush;
+      if success then success:=(FOwner.FComms.SynSer.LastError=0);
+      if success then
       begin
         FillChar({%H-}SISRetrieveHeader,SizeOf(SISRetrieveHeader),0);
-        if FOwner.FComms.RetrieveSISHeader(@SISRetrieveHeader) then
+        success:=(FOwner.FComms.SynSer.RecvBufferEx(@SISRetrieveHeader,8,10000)=8);
+        if success then success:=(FOwner.FComms.SynSer.LastError=0);
+        if success then
         begin
-          // Only length for now
-          // Might also parse errors and more !
-          slavelength:=ParseSISHeaderUserDataLength(SISRetrieveHeader);
-          if (slavelength>0) then
+          for i:=1 to 8 do Header.Bytes[i-1]:=SISRetrieveHeader[i];
+          SlaveDataLength:=Header.Data.DataLen;
+          if (SlaveDataLength>0) then
           begin
             FillChar({%H-}SISRetrieveUserData,SizeOf(SISRetrieveUserData),0);
-            if (FOwner.FComms.RetrieveSISUserData(@SISRetrieveUserData,slavelength)=slavelength) then
+            success:=(FOwner.FComms.SynSer.RecvBufferEx(@SISRetrieveUserData,SlaveDataLength,10000)=SlaveDataLength);
+            if success then success:=(FOwner.FComms.SynSer.LastError=0);
+            if success then
             begin
-              DataReady:=ParseSISUserDataReady(SISRetrieveUserData);
-              // Skip userdata header
-              if (slavelength>3) then
+              // Check the CRC
+              crc:=0;
+              for i:=1 to 8 do crc := ((crc + SISRetrieveHeader[i]) AND $FF);
+              for i:=1 to SlaveDataLength do crc := ((crc + SISRetrieveUserData[i]) AND $FF);
+              success:=(crc=0);// crc should now be zero again !!
+              if success then
               begin
-                Dec(slavelength,3);
-                index:=Length(AData^.DATA)+1;
-                SetLength(AData^.DATA,Length(AData^.DATA)+slavelength);
-                // Add userdata
-                for i:=1 to slavelength do
+                // Check for normal user data
+                if (SlaveDataLength>=3) then
                 begin
-                  AData^.DATA[index]:=Chr(SISRetrieveUserData[i+3]);
-                  Inc(index);
+                  //Process first three bytes of user data
+                  for i:=1 to 3 do UserHeader.Bytes[i-1]:=SISRetrieveUserData[i];
+                  DataReady:=(UserHeader.Data.Control.Data.LastTransmission=1);
+                  // Skip userdata header and process rest of data
+                  if (SlaveDataLength>3) then
+                  begin
+                    Dec(SlaveDataLength,3);
+                    dataindex:=Length(AData^.DATA)+1;
+                    // Extend DATA to store the received bytes
+                    SetLength(AData^.DATA,Length(AData^.DATA)+SlaveDataLength);
+                    // Add remaining userdata if any
+                    for i:=1 to SlaveDataLength do
+                    begin
+                      AData^.DATA[dataindex]:=Chr(SISRetrieveUserData[i+3]);
+                      Inc(dataindex);
+                    end;
+                  end;
                 end;
               end;
             end;
@@ -210,23 +244,76 @@ begin
         end;
       end;
     until DataReady;
+    NewerParseSISResponse(AData);
   end
   else
   begin
-    // Do the actual work here
-    Sleep(1500); // Simulate processing time
+    //Sleep(1500); // Simulate processing time
     AData^.DATA := 'No connection available';
     AData^.ERROR := 'No connection available';
   end;
 end;
 
 procedure TWorkerThread.ProcessASCIIWork(AData: PPARAMETERDATA);
+var
+  c         : RawByteString;
+  ro        : boolean;
+  rcvd      : ansistring;
+  re        : boolean;
+  datas     : ansistring;
+  i,j       : integer;
+  success   : boolean;
 begin
-  // Do the actual work here
-  Sleep(1500); // Simulate processing time
+  if Assigned(FOwner.FComms) AND Assigned(FOwner.FComms.SynSer) then
+  begin
+    ro:=(Length(AData^.DATA)=0);
 
-  AData^.DATA := AData^.DATA + 'done !!';
-  AData^.ERROR := 'Processed: ' + InttoStr(AData^.NUMID);
+    c:=GetDirectDriveCommand(AData^);
+
+    AData^.DATA:='';
+
+    FOwner.FComms.SynSer.Purge;
+    FOwner.FComms.SynSer.SendString(c+#13);
+    FOwner.FComms.SynSer.Flush;
+
+    if (AData^.CSUBCLASS=mscList) then
+      rcvd:=FOwner.FComms.SynSer.RecvTerminated(1500,TERDT) // List might take long to receive
+    else
+      rcvd:=FOwner.FComms.SynSer.RecvTerminated(100,TERDT);
+
+    if ((FOwner.FComms.SynSer.LastError=0) AND (Length(rcvd)>0)) then
+    begin
+      // Response should always start with the command itself
+      success:=(Pos(c,rcvd)=1);
+      if success then
+      begin
+        // Remove header
+        //i:=Pos(#13,rcvd);
+        //Delete(rcvd,1,i);
+      end;
+      // remove [unneeded and unwanted and unexpected] CRLF from result
+      SetLength({%H-}datas,MAXWORD);
+      j:=1;
+      for i:=1 to Length(rcvd) do
+      begin
+        if (rcvd[i]=#10) then continue;
+        if ((i<Length(rcvd)) AND (rcvd[i]=#13) AND (rcvd[i+1]=#10)) then continue;
+        datas[j]:=rcvd[i];
+        Inc(j);
+        if (j>MAXWORD) then break; // prevent memory errors
+      end;
+      SetLength(datas,j-1);
+      // Add the terminator to the result
+      AData^.DATA:=datas+TERDT;
+    end;
+    NewProcessNormalResponse(AData);
+  end
+  else
+  begin
+    //Sleep(1500); // Simulate processing time
+    AData^.DATA := 'No connection available';
+    AData^.ERROR := 'No connection available';
+  end;
 end;
 
 procedure TWorkerThread.NotifyComplete;
@@ -293,7 +380,7 @@ begin
         try
           if ((FSISQueue.Count>0) OR (FASCIIQueue.Count>0)) then
           begin
-            Sleep(1); // don't flood
+            Sleep(10); // don't flood
             FEvent.SetEvent;
           end
           else

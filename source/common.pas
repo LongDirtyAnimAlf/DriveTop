@@ -35,7 +35,7 @@ const
 
   VMCOMMANDCLASS                     : array[TVMCOMMANDCLASS] of TCAPSCHAR = ('-','-','A','C','D','D','T','F','G','H','I','M','X','Y','E','P','K','S','R','L','Q','W','Z');
   VMCOMMANDPARAMETERSUBCLASS         : array[TVMCOMMANDPARAMETERSUBCLASS] of TCAPSCHAR = ('-','A','B','D','H','L','P','T','U');
-  VMCOMMANDPARAMETERSUBCLASSLONG     : array[TVMCOMMANDPARAMETERSUBCLASS] of ansistring = ('None','Attribute','Block','List','Max','Min','Value','Name','Unit');
+  VMCOMMANDPARAMETERSUBCLASSLONG     : array[TVMCOMMANDPARAMETERSUBCLASS] of RawByteString = ('None','Attribute','Block','List','Max','Min','Value','Name','Unit');
 
 
 type
@@ -48,8 +48,8 @@ type
     MEMORY         : boolean;        // Parameter block
     SETID          : word;           // Drive address ; Program handle ; Task ID
     STEPID         : word;
-    DATA           : ansistring;
-    ERROR          : ansistring;
+    DATA           : RawByteString;
+    ERROR          : RawByteString;
   end;
   PPARAMETERDATA = ^TPARAMETERDATA;
 
@@ -70,11 +70,11 @@ type
     DRIVEMODE      : word;
     INREFERENCE    : boolean;
     STANDSTILL     : boolean;
-    NAME           : ansistring;
-    FIRMWARE       : ansistring;
-    CONTROLLER     : ansistring;
-    MOTORTYPE      : ansistring;
-    MOTORSERIAL    : ansistring;
+    NAME           : RawByteString;
+    FIRMWARE       : RawByteString;
+    CONTROLLER     : RawByteString;
+    MOTORTYPE      : RawByteString;
+    MOTORSERIAL    : RawByteString;
   end;
   PDRIVE = ^TDRIVE;
 
@@ -105,11 +105,11 @@ type
     CClass         : TVMCOMMANDCLASS;
     IDN            : TIDNWORD;
     Attribute      : dword;
-    Min            : ansistring;
-    Max            : ansistring;
-    Measure        : ansistring;
-    Name           : ansistring;
-    Value          : ansistring;
+    Min            : RawByteString;
+    Max            : RawByteString;
+    Measure        : RawByteString;
+    Name           : RawByteString;
+    Value          : RawByteString;
   end;
   PRegisterRecord = ^TRegisterRecord;
 
@@ -249,7 +249,7 @@ type
   procedure CreateRegisterData(var MAP:TMySortedMap);
   function  RegisterDataCount(var MAP:TMySortedMap):integer;
 
-  function  IDN2CD(const IDN:ansistring; const DriveAddress:byte):TPARAMETERDATA;
+  function  IDN2CD(const IDN:RawByteString; const DriveAddress:byte):TPARAMETERDATA;
   function  COMMAND2CD(const C:TPARAMETER; const DriveAddress:byte):TPARAMETERDATA;
   function  NUM2SCLASS(const S:byte; var SC:TVMCOMMANDPARAMETERSUBCLASS):boolean;
   function  GetIDN(const IDN:TIDNWORD):string; overload;
@@ -390,10 +390,10 @@ begin
   result:=DecimalToHexStringBase(dw,8,dd);
 end;
 
-function IDN2CD(const IDN:ansistring; const DriveAddress:byte):TPARAMETERDATA;
+function IDN2CD(const IDN:RawByteString; const DriveAddress:byte):TPARAMETERDATA;
 var
   t     : Char;
-  s     : ansistring;
+  s     : RawByteString;
   Error : word;
 //  i:integer;
 begin
