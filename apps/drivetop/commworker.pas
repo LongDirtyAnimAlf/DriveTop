@@ -55,7 +55,7 @@ type
     destructor Destroy; override;
     procedure AddWork(var NewWorkData: TPARAMETERDATA; SISData:boolean; prio:boolean=false;blocking:boolean=false);
     procedure ProcessSISRaw(var data:array of byte; var len:integer);
-    procedure ProcessASCIIRaw(var data: RawByteString);
+    function  ProcessASCIIRaw(var data: RawByteString):boolean;
     function IsAllFinished: Boolean;
     procedure Connect(aPort:string);
     procedure DisConnect;
@@ -168,6 +168,11 @@ end;
 
 procedure TWorkerThread.AddASCIIWorkBlocking(AData: PPARAMETERDATA);
 begin
+  (*
+  repeat
+    CheckSynchronize(1);
+  until IsAllFinished;
+  *)
   FLock.Acquire;
   try
     ProcessASCIIWork(AData);
@@ -179,18 +184,23 @@ end;
 function TWorkerThread.ProcessASCII(const ASCIISendData:RawByteString; out Data:RawByteString):boolean;
 var
   rcvd      : ansistring;
+  error     : ansistring;
   i         : integer;
   success   : boolean;
 begin
   result:=false;
   if Assigned(FOwner.FComms) then
   begin
-    FOwner.FComms.Purge;
+    //FOwner.FComms.Purge;
     FOwner.FComms.SendString(ASCIISendData+#13);
     FOwner.FComms.Flush;
-    rcvd:=FOwner.FComms.RecvTerminated(1000,TERDT);
-
-    if ((FOwner.FComms.LastError=0) AND (Length(rcvd)>0)) then
+    success:=(FOwner.FComms.LastError=0);
+    if (NOT success) then error:=FOwner.FComms.LastErrorDesc;
+    if success then
+      rcvd:=FOwner.FComms.RecvTerminated(100,TERDT);
+    if (NOT success) then error:=FOwner.FComms.LastErrorDesc;
+    success:=(FOwner.FComms.LastError=0);
+    if (success AND (Length(rcvd)>0)) then
     begin
       if (Pos('BCD',ASCIISendData)=1) then
       begin
@@ -326,15 +336,21 @@ end;
 
 procedure TWorkerThread.ProcessASCIIWork(AData: PPARAMETERDATA);
 var
-  c         : RawByteString;
+  c,s       : RawByteString;
   rcvd      : RawByteString;
+  success   : boolean;
 begin
   if Assigned(FOwner.FComms) then
   begin
     c:=GetDirectDriveCommand(AData^);
-    Self.ProcessASCII(c,rcvd);
-    AData^.DATA:=rcvd;
-    NewProcessNormalResponse(AData);
+    s:=AData^.DATA;
+    if Length(s)>0 then c:=c+s;
+    success:=ProcessASCII(c,rcvd);
+    if success then
+    begin
+      AData^.DATA:=rcvd;
+      NewProcessNormalResponse(AData);
+    end;
   end
   else
   begin
@@ -365,9 +381,11 @@ var
 begin
   while (NOT Terminated) do
   begin
-    WaitResult:=FEvent.WaitFor(INFINITE);
+    WaitResult:=FEvent.WaitFor(1);
+    //WaitResult:=FEvent.WaitFor(INFINITE);
 
-    if ((WaitResult=wrSignaled) AND (NOT Terminated)) then
+    if (NOT Terminated) then
+    //if ((WaitResult=wrSignaled) AND (NOT Terminated)) then
     begin
       FLock.Acquire;
       try
@@ -406,9 +424,10 @@ begin
         FCurrentWorkData := nil;
         FLock.Acquire;
         try
-          if ((FSISQueue.Count>0) OR (FASCIIQueue.Count>0)) then
+          if false then
+          //if ((FSISQueue.Count>0) OR (FASCIIQueue.Count>0)) then
           begin
-            Sleep(10); // don't flood
+            Sleep(1); // don't flood
             FEvent.SetEvent;
           end
           else
@@ -466,11 +485,19 @@ begin
   end;
 end;
 
-procedure TWorkManager.ProcessASCIIRaw(var data: RawByteString);
+function TWorkManager.ProcessASCIIRaw(var data: RawByteString):boolean;
 var
   ASCIIResult    : RawByteString;
-  success      : boolean;
+  success        : boolean;
 begin
+  result:=false;
+
+  (*
+  repeat
+    CheckSynchronize(1);
+  until IsAllFinished;
+  *)
+
   FThread.FLock.Acquire;
   try
     success:=FThread.ProcessASCII(data,ASCIIResult);
@@ -478,6 +505,7 @@ begin
   finally
     FThread.FLock.Release;
   end;
+  result:=success;
 end;
 
 procedure TWorkManager.AddWork(var NewWorkData: TPARAMETERDATA; SISData:boolean;prio:boolean;blocking:boolean);

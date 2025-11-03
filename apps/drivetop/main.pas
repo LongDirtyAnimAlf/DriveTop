@@ -274,7 +274,7 @@ type
     {$endif}
 
     function  ProcessSerialCommand(const Command:RawByteString; var Value:RawByteString; const prio,blocking:boolean):boolean;
-    function  ProcessDirectDriveCommand(const Command:RawByteString; var Value:RawByteString; const prio,blocking:boolean):boolean;
+    function  ProcessDirectDriveCommand(const Command:RawByteString; var Value:RawByteString):boolean;
     procedure ArrowMouse(Sender: TObject; Button: TMouseButton; Shift: TShiftState; {%H-}X, {%H-}Y: Integer);
     procedure ApplicationIdle({%H-}Sender: TObject; var Done: Boolean);
     function  ConnectDDE:boolean;
@@ -330,7 +330,6 @@ type
     procedure OnWorkComplete(Sender: TObject);
   public
     { public declarations }
-    function  ProcessResonse(const CD:TPARAMETERDATA;DD:boolean;Data:RawByteString):TPARAMETERDATA;
     function  ProcessParameter(const CD:TPARAMETERDATA;out response:RawByteString; prio:boolean=false; blocking:boolean=false; verbose:boolean=false):boolean;
     function  JogAxis(aDir:TAXISDIRECTION;Engage:boolean):boolean;
     procedure MoveDistance(Sender: TObject; Axis: word; Distance:integer);
@@ -792,11 +791,13 @@ procedure TForm1.btnConnectDDEClick(Sender: TObject);
 var
   Success:boolean;
 begin
+  {$ifdef VISUALMOTION}
   Success:=ConnectDDE;
   if Success then
   begin
     ActiveSerialConnection:=TCONNECTION.conCLCDDE;
   end;
+  {$endif}
 end;
 
 function TForm1.CommandExecuteAndWait(const aCD: TPARAMETERDATA):boolean;
@@ -806,7 +807,6 @@ var
   SCS      : SERCOSCOMMAND_STATUS;
   success  : boolean;
   CD       : TPARAMETERDATA;
-  CDStatus : TPARAMETERDATA;
 begin
   result:=false;
 
@@ -821,7 +821,7 @@ begin
   success:=ProcessParameter(CD,s,false,true);
 
   // Sleep at least 64 ms
-  Sleep(100);
+  Sleep(200);
 
   i:=0;
   while true do
@@ -837,39 +837,47 @@ begin
       // read normal result
       c:=Format('%s,%d,w,0',[GetIDN(CD),1]);
       //c:=GetDirectDriveCommand(CD);
-      success:=ProcessDirectDriveCommand(c,s,false,true);
+      success:=ProcessDirectDriveCommand(c,s);
+      CD.DATA:=s;
+      NewProcessNormalResponse(@CD);
     end
     else
     if SISDrive then
     begin
       // ToDo
+      //CD.DATA:=s;
+      //NewerParseSISResponse(@CD);
     end
     else
     begin
       success:=ProcessParameter(CD,s,false,true);
+      // Process response !!
+      // todo
     end;
-    CDStatus:=ProcessResonse(CD,DirectDrive,s);
 
     sleep(150);
 
     if (NOT success) then break;
-    if (Length(CDStatus.ERROR)>0) then break;
+    if (Length(CD.ERROR)>0) then break;
     //success:=(s<>sERR);
     //if (NOT success) then break;
     if DirectDrive then
-      SCS.Raw:=HexStringToDecimal(CDStatus.DATA)
+      SCS.Raw:=HexStringToDecimal(CD.DATA)
     else
     if SISDrive then
       // ToDo !!
     else
-      SCS.Raw:=BinaryStringToDecimal(CDStatus.DATA);
+      SCS.Raw:=BinaryStringToDecimal(CD.DATA);
       //i:=StringToIntSafe(CDStatus.DATA);
     //Detect command error.
     success:=((SCS.Data.CommandSetInDrive=1) AND (SCS.Data.ExecutionOfCommandInDriveEnabled=1) AND (SCS.Data.ExecutionOfCommandIsNotPossible=0));
     if (NOT success) then break;
     if (SCS.Data.CommandNotYetExecuted=0) then break; // Command ready !
 
-    if (i>20) then break; // we are stuck ... :-( ... breakout
+    if (i>20) then
+    begin
+      break; // we are stuck ... :-( ... breakout
+    end;
   end;
 
   // Clear command
@@ -1566,7 +1574,7 @@ begin
           if c[Length(c)]='r' then c[Length(c)]:='w';
           if c[Length(c)]='w' then c:=c+',';
         end;
-        if (NOT ProcessDirectDriveCommand(c,s,false,true)) then c:='Serial error !';
+        if (NOT ProcessDirectDriveCommand(c,s)) then c:='Serial error !';
       end
       else
       if SISDrive then
@@ -2482,17 +2490,16 @@ begin
   end;
 end;
 
-function TForm1.ProcessDirectDriveCommand(const Command:RawByteString; var Value:RawByteString; const prio,blocking:boolean):boolean;
+function TForm1.ProcessDirectDriveCommand(const Command:RawByteString; var Value:RawByteString):boolean;
 var
   c        : RawByteString;
   ro       : boolean;
 begin
-  result:=true;
   c:=Command;
   ro:=(Length(Value)=0);
   if (NOT ro) then c:=c+Value;
-  commworker.ProcessASCIIRaw(c);
-  Value:=c;
+  result:=commworker.ProcessASCIIRaw(c);
+  if result then Value:=c;
 end;
 
 {$ifdef MSWindows}
@@ -3189,20 +3196,6 @@ begin
   {$endif UNIX}
 end;
 
-
-function TForm1.ProcessResonse(const CD:TPARAMETERDATA;DD:boolean;Data:RawByteString):TPARAMETERDATA;
-begin
-  if SISDrive then
-  begin
-    //result:=ParseSISResponse(CD,Data);
-    result:=NewParseSISResponse(CD,Data);
-  end
-  else
-  begin
-    result:=ProcessNormalResponse(CD,DirectDrive,Data);
-  end;
-end;
-
 function TForm1.ProcessParameter(const CD:TPARAMETERDATA;out response:RawByteString; prio:boolean=false; blocking:boolean=false; verbose:boolean=false):boolean;
 var
   s,c                    : RawByteString;
@@ -3762,6 +3755,7 @@ end;
 procedure TForm1.ProcessRealtimeData(const CD: TPARAMETERDATA);
 var
   PDI      : PDRIVE;
+  DW       : DATADWORD;
 begin
   // This is a GUI update, so only process if we have data of the current visible drive
   if (CD.SETID=GetDriveAddress(ActiveDriveNumber)) then
@@ -3776,13 +3770,14 @@ begin
     PDI:=GetPDriveInfo(ActiveDriveNumber);
     with DRIVE_332 do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then
     begin
-      PDI^.STANDSTILL:=(CD.DATA='1b');
+      DW.Raw:=BinaryStringToDecimal(CD.DATA);
+      PDI^.STANDSTILL:=(DW.Bits[0]=1);
       SetInfoPanel(panelStandstill,PDI^.STANDSTILL);
-
     end;
     with DRIVE_POSITIONFEEDBACKSTATUS do if ((CD.CCLASS=CCLASS) AND (CD.NUMID=NUMID)) then
     begin
-      PDI^.INREFERENCE:=(CD.DATA='1b');
+      DW.Raw:=BinaryStringToDecimal(CD.DATA);
+      PDI^.INREFERENCE:=(DW.Bits[0]=1);
       SetInfoPanel(panelInReference,PDI^.INREFERENCE);
     end;
 
@@ -4517,7 +4512,7 @@ begin
         // BCD = Bus Change Drive
         c:=Format('BCD:%.2d',[GetPDriveInfo(ActiveDriveNumber)^.DRIVEADDRESS]);
         s:='';
-        Success:=ProcessDirectDriveCommand(c,s,false,true);
+        Success:=ProcessDirectDriveCommand(c,s);
         Memo1.Lines.Append('Select drive ASCII response: '+s);
         c:=Format('E%.2d',[GetPDriveInfo(ActiveDriveNumber)^.DRIVEADDRESS]);
         if s=c then Memo1.Lines.Append('Selected drive connected !');
