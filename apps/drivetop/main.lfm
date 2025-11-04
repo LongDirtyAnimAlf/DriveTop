@@ -110,12 +110,12 @@ object Form1: TForm1
     Height = 615
     Top = 8
     Width = 543
-    ActivePage = TabSheet1
+    ActivePage = tabMove
     Anchors = [akTop, akRight, akBottom]
     BorderSpacing.Top = 8
     BorderSpacing.Right = 8
     BorderSpacing.Bottom = 8
-    TabIndex = 0
+    TabIndex = 1
     TabOrder = 6
     object TabSheet1: TTabSheet
       Caption = 'Drive data'
@@ -729,7 +729,7 @@ object Form1: TForm1
         )
         ColWidths = (
           64
-          214
+          197
         )
       end
     end
@@ -1086,11 +1086,18 @@ object Form1: TForm1
           end
         end
         object btnExecuteReps: TButton
-          Left = 332
-          Height = 41
+          AnchorSideLeft.Control = editReps
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = editReps
+          AnchorSideBottom.Control = editReps
+          AnchorSideBottom.Side = asrBottom
+          Left = 424
+          Height = 38
           Top = 440
           Width = 90
-          Caption = 'btnExecuteReps'
+          Anchors = [akTop, akLeft, akBottom]
+          BorderSpacing.Left = 8
+          Caption = 'Execute Reps.'
           TabOrder = 2
           OnClick = btnExecuteRepsClick
         end

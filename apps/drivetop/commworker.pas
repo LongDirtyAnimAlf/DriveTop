@@ -381,11 +381,11 @@ var
 begin
   while (NOT Terminated) do
   begin
-    WaitResult:=FEvent.WaitFor(1);
-    //WaitResult:=FEvent.WaitFor(INFINITE);
+    //WaitResult:=FEvent.WaitFor(1);
+    WaitResult:=FEvent.WaitFor(INFINITE);
 
-    if (NOT Terminated) then
-    //if ((WaitResult=wrSignaled) AND (NOT Terminated)) then
+    //if (NOT Terminated) then
+    if ((WaitResult=wrSignaled) AND (NOT Terminated)) then
     begin
       FLock.Acquire;
       try
@@ -424,8 +424,8 @@ begin
         FCurrentWorkData := nil;
         FLock.Acquire;
         try
-          if false then
-          //if ((FSISQueue.Count>0) OR (FASCIIQueue.Count>0)) then
+          //if false then
+          if ((FSISQueue.Count>0) OR (FASCIIQueue.Count>0)) then
           begin
             Sleep(1); // don't flood
             FEvent.SetEvent;

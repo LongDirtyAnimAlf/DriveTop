@@ -377,6 +377,11 @@ begin
     end;
   end;
 end;
+{$else}
+procedure ProcessControlMessages(Ctrl: TWinControl);
+begin
+  //Application.ProcessMessages;
+end;
 {$endif MsWindows}
 
 function ChangeBrightness(lIn: tColor; factor:double): TColor;
@@ -1158,6 +1163,8 @@ var
   s                    : RawByteString;
   Axis                 : word;
   PDI                  : PDRIVE;
+  DW                   : DATAWORD;
+  StandStill           : boolean;
 begin
   // Axis or active drive !!??
   if CheckAxis(axis) then exit;
@@ -1171,17 +1178,35 @@ begin
     for i:=1 to Reps do
     begin
       editReps.Text:=InttoStr(Reps-i);
-      Application.ProcessMessages;
-      MoveDistance(Sender,Axis,Distance);
+      editReps.Repaint;
+      ProcessControlMessages(editReps);
+      //Application.ProcessMessages;
+      MoveDistance(Sender,driveaddress,Distance);
       repeat
         sleep(100);
-        Application.ProcessMessages;
-      until PDI^.STANDSTILL;
-      MoveDistance(Sender,Axis,-1*Distance);
+        // Force a data reception of message 'nactual < nx'
+        CD:=COMMAND2CD(DRIVE_332,axis);
+        ProcessParameter(CD,s,false,true);
+        DW.Raw:=BinaryStringToDecimal(s);
+        StandStill:=(DW.Bits[0]=1);
+        SetInfoPanel(panelStandstill,StandStill);
+        panelStandstill.Repaint;
+        ProcessControlMessages(panelStandstill);
+        //CheckSynchronize;
+      until StandStill;
+      MoveDistance(Sender,driveaddress,-1*Distance);
       repeat
         sleep(100);
-        Application.ProcessMessages;
-      until PDI^.STANDSTILL;
+        // Force a data reception of message 'nactual < nx'
+        CD:=COMMAND2CD(DRIVE_332,axis);
+        ProcessParameter(CD,s,false,true);
+        DW.Raw:=BinaryStringToDecimal(s);
+        StandStill:=(DW.Bits[0]=1);
+        SetInfoPanel(panelStandstill,StandStill);
+        panelStandstill.Repaint;
+        ProcessControlMessages(panelStandstill);
+        //CheckSynchronize;
+      until StandStill;
     end;
     editReps.Text:=InttoStr(Reps);
   end;
@@ -2045,10 +2070,6 @@ begin
     until ((DR182.Data.InTargetPosition=1) OR (i>20));
 
     *)
-
-    CD:=COMMAND2CD(DRIVE_332,axis);
-    ProcessParameter(CD,s,true,false);
-
   end;
 end;
 
@@ -2337,6 +2358,8 @@ var
   Distance             : integer;
   Axis                 : word;
   driveaddress         : byte;
+  CD                   : TPARAMETERDATA;
+  s                    : RawByteString;
 begin
   // Axis or active drive !!??
   if CheckAxis(axis) then exit;
@@ -2345,7 +2368,10 @@ begin
   Distance:=StrToIntDef(editDist.Text,0);
   if (Distance<>0) then
   begin
-    MoveDistance(Sender,Axis,Distance);
+    MoveDistance(Sender,driveaddress,Distance);
+    // Force a data reception of message 'nactual < nx'
+    CD:=COMMAND2CD(DRIVE_332,driveaddress);
+    ProcessParameter(CD,s,true,false);
   end;
 end;
 
@@ -2423,7 +2449,7 @@ begin
 
   CD:=Default(TPARAMETERDATA);
   CD.CSUBCLASS:=mscParameterData;
-  CD.SETID:=axis;
+  CD.SETID:=driveaddress;
   CD.STEPID:=0;
 
   // Tricky, we might move axis that is not active !!
@@ -3188,7 +3214,6 @@ begin
     if (Pos('ttyUSB',com)>0) then
     begin
       cmboSerialPorts.ItemIndex:=i;
-      cmboSerialPortsChange(cmboSerialPorts);
       break;
     end;
     Inc(i);
