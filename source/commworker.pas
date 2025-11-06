@@ -53,6 +53,7 @@ type
   public
     constructor Create;
     destructor Destroy; override;
+    procedure StartComms;
     procedure AddWork(var NewWorkData: TPARAMETERDATA; SISData:boolean; prio:boolean=false;blocking:boolean=false);
     procedure ProcessSISRaw(var data:array of byte; var len:integer);
     function  ProcessASCIIRaw(var data: RawByteString):boolean;
@@ -69,7 +70,6 @@ implementation
 
 uses
   drive,sis;
-
 
 const
   MAXWORD = $FFFF;
@@ -90,12 +90,12 @@ destructor TWorkerThread.Destroy;
 var
   i: Integer;
 begin
-  Terminate;
+  if (NOT Suspended) then Terminate;
   FEvent.SetEvent;
-  WaitFor;
+  if (NOT Suspended) then WaitFor;
 
   // Clean up any remaining items
-  FLock.Acquire;
+  if (NOT Suspended) then FLock.Acquire;
   try
     for i := 0 to FSISQueue.Count - 1 do
       Dispose(PPARAMETERDATA(FSISQueue[i]));
@@ -104,7 +104,7 @@ begin
       Dispose(PPARAMETERDATA(FASCIIQueue[i]));
     FASCIIQueue.Free;
   finally
-    FLock.Release;
+    if (NOT Suspended) then FLock.Release;
   end;
 
   FLock.Free;
@@ -114,55 +114,55 @@ end;
 
 procedure TWorkerThread.AddSISWork(AData: PPARAMETERDATA);
 begin
-  FLock.Acquire;
+  if (NOT Suspended) then FLock.Acquire;
   try
     FSISQueue.Add(AData);
     FEvent.SetEvent;
   finally
-    FLock.Release;
+    if (NOT Suspended) then FLock.Release;
   end;
 end;
 
 procedure TWorkerThread.AddSISWorkPrio(AData: PPARAMETERDATA);
 begin
-  FLock.Acquire;
+  if (NOT Suspended) then FLock.Acquire;
   try
     FSISQueue.Insert(0,AData);
     FEvent.SetEvent;
   finally
-    FLock.Release;
+    if (NOT Suspended) then FLock.Release;
   end;
 end;
 
 procedure TWorkerThread.AddSISWorkBlocking(AData: PPARAMETERDATA);
 begin
-  FLock.Acquire;
+  if (NOT Suspended) then FLock.Acquire;
   try
     ProcessSISWork(AData);
   finally
-    FLock.Release;
+    if (NOT Suspended) then FLock.Release;
   end;
 end;
 
 procedure TWorkerThread.AddASCIIWork(AData: PPARAMETERDATA);
 begin
-  FLock.Acquire;
+  if (NOT Suspended) then FLock.Acquire;
   try
     FASCIIQueue.Add(AData);
     FEvent.SetEvent;
   finally
-    FLock.Release;
+    if (NOT Suspended) then FLock.Release;
   end;
 end;
 
 procedure TWorkerThread.AddASCIIWorkPrio(AData: PPARAMETERDATA);
 begin
-  FLock.Acquire;
+  if (NOT Suspended) then FLock.Acquire;
   try
     FASCIIQueue.Insert(0,AData);
     FEvent.SetEvent;
   finally
-    FLock.Release;
+    if (NOT Suspended) then FLock.Release;
   end;
 end;
 
@@ -173,11 +173,11 @@ begin
     CheckSynchronize(1);
   until IsAllFinished;
   *)
-  FLock.Acquire;
+  if (NOT Suspended) then FLock.Acquire;
   try
     ProcessASCIIWork(AData);
   finally
-    FLock.Release;
+    if (NOT Suspended) then FLock.Release;
   end;
 end;
 
@@ -443,11 +443,11 @@ end;
 
 function TWorkerThread.IsAllFinished: Boolean;
 begin
-  FLock.Acquire;
+  if (NOT Suspended) then FLock.Acquire;
   try
     Result := (FSISQueue.Count = 0) AND (FASCIIQueue.Count = 0) and (not FIsProcessing);
   finally
-    FLock.Release;
+    if (NOT Suspended) then FLock.Release;
   end;
 end;
 
@@ -456,7 +456,6 @@ begin
   FConnected:=false;
   FComms:=TBlockSerial.Create;
   FThread := TWorkerThread.Create(Self);
-  FThread.Start;
 end;
 
 destructor TWorkManager.Destroy;
@@ -466,13 +465,18 @@ begin
   inherited;
 end;
 
+procedure TWorkManager.StartComms;
+begin
+  FThread.Start;
+end;
+
 procedure TWorkManager.ProcessSISRaw(var data:array of byte; var len:integer);
 var
   SISResult    : RawByteString;
   success      : boolean;
   i            : integer;
 begin
-  FThread.FLock.Acquire;
+  if (NOT FThread.Suspended) then FThread.FLock.Acquire;
   try
     success:=FThread.ProcessSIS(data,len,SISResult);
     if success then
@@ -481,7 +485,7 @@ begin
       for i:=1 to len do data[i-1]:=Ord(SISResult[i]);
     end;
   finally
-    FThread.FLock.Release;
+    if (NOT FThread.Suspended) then FThread.FLock.Release;
   end;
 end;
 
@@ -498,12 +502,12 @@ begin
   until IsAllFinished;
   *)
 
-  FThread.FLock.Acquire;
+  if (NOT FThread.Suspended) then FThread.FLock.Acquire;
   try
     success:=FThread.ProcessASCII(data,ASCIIResult);
     if success then data:=ASCIIResult;
   finally
-    FThread.FLock.Release;
+    if (NOT FThread.Suspended) then FThread.FLock.Release;
   end;
   result:=success;
 end;

@@ -1,10 +1,10 @@
-object MainForm: TMainForm
-  Left = 233
+object Form1: TForm1
+  Left = 413
   Height = 569
-  Top = 143
+  Top = 200
   Width = 459
   BorderIcons = [biSystemMenu, biMinimize]
-  Caption = 'Simple'
+  Caption = 'DriveTop'
   ClientHeight = 569
   ClientWidth = 459
   LCLVersion = '4.2.0.0'
@@ -584,50 +584,45 @@ object MainForm: TMainForm
       BorderSpacing.Right = 4
       BorderSpacing.Bottom = 4
       Caption = 'Drive Commands'
-      ChildSizing.TopBottomSpacing = 8
-      ChildSizing.HorizontalSpacing = 4
-      ChildSizing.VerticalSpacing = 4
-      ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
-      ChildSizing.EnlargeVertical = crsHomogenousChildResize
-      ChildSizing.ShrinkHorizontal = crsHomogenousChildResize
-      ChildSizing.ShrinkVertical = crsHomogenousChildResize
-      ChildSizing.Layout = cclLeftToRightThenTopToBottom
-      ChildSizing.ControlsPerLine = 2
       ClientHeight = 78
       ClientWidth = 233
       TabOrder = 4
       object btnResetAxis: TButton
-        Left = 0
-        Height = 29
-        Top = 8
-        Width = 111
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Side = asrBottom
+        Left = 136
+        Height = 26
+        Top = 48
+        Width = 80
+        BorderSpacing.Top = 8
+        BorderSpacing.Around = 8
         Caption = 'Axis Reset'
         TabOrder = 0
         OnClick = btnResetAxisClick
       end
       object btnAbsoluteAxis: TButton
-        Left = 115
-        Height = 29
+        Left = 16
+        Height = 26
         Top = 8
-        Width = 118
+        Width = 80
         Caption = 'Set absolute'
         TabOrder = 1
         OnClick = btnAbsoluteAxisClick
       end
       object btnAxisHome: TButton
-        Left = 0
-        Height = 29
-        Top = 41
-        Width = 111
+        Left = 16
+        Height = 26
+        Top = 48
+        Width = 80
         Caption = 'Axis Home'
         TabOrder = 2
         OnClick = btnAxisHomeClick
       end
       object btnClearErrors: TButton
-        Left = 115
-        Height = 29
-        Top = 41
-        Width = 118
+        Left = 136
+        Height = 26
+        Top = 8
+        Width = 80
         Caption = 'Clear Errors'
         TabOrder = 3
         OnClick = btnAxisCommandClick

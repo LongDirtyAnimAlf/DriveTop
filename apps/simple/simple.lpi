@@ -8,7 +8,7 @@
         <CompatibilityMode Value="True"/>
       </Flags>
       <SessionStorage Value="InProjectDir"/>
-      <Title Value="move"/>
+      <Title Value="simple"/>
       <ResourceType Value="res"/>
       <UseXPManifest Value="True"/>
       <XPManifest>
@@ -56,15 +56,15 @@
         <PackageName Value="LCL"/>
       </Item4>
     </RequiredPackages>
-    <Units Count="9">
+    <Units Count="8">
       <Unit0>
-        <Filename Value="move.pas"/>
+        <Filename Value="simple.lpr"/>
         <IsPartOfProject Value="True"/>
       </Unit0>
       <Unit1>
         <Filename Value="main.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="Form1"/>
+        <ComponentName Value="MainForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
       </Unit1>
@@ -81,29 +81,24 @@
         <IsPartOfProject Value="True"/>
       </Unit4>
       <Unit5>
-        <Filename Value="..\..\source\commbase.pas"/>
+        <Filename Value="..\..\source\customdefines.inc"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="CommBase"/>
       </Unit5>
       <Unit6>
-        <Filename Value="..\..\source\customdefines.inc"/>
+        <Filename Value="..\..\source\sis.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit6>
       <Unit7>
-        <Filename Value="..\..\source\sis.pas"/>
+        <Filename Value="..\..\source\commworker.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit7>
-      <Unit8>
-        <Filename Value="..\..\source\sis2.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit8>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value=".\bins\move"/>
+      <Filename Value="bins\$NameOnly($(ProjFile))\$(TargetCPU)-$(TargetOS)\simple"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir);..\..\source;..\..\common;..\..\common\jvcl\jvcl\common"/>

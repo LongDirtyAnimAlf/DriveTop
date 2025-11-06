@@ -1140,7 +1140,7 @@ begin
     success:=ProcessParameter(CD,s,false,true);
 
     // Wait for position
-    CD:=COMMAND2CD(DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3,driveaddress);
+    CD:=COMMAND2CD(DRIVE_MANUDIAGS_CLASS3,driveaddress);
     i:=0;
     repeat
       sleep(100);
@@ -1162,7 +1162,6 @@ var
   success              : boolean;
   s                    : RawByteString;
   Axis                 : word;
-  PDI                  : PDRIVE;
   DW                   : DATAWORD;
   StandStill           : boolean;
 begin
@@ -1172,7 +1171,6 @@ begin
 
   Reps:=StrToIntDef(editReps.Text,0);
   Distance:=StrToIntDef(editDist.Text,0);
-  PDI:=GetPDriveInfo(ActiveDriveNumber);
   if (Reps>0) then
   begin
     for i:=1 to Reps do
@@ -1185,7 +1183,7 @@ begin
       repeat
         sleep(100);
         // Force a data reception of message 'nactual < nx'
-        CD:=COMMAND2CD(DRIVE_332,axis);
+        CD:=COMMAND2CD(DRIVE_332,driveaddress);
         ProcessParameter(CD,s,false,true);
         DW.Raw:=BinaryStringToDecimal(s);
         StandStill:=(DW.Bits[0]=1);
@@ -1198,7 +1196,7 @@ begin
       repeat
         sleep(100);
         // Force a data reception of message 'nactual < nx'
-        CD:=COMMAND2CD(DRIVE_332,axis);
+        CD:=COMMAND2CD(DRIVE_332,driveaddress);
         ProcessParameter(CD,s,false,true);
         DW.Raw:=BinaryStringToDecimal(s);
         StandStill:=(DW.Bits[0]=1);
@@ -2060,7 +2058,7 @@ begin
     (*
 
     // Wait for position
-    CD:=COMMAND2CD(DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3,GetDriveAddress(ActiveDriveNumber));
+    CD:=COMMAND2CD(DRIVE_MANUDIAGS_CLASS3,GetDriveAddress(ActiveDriveNumber));
     i:=0;
     repeat
       Inc(i);
@@ -4267,7 +4265,7 @@ begin
     with DRIVE_DIAGNOSTIC_CLASS2 do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))   then ProcessDR12(LocalCD);
     with DRIVE_DIAGNOSTIC_CLASS3 do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))   then ProcessDR13(LocalCD);
 
-    with DRIVE_MANUFACTURER_DIAGNOSTIC_CLASS3 do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))   then ProcessDR182(LocalCD);
+    with DRIVE_MANUDIAGS_CLASS3 do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))   then ProcessDR182(LocalCD);
 
     with DRIVE_MAXSPEED do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))            then ProcessMaxSpeed(LocalCD);
     with DRIVE_MAXACCEL do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))            then ProcessMaxAccel(LocalCD);
