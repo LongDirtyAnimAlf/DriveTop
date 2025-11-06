@@ -453,6 +453,7 @@ begin
 
   CommWorker := TWorkManager.Create;
   CommWorker.WorkComplete:=@OnWorkComplete;
+  CommWorker.StartComms;
 
   ActiveSerialConnection:=conNone;
   DCStatus:=TDATACOLLECTION.dcNone;

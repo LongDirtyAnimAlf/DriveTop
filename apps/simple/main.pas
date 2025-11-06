@@ -107,13 +107,13 @@ type
     function  GetPrio(const {%H-}CD:TPARAMETERDATA):boolean;
     function  GetBlocking(const {%H-}CD:TPARAMETERDATA):boolean;
 
+    procedure GetRealTimeData;
+
     procedure ProcessDR14(const CD: TPARAMETERDATA);
     procedure ProcessDR134(const CD: TPARAMETERDATA);
     procedure ProcessDR135(const CD: TPARAMETERDATA);
     procedure ProcessDR182(const CD: TPARAMETERDATA);
     procedure SetStatus(const LocalCD:TPARAMETERDATA);
-
-    procedure OnWorkComplete(Sender: TObject);
   public
     { public declarations }
     function  ProcessParameter(const CD:TPARAMETERDATA;out response:RawByteString; prio:boolean=false; blocking:boolean=false; verbose:boolean=false):boolean;
@@ -210,7 +210,6 @@ begin
   FActiveDriveNumber:=1;
 
   CommWorker := TWorkManager.Create;
-  CommWorker.WorkComplete:=@OnWorkComplete;
 
   ActiveSerialConnection:=conNone;
 
@@ -422,7 +421,7 @@ begin
   begin
     Success:=false;
     ActiveSerialConnection:=conNone;
-    if (Sender=btnConnectDriveRS232) then ActiveSerialConnection:=conASCIIDDRS232;
+    //if (Sender=btnConnectDriveRS232) then ActiveSerialConnection:=conASCIIDDRS232;
     if (Sender=btnConnectDriveRS485) then ActiveSerialConnection:=conASCIIDDRS485;
 
     if (cmboSerialPorts.ItemIndex<>-1) then
@@ -445,7 +444,7 @@ begin
   if Success then
   begin
     cmboSerialPorts.Enabled:=(NOT Success);
-    btnConnectDriveRS232.Enabled:=(NOT Success);
+    //btnConnectDriveRS232.Enabled:=(NOT Success);
     btnConnectDriveRS485.Enabled:=(NOT Success);
 
     // Force the activedrive change magic
@@ -633,7 +632,7 @@ begin
   commworker.DisConnect;
   ActiveSerialConnection:=conNone;
   cmboSerialPorts.Enabled:=true;
-  btnConnectDriveRS232.Enabled:=true;
+  //btnConnectDriveRS232.Enabled:=true;
   btnConnectDriveRS485.Enabled:=true;
 end;
 
@@ -1015,28 +1014,6 @@ begin
   end;
 end;
 
-procedure TMainForm.OnWorkComplete(Sender: TObject);
-var
-  WorkData: PPARAMETERDATA;
-  Thread: TWorkerThread;
-begin
-  Thread := Sender as TWorkerThread;
-  WorkData := Thread.CurrentWorkData;
-  if Assigned(WorkData) then
-  begin
-    try
-      try
-        Memo1.Lines.Append(WorkData^.DATA);
-      except
-        // Swallow exceptions !!
-        // We always need to free the workdata
-      end;
-    finally
-      Dispose(WorkData);
-    end;
-  end;
-end;
-
 procedure TMainForm.SetActiveDriveNumber(value:word);
 var
   Success      : boolean;
@@ -1106,21 +1083,44 @@ begin
       s:='';
       success:=ProcessParameter(CD,s,false,true);
 
-      CD:=COMMAND2CD(DRIVE_INTERFACE,GetDriveAddress(ActiveDriveNumber));
-      CD.DATA:='';
-      s:='';
-      success:=ProcessParameter(CD,s,false,true);
-      ProcessDR14(CD);
-
-
-      //with DRIVE_CONTROLWORD do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))         then ProcessDR134(LocalCD);
-      //with DRIVE_STATUSWORD do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))          then ProcessDR135(LocalCD);
-      //with DRIVE_MANUDIAGS_CLASS3 do if ((LocalCD.CCLASS=CCLASS) AND (LocalCD.NUMID=NUMID))   then ProcessDR182(LocalCD);
-      //ProcessDR134(CD);
-      //ProcessDR135(CD);
-      //ProcessDR182(CD);
+      GetRealTimeData;
     end;
   end;
+end;
+
+procedure TMainForm.GetRealTimeData;
+var
+  Success      : boolean;
+  s            : RawByteString;
+  CD           : TPARAMETERDATA;
+begin
+  CD:=COMMAND2CD(DRIVE_INTERFACE,GetDriveAddress(ActiveDriveNumber));
+  CD.DATA:='';
+  s:='';
+  success:=ProcessParameter(CD,s,false,true);
+  CD.DATA:=s;
+  ProcessDR14(CD);
+
+  CD:=COMMAND2CD(DRIVE_CONTROLWORD,GetDriveAddress(ActiveDriveNumber));
+  CD.DATA:='';
+  s:='';
+  success:=ProcessParameter(CD,s,false,true);
+  CD.DATA:=s;
+  ProcessDR134(CD);
+
+  CD:=COMMAND2CD(DRIVE_STATUSWORD,GetDriveAddress(ActiveDriveNumber));
+  CD.DATA:='';
+  s:='';
+  success:=ProcessParameter(CD,s,false,true);
+  CD.DATA:=s;
+  ProcessDR135(CD);
+
+  CD:=COMMAND2CD(DRIVE_MANUDIAGS_CLASS3,GetDriveAddress(ActiveDriveNumber));
+  CD.DATA:='';
+  s:='';
+  success:=ProcessParameter(CD,s,false,true);
+  CD.DATA:=s;
+  ProcessDR182(CD);
 end;
 
 procedure TMainForm.SetStatus(const LocalCD:TPARAMETERDATA);

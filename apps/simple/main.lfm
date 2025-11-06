@@ -65,6 +65,7 @@ object MainForm: TMainForm
     BorderSpacing.Left = 8
     BorderSpacing.Top = 4
     Caption = 'Connect as  DriveTop ASCII RS232'
+    Enabled = False
     TabOrder = 0
     OnClick = btnConnectSerialClick
   end
@@ -552,11 +553,10 @@ object MainForm: TMainForm
         Left = 8
         Height = 19
         Top = 78
-        Width = 184
-        Anchors = [akTop, akLeft, akRight]
+        Width = 158
         BorderSpacing.Top = 8
         BorderSpacing.Around = 8
-        Caption = 'Speed ratio [%]'
+        Caption = 'Speed ratio [1-200%]'
         Font.CharSet = ANSI_CHARSET
         Font.Height = -16
         Font.Name = 'Arial'
